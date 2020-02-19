@@ -71,6 +71,9 @@ clean_bin:
 
 clean: clean_lib clean_bin clean_obj
 
+run:
+	bin/cc/main.out
+
 bin/:
 	$(MKDIR) bin/cc
 	$(MKDIR) bin/cu
