@@ -3,7 +3,7 @@ OS=$(shell uname)
 CLR=clear && clear && clear
 
 CC=g++
-CCFLAGS=-std=c++11
+CCFLAGS=-std=c++11 -Wall -O3
 NV=nvcc
 NVFLAGS=-std=c++11 -arch=sm_35 -rdc=true --default-stream per-thread
 
@@ -11,8 +11,8 @@ AR=ar rcs
 
 CCSRC=$(wildcard src/*.cc)
 NVSRC=$(wildcard src/*.cu)
-CCOBJ=$(subst src,src/obj/cc/,$(patsubst %.cc,%.o, $(SRC)))
-NVOBJ=$(subst src,src/obj/cu/,$(patsubst %.cu,%.o, $(SRC)))
+CCOBJ=$(subst src/,src/obj/cc/,$(patsubst %.cc,%.o, $(CCSRC)))
+NVOBJ=$(subst src/,src/obj/cu/,$(patsubst %.cu,%.o, $(NVSRC)))
 
 TESTCCSRC=$(wildcard test/*.cc)
 TESTNVSRC=$(wildcard test/*.cu)
@@ -21,7 +21,7 @@ TESTNVEXEC=$(subst test/,bin/cu/,$(patsubst %.cu,%.out, $(TESTNVSRC)))
 
 INCLUDE=src/include
 INC=-I./lib/include
-LIBS=-L./lib $(INC)
+LIBS=-L./lib $(INC) -lClothoids
 LIB=libClothoids.a #LIB_DUBINS
 MORE_FLAGS=
 
@@ -41,7 +41,7 @@ all: echo lib $(TESTCCEXEC)
 
 echo:
 	@echo "CCSRC: " $(CCSRC)
-	@echo "CUSRC: " $(CUSRC)
+	@echo "CUSRC: " $(NVSRC)
 	@echo "CCOBJ: " $(CCOBJ)
 	@echo "CUOBJ: " $(CUOBJ)
 	@echo "TESTCCSRC: " $(TESTCCSRC)

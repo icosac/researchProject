@@ -5,3 +5,5 @@ lib/
 *prova*
 .idea/
 cmake-build-debug/
+input/
+output/
