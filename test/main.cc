@@ -21,6 +21,11 @@ vector<Configuration2<double> > points={
         Configuration2<double> (3, 2, ANGLE::INVALID),
         Configuration2<double> (4, 0, ANGLE::INVALID),
         Configuration2<double> (6, 2, ANGLE::INVALID),
+
+//        Configuration2<double> (10, 2, ANGLE::INVALID),
+//        Configuration2<double> (8, 4, ANGLE::INVALID),
+//        Configuration2<double> (3, 1, ANGLE::INVALID),
+//        Configuration2<double> (6, 2, ANGLE::INVALID),
 //        Configuration2<double> (6, 2, 15*m_pi/16),
 };
 
@@ -71,7 +76,7 @@ public:
 #include <limits>
 inline int closestDiscr(Angle th0){//TODO an epsilon should be used
   double app=th0/(2*m_pi)*DISCR;
-  cout << "closestDiscrApp: " << app << endl;
+//  cout << "closestDiscrApp: " << app << endl;
   int a=(int)(app+1.0e-5);
   int b=app;
   return (a==b ? b : a);
@@ -86,10 +91,10 @@ bool lengthOrder(pair<LEN_T, int> a, pair<LEN_T, int> b){
   for (auto a : v) cout << a << " "; \
   cout << ">" << endl;
 
-vector<pair<Angle, Angle> > bestAngles(Data matrix[][DISCR]){
+vector<Angle> bestAngles(Data matrix[][DISCR]){
   vector<pair<LEN_T, int> > ordered; //pair<length, id>
   vector<Angle> bestA;
-  LEN_T bL=0, l=0;
+  LEN_T bL=0;
 
   for (int i=0; i<DISCR; i++){
     if (matrix[0][i].th0()!=ANGLE::INVALID && matrix[0][i].th1()!=ANGLE::INVALID) {
@@ -99,22 +104,33 @@ vector<pair<Angle, Angle> > bestAngles(Data matrix[][DISCR]){
   sort(ordered.begin(), ordered.end(), lengthOrder);
 
   for (int i=0; i<ordered.size(); i++) {
+    LEN_T l=0;
     vector<Angle> app;
     Data d = matrix[0][ordered[i].second];
     app.push_back(d.th0());
     l+=ordered[i].first;
     for (int j=1; j<SIZE-1; j++) {
-      cout << d << endl;
+      COUT(d);
       if (d.th0()!=ANGLE::INVALID && d.th1()!=ANGLE::INVALID) {
         int id=closestDiscr(d.th1());
-        cout << d.th1() << " " << id << endl;
+        COUT("Closest id of " << d.th1() << " is " << id << endl)
         d=matrix[j][closestDiscr(d.th1())];
         app.push_back(d.th0());
+        if (j==SIZE-2){
+          app.push_back(d.th1());
+        }
         l+=d.l();
       }
+      else {
+        break;
+      }
     }
-    cout << endl << "app ";
+#ifdef DEBUG
+    cout << "app ";
     printV(app)
+    cout << "appL=" << l << endl;
+    cout << endl;
+#endif
     if (l!=0 && (l<bL || bL==0)){
       bL=l;
       bestA=app;
@@ -126,12 +142,11 @@ vector<pair<Angle, Angle> > bestAngles(Data matrix[][DISCR]){
   }
   cout << endl;
 
+  return bestA;
 }
 
 int main (){
-//  vector<Data> matrix[SIZE-1]; //TODO this can be changed to a vector
-  Data matrix[SIZE-1][DISCR]; //TODO this can be changed to a vector
-  cout << matrix[0][0] << matrix[1][2] << endl;
+  Data matrix[SIZE-1][DISCR]; //TODO can this be changed to a vector???
   double L=0;
   for (int i=points.size()-1; i>0; i--){
     Configuration2<double>* c0=&points[i-1];
@@ -143,16 +158,16 @@ int main (){
       for (double th1=0; th1<2*m_pi; th1+=m_pi/(DISCR*1.0/2.0)) {
         c1->th(th1);
         Clothoid<double> c(*c0, *c1);
-        if (c.l()>0 && (c.l()<bL || bL==0)) {
-          bL = c.l();
+        if (c.l()>0 && (c.l()<matrix[i-1][j].l() || matrix[i-1][j].l()==0)) {
+          matrix[i-1][j]=(Data(th0, th1, c.l()));
           bA = th1;
-          cout << "For points <" << *c.ci() << ", " << *c.cf() << ">" << "  chosen: " << bL << " " << bA << endl;
+          COUT("For points <" << *c.ci() << ", " << *c.cf() << ">" << "  chosen: " << bL << " " << bA << endl)
         }
       }
-      matrix[i-1][j]=(Data(th0, bA, bL));
       j++;
     }
   }
+#ifdef DEBUG
   cout << "Printing " << endl;
   for (int i=0; i<8; i++){
     for (int j=0; j<SIZE-1; j++){
@@ -160,8 +175,19 @@ int main (){
     }
     cout << endl;
   }
+#endif
 
   cout << "Solving" << endl;
-  bestAngles(matrix);
+  vector<Angle> angles=bestAngles(matrix);
+
+  COUT("Printing for Matlab" << endl)
+  COUT("x0 = " << points[0].x() << ";" << endl)
+  COUT("y0 = " << points[0].y() << ";" << endl)
+  COUT("th0 = " << angles[0] << ";" << endl)
+  COUT("points=[")
+  for (int i=1; i<SIZE; i++){
+    COUT("[" << points[i].x() << "," << points[i].y() << "," << angles[i] << "],")
+  }
+  COUT("];" << endl)
   return 0;
 }

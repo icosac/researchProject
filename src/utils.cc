@@ -1,6 +1,6 @@
 #include <utils.hh>
 
-real_type const machepsi    = std::numeric_limits<real_type>::epsilon() ;
+real_type const epsi        = std::numeric_limits<real_type>::epsilon() ;
 real_type const m_pi        = 3.14159265358979323846264338328  ; // pi
 real_type const m_pi_2      = 1.57079632679489661923132169164  ; // pi/2
 real_type const m_2pi       = 6.28318530717958647692528676656  ; // 2*pi

@@ -8,6 +8,14 @@
 
 #include <typedefs.hh>
 
+#define DEBUG
+
+#ifdef DEBUG
+#define COUT(x) cout << x;
+#else
+#define COUT(x)
+#endif
+
 #ifndef ASSERT
   #define ASSERT(COND,MSG)         \
     if ( !(COND) ) {                        \
@@ -19,7 +27,7 @@
     }
 #endif //ASSERT
 
-extern real_type const machepsi    ;
+extern real_type const epsi        ;
 extern real_type const m_pi        ; // pi
 extern real_type const m_pi_2      ; // pi/2
 extern real_type const m_2pi       ; // 2*pi
