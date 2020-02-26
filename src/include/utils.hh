@@ -8,7 +8,7 @@
 
 #include <typedefs.hh>
 
-#define DEBUG
+//#define DEBUG
 
 #ifdef DEBUG
 #define COUT(x) cout << x;
@@ -33,5 +33,19 @@ extern real_type const m_pi_2      ; // pi/2
 extern real_type const m_2pi       ; // 2*pi
 extern real_type const m_1_pi      ; // 1/pi
 extern real_type const m_1_sqrt_pi ; // 1/sqrt(pi)
+
+#define printV(v) \
+  cout << "<"; \
+  for (auto a : v) cout << a << " "; \
+  cout << ">" << endl;
+
+#define printM(M) \
+for (int i=0; i<DISCR; i++){   \
+  cout << "th" << i;    \
+  for (int j=0; j<SIZE; j++){\
+    cout << M[i][j] << "\t";   \
+  }                            \
+  cout << endl;                \
+}
 
 #endif //CLOTHOIDSG1_UTILS_HH

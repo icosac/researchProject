@@ -12,5 +12,6 @@ typedef float Angle;
 typedef double LEN_T;///<Typedef to describe the length
 typedef double K_T;  ///<Typedef to describe the curvature
 
+enum ANGLE {INVALID=-1};
 
 #endif //CLOTHOIDSG1_TYPEDEFS_HH
