@@ -8,30 +8,32 @@ using namespace std;
 #include <curve.hh>
 #include <utils.hh>
 
-#define A_THRESOLD   0.01  ///<TODO cosa sono questi?
-#define A_SERIE_SIZE 3     ///<TODO cosa sono questi?
+#define A_THRESOLD   0.01  //TODO cosa sono questi?
+#define A_SERIE_SIZE 3     //TODO cosa sono questi?
 
 template<class T1>
 class Clothoid : public Curve<T1>{
 private:
-  real_type tol = 0.000000000001;   ///<Tolerance
-  bool compute_deriv=false; ///<Whether to compute derivatives or not
-  K_T _dk;             ///<Curvature derivative
-  real_type L_D[2];         ///<Derivateves of the length
-  real_type k_D[2];         ///<Curvature derivatives
-  real_type dk_D[2];        ///<Sharpness derivatives
+  LEN_T _l;                          ///< Length
+  real_type tol = 0.000000000001;   ///< Tolerance
+  bool compute_deriv=false;         ///< Whether to compute derivatives or not
+  K_T _dk;                          ///< Curvature derivative
+  real_type L_D[2];                 ///< Derivateves of the length
+  real_type k_D[2];                 ///< Curvature derivatives
+  real_type dk_D[2];                ///< Sharpness derivatives
 
 public:
-  Clothoid() : Curve<T1>() {}
-  Clothoid(Configuration2<T1> ci, Configuration2<T1> cf, LEN_T l=0) : Curve<T1>(ci, cf, l) {
+  Clothoid() : Curve<T1>(CURVE_TYPE::CLOTHOID), _l(0) {}
+  Clothoid(Configuration2<T1> ci, Configuration2<T1> cf, LEN_T l=0) : Curve<T1>(ci, cf, CURVE_TYPE::CLOTHOID), _l(l) {
     this->buildG1();
   }
 
-//  TODO how to compute these?
-  K_T dk () { return this->_dk; }
-//  real_type k () { return ; }
+  LEN_T l() const { return this->_l; }                  ///< Returns the length of the curve.
+  K_T dk () const { return this->_dk; }                 ///< Returns the curvature derivative.
+//  real_type k () { return ; } //  TODO how to compute these?
 
-  K_T dk(real_type dk) {this->_dk=dk; return this->dk(); }
+  K_T dk(real_type dk) {this->_dk=dk; return this->dk(); }   ///< Sets and returns the curvature derivative.
+  LEN_T l(LEN_T l) { this->_l=l; return this->l(); }         ///< Sets and returns the length of the curve.
 
   int buildG1(){
     static real_type const CF[] = { 2.989696028701907,  0.716228953608281,

@@ -11,6 +11,9 @@ typedef float Angle;
 //curve.hh
 typedef double LEN_T;///<Typedef to describe the length
 typedef double K_T;  ///<Typedef to describe the curvature
+namespace {
+ enum CURVE_TYPE {INVALID, CLOTHOID, DUBINS}; ///< Possible types of CURVE
+}
 
 enum ANGLE {INVALID=-1};
 

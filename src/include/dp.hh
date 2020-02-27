@@ -1,6 +1,7 @@
 #ifndef CLOTHOIDSG1_DP_HH
 #define CLOTHOIDSG1_DP_HH
 
+#include <settings.hh>
 #include <utils.hh>
 #include <typedefs.hh>
 #include <configuration.hh>

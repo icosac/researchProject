@@ -1,7 +1,6 @@
 #include <dp.hh>
-#include <prova.hh>
+
 vector<Angle> bestAngles (DP::Cell** matrix, int rows, int cols, int discr){
-  prova();
   int id=0;
   double bL=0.0;
   for (int i=0; i<rows; i++){
@@ -21,7 +20,7 @@ vector<Angle> bestAngles (DP::Cell** matrix, int rows, int cols, int discr){
   return ret;
 }
 
-void DP::solveDP(vector<Configuration2<double> > points, int size, int discr){
+void DP::solveDP(vector<Configuration2<double> > points, int size, int discr){ //TODO this could be parametrized.
 //  DP::Cell matrix[discr][size-1]; //TODO can this be changed to a vector???
   DP::Cell** matrix=new DP::Cell*[discr];
   for (int i=0; i<discr; i++){
@@ -33,20 +32,17 @@ void DP::solveDP(vector<Configuration2<double> > points, int size, int discr){
   for (i=points.size()-1; i>0; i--){
     Configuration2<double>* c0=&points[i-1];
     Configuration2<double>* c1=&points[i];
-//    int j=0; //Used to count how many th1 angles have been tested; //TODO if reused remember to increment at end of for
-//    for (double th0=0; th0<m_2pi && j<discr; th0+=m_2pi/(discr*1.0)) {
     for (int j=0; j<discr; j++) {
       double th0=m_2pi*(j*1.0)/(discr*1.0);
       LEN_T cL=0.0, bL=0.0;
       Angle bA=0.0;
       c0->th(th0);
-//      for (double th1=0; th1<m_2pi; th1+=m_2pi/(discr*1.0)) {
       for (int k=0; k<discr; k++){
         double th1=m_2pi*(k*1.0)/(discr*1.0);
         c1->th(th1);
-        Clothoid<double> c;
+        CURVE c;
         try{
-          c=Clothoid<double> (*c0, *c1);
+          c=CURVE (*c0, *c1);
         } catch (runtime_error e){}
 
         COUT(*c0 << " " << *c1 << " " << c.l() << endl)
@@ -55,7 +51,6 @@ void DP::solveDP(vector<Configuration2<double> > points, int size, int discr){
           cL = c.l();
         }
         if (i!=(points.size()-1)) {
-//          cL+=matrix[j][i+1].l();
           cL+=matrix[closestDiscr(th1, discr)][i+1].l();
         }
         if (cL>0 && (cL<bL || bL==0)){

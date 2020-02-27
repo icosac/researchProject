@@ -14,17 +14,16 @@ using namespace std;
 #define SIZE 349
 #define DISCR 100
 
-
-//vector<Configuration2<double> > points={
-//        Configuration2<double> (1, 1, ANGLE::INVALID),
-//        Configuration2<double> (3, 2, ANGLE::INVALID),
-//        Configuration2<double> (4, 0, ANGLE::INVALID),
-//        Configuration2<double> (6, 2, ANGLE::INVALID),
-//        Configuration2<double> (10, 2, ANGLE::INVALID),
-//        Configuration2<double> (8, 4, ANGLE::INVALID),
-//        Configuration2<double> (3, 1, ANGLE::INVALID),
-//        Configuration2<double> (6, 2, ANGLE::INVALID),
-//};
+vector<Configuration2<double> > points={
+        Configuration2<double> (1, 1, ANGLE::INVALID),
+        Configuration2<double> (3, 2, ANGLE::INVALID),
+        Configuration2<double> (4, 0, ANGLE::INVALID),
+        Configuration2<double> (6, 2, ANGLE::INVALID),
+        Configuration2<double> (10, 2, ANGLE::INVALID),
+        Configuration2<double> (8, 4, ANGLE::INVALID),
+        Configuration2<double> (3, 1, ANGLE::INVALID),
+        Configuration2<double> (6, 2, ANGLE::INVALID),
+};
 
 
 //double X[SIZE] = {2.9265642,2.6734362,2.5109322,1.9078122,1.1859282,1.9249962,2.8265562,0.00468420000000025,-2.826567,-1.9437558,-1.1859438,-1.9062558,-2.501565,-2.6734386,-2.9265642,-2.6187522,-1.1406318,-0.8968758,-1.4562558,-1.9062558,-0.00468780000000013,1.9078122,1.4468682,0.8968722,1.1406282,2.6187522, 2.9265642 };
@@ -49,8 +48,58 @@ vector<Configuration2<double> > createPoints(){
 }
 
 int main (){
-  vector<Configuration2<double> > points=createPoints();
   DP::solveDP(points, points.size(), DISCR);
-
   return 0;
 }
+
+//class Poly {
+//private:
+//  int _b, _h;
+//public:
+//  Poly(int b, int h): _b(b), _h(h) {}
+//
+//  int b() const { return this->_b; }
+//  int h() const { return this->_h; }
+//
+//  virtual int area () const = 0;
+//  virtual int peri () const = 0;
+//};
+//
+//class Tri: public Poly{
+//public:
+//  Tri(int a, int b) : Poly(a,b) {}
+//
+//  int area() const {
+//    return (this->b())*(this->h())/2;
+//  }
+//
+////  int peri() const { return 1; }
+//};
+//
+//class Rect: public Poly {
+//public:
+//  Rect(int a, int b) : Poly(a,b) {}
+//
+//  int area() const {
+//    return (this->b())*(this->h());
+//  }
+//
+//  int peri() const {
+//    return (this->b()*2)+(this->h()*2);
+//  }
+//};
+//
+//void area(Poly* p){
+//  cout << p->area() << endl;
+//}
+//
+//void peri(Poly* p){
+//  cout << p->peri() << endl;
+//}
+//
+//#define RECT
+//#ifdef RECT
+//typedef Rect POLY;
+//#else
+//typedef Tri POLY;
+//#endif
