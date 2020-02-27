@@ -8,7 +8,7 @@
 
 #include <typedefs.hh>
 
-//#define DEBUG
+#define DEBUG
 
 #ifdef DEBUG
 #define COUT(x) cout << x;

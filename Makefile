@@ -56,6 +56,7 @@ mvlib:
 	$(MKDIR) lib
 	$(MKDIR) lib/include
 	cp -f $(INCLUDE)/*.hh lib/include
+	cp -f $(INCLUDE)/*.tt lib/include
 
 lib/$(LIB): mvlib obj/ bin/ $(CCOBJ) #TODO add CUDA support
 	$(AR) lib/$(LIB) $(CCOBJ)

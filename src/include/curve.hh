@@ -37,7 +37,7 @@ public:
   CURVE_TYPE type () const { return this->_type; } ///< Returns type of curve.
 
   virtual LEN_T l() const = 0;                     ///< Returns the length of the curve.
-  virtual LEN_T l(LEN_T l) = 0;                    ///< Sets and returns the length of the curve.
+//  virtual LEN_T l(LEN_T l) = 0;                    ///< Sets and returns the length of the curve.
 };
 
 #endif //CLOTHOIDSG1_CURVE_HH

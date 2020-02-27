@@ -4,8 +4,8 @@
 #include <clothoid.hh>
 #include <dubins.hh>
 
-#define CLOTHOID
-//#define DUBINS
+//#define CLOTHOID
+#define DUBINS
 
 #if defined(CLOTHOID)
 typedef Clothoid<double> CURVE;

@@ -12,17 +12,17 @@
 using namespace std;
 
 #define SIZE 349
-#define DISCR 100
+#define DISCR 360
 
 vector<Configuration2<double> > points={
         Configuration2<double> (1, 1, ANGLE::INVALID),
         Configuration2<double> (3, 2, ANGLE::INVALID),
         Configuration2<double> (4, 0, ANGLE::INVALID),
         Configuration2<double> (6, 2, ANGLE::INVALID),
-        Configuration2<double> (10, 2, ANGLE::INVALID),
-        Configuration2<double> (8, 4, ANGLE::INVALID),
-        Configuration2<double> (3, 1, ANGLE::INVALID),
-        Configuration2<double> (6, 2, ANGLE::INVALID),
+//        Configuration2<double> (10, 2, ANGLE::INVALID),
+//        Configuration2<double> (8, 4, ANGLE::INVALID),
+//        Configuration2<double> (3, 1, ANGLE::INVALID),
+//        Configuration2<double> (6, 2, ANGLE::INVALID),
 };
 
 

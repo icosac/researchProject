@@ -26,8 +26,7 @@ void DP::solveDP(vector<Configuration2<double> > points, int size, int discr){ /
   for (int i=0; i<discr; i++){
     matrix[i]=new DP::Cell [size]; //TODO one column could be removed but indexes need to be changed. The angle of the first point it's just m_2pi*i/discr
   }
-  double L=0;
-  int i=0;
+  unsigned int i=0;
   cout << m_2pi/(discr*1.0) << endl;
   for (i=points.size()-1; i>0; i--){
     Configuration2<double>* c0=&points[i-1];
@@ -42,10 +41,10 @@ void DP::solveDP(vector<Configuration2<double> > points, int size, int discr){ /
         c1->th(th1);
         CURVE c;
         try{
-          c=CURVE (*c0, *c1);
+          c=CURVE (*c0, *c1, 5);
         } catch (runtime_error e){}
 
-        COUT(*c0 << " " << *c1 << " " << c.l() << endl)
+//        COUT(*c0 << " " << *c1 << " " << c.l() << endl)
 
         if (c.l()>0) {
           cL = c.l();
@@ -58,7 +57,7 @@ void DP::solveDP(vector<Configuration2<double> > points, int size, int discr){ /
           bL=cL;
         }
       }
-      COUT("i: " << i << " j: " << j << " bL: " << bL << " bA: " << bA << endl)
+//      COUT("i: " << i << " j: " << j << " bL: " << bL << " bA: " << bA << endl)
       matrix[j][i].l(bL);
       matrix[j][i].th(bA);
       if (i==1){ //Add values for first point.
@@ -69,7 +68,7 @@ void DP::solveDP(vector<Configuration2<double> > points, int size, int discr){ /
   }
 #ifdef DEBUG
   cout << "Printing " << endl;
-  printM(matrix, discr, size)
+//  printM(matrix, discr, size)
 #endif
 
   cout << "Solving" << endl;
@@ -86,10 +85,10 @@ void DP::solveDP(vector<Configuration2<double> > points, int size, int discr){ /
   cout << "];" << endl;
 
   double Length=0.0;
-  for (int i=0; i<angles.size()-1; i++){
+  for (unsigned int i=0; i<angles.size()-1; i++){
     points[i].th(angles[i]);
     points[i+1].th(angles[i+1]);
-    Clothoid<double> c(points[i], points[i+1]);
+    CURVE c(points[i], points[i+1], 5);
     Length+=c.l();
   }
   cout << "Length: " << Length << endl;

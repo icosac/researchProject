@@ -6,6 +6,7 @@
 #include <typedefs.hh>
 #include <configuration.hh>
 #include <clothoid.hh>
+#include <dubins.hh>
 
 #include <iostream>
 #include <cmath>

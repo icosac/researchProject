@@ -12,9 +12,9 @@ typedef float Angle;
 typedef double LEN_T;///<Typedef to describe the length
 typedef double K_T;  ///<Typedef to describe the curvature
 namespace {
- enum CURVE_TYPE {INVALID, CLOTHOID, DUBINS}; ///< Possible types of CURVE
+  enum CURVE_TYPE { INVALID, CLOTHOID, DUBINS, DUBINS_ARC }; ///< Possible types of CURVE
 }
 
-enum ANGLE {INVALID=-1};
+enum ANGLE { INVALID = -1 };
 
 #endif //CLOTHOIDSG1_TYPEDEFS_HH
