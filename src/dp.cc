@@ -1,19 +1,23 @@
 #include <dp.hh>
-
-vector<Angle> bestAngles (DP::Cell** matrix, int rows, int cols){
+#include <prova.hh>
+vector<Angle> bestAngles (DP::Cell** matrix, int rows, int cols, int discr){
+  prova();
   int id=0;
   double bL=0.0;
   for (int i=0; i<rows; i++){
-    if (bL>matrix[i][0].l() || bL==0){
-      bL=matrix[i][0].l();
+    if (bL>matrix[i][1].l() || bL==0){
+      bL=matrix[i][1].l();
       id=i;
     }
   }
-  vector<Angle> ret;
-  for (int i=0; i<cols; i++){
-    ret.push_back(matrix[id][i].th());
-  }
   printf("Best length: %.8f\n", matrix[id][0].l());
+
+  vector<Angle> ret(1,matrix[id][0].th());
+  for (int i=1; i<cols; i++){
+//    ret.push_back(matrix[id][i].th());
+    ret.push_back(matrix[id][i].th());
+    id=DP::closestDiscr(ret.back(), discr);
+  }
   return ret;
 }
 
@@ -70,11 +74,11 @@ void DP::solveDP(vector<Configuration2<double> > points, int size, int discr){
   }
 #ifdef DEBUG
   cout << "Printing " << endl;
-  printM(matrix)
+  printM(matrix, discr, size)
 #endif
 
   cout << "Solving" << endl;
-  vector<Angle> angles=bestAngles(matrix, discr, size);
+  vector<Angle> angles=bestAngles(matrix, discr, size, discr);
 
   cout << "Printing for Matlab" << endl;
   cout << "x0 = " << points[0].x() << ";" << endl;
@@ -85,6 +89,15 @@ void DP::solveDP(vector<Configuration2<double> > points, int size, int discr){
     cout << "[" << points[i].x() << "," << points[i].y() << "," << angles[i] << "],";
   }
   cout << "];" << endl;
+
+  double Length=0.0;
+  for (int i=0; i<angles.size()-1; i++){
+    points[i].th(angles[i]);
+    points[i+1].th(angles[i+1]);
+    Clothoid<double> c(points[i], points[i+1]);
+    Length+=c.l();
+  }
+  cout << "Length: " << Length << endl;
 
   for (int i=0; i<discr; i++) {
     delete[] matrix[i];

@@ -39,10 +39,10 @@ extern real_type const m_1_sqrt_pi ; // 1/sqrt(pi)
   for (auto a : v) cout << a << " "; \
   cout << ">" << endl;
 
-#define printM(M) \
-for (int i=0; i<DISCR; i++){   \
+#define printM(M, discr, size) \
+for (int i=0; i<discr; i++){   \
   cout << "th" << i;    \
-  for (int j=0; j<SIZE; j++){\
+  for (int j=0; j<size; j++){\
     cout << M[i][j] << "\t";   \
   }                            \
   cout << endl;                \

@@ -14,7 +14,7 @@ namespace DP {
   namespace {
     class Cell { //TODO please change name
     private:
-      Angle _th; //exit and entrance angles respectively
+      Angle _th;
       LEN_T _l; //Length of the curve
 
     public:
