@@ -9,5 +9,4 @@ cmake-build-debug/
 input/
 output/
 Testing/
-ExternalLibs/
 build/

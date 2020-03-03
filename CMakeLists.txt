@@ -28,7 +28,7 @@ target_include_directories(${APP_EXEC} PRIVATE src/include/)
 IF(${TEST} MATCHES "GTEST")
     #GTEST_TEST
     add_definitions(-DGTEST)
-    add_subdirectory(ExternalLibs/gtest)
+    add_subdirectory(ExternalLibs/googletest)
     enable_testing()
 
     add_executable(ConfigurationTest test/ConfigurationTest.cc)
