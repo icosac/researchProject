@@ -14,10 +14,10 @@ NVSRC=$(wildcard src/*.cu)
 CCOBJ=$(subst src/,src/obj/cc/,$(patsubst %.cc,%.o, $(CCSRC)))
 NVOBJ=$(subst src/,src/obj/cu/,$(patsubst %.cu,%.o, $(NVSRC)))
 
-TESTCCSRC=$(wildcard test/*.cc)
-TESTNVSRC=$(wildcard test/*.cu)
-TESTCCEXEC=$(subst test/,bin/cc/,$(patsubst %.cc,%.out, $(TESTCCSRC)))
-TESTNVEXEC=$(subst test/,bin/cu/,$(patsubst %.cu,%.out, $(TESTNVSRC)))
+TESTCCSRC=$(wildcard exec/*.cc)
+TESTNVSRC=$(wildcard exec/*.cu)
+TESTCCEXEC=$(subst exec/,bin/cc/,$(patsubst %.cc,%.out, $(TESTCCSRC)))
+TESTNVEXEC=$(subst exec/,bin/cu/,$(patsubst %.cu,%.out, $(TESTNVSRC)))
 
 INCLUDE=src/include
 INC=-I./lib/include
@@ -31,10 +31,10 @@ src/obj/cc/%.o: src/%.cc
 src/obj/cu/%.o: src/%.cu
 	$(NV) $(NVFLAGS) $(MORE_FLAGS) -c -o $@ $< $(LIBS)
 
-bin/cc/%.out: test/%.cc
+bin/cc/%.out: exec/%.cc
 	$(CC) $(CCFLAGS) $(MORE_FLAGS) -o $@ $< $(LIBS)
 
-bin/cu/%.out: test/%.cu
+bin/cu/%.out: exec/%.cu
 	$(NV) $(NVFLAGS) $(MORE_FLAGS) -o $@ $< $(LIBS)
 
 all: echo lib $(TESTCCEXEC)

@@ -48,4 +48,16 @@ for (int i=0; i<discr; i++){   \
   cout << endl;                \
 }
 
+template<class T>
+inline T ABS(T x, T y) {return (x>y ? (x-y) : (y-x)); }
+
+template<class T>
+inline bool eq(T x, T y) {
+#ifndef EPSILON
+  return ((ABS(x, y)>(T)(std::numeric_limits<T>::epsilon())) ? false : true);
+#else
+  return ((ABS(x, y)>(EPSI<T>())) ? false : true);
+#endif
+}
+
 #endif //CLOTHOIDSG1_UTILS_HH
