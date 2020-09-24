@@ -1,5 +1,5 @@
-#ifndef CLOTHOIDSG1_DUBINS_HH
-#define CLOTHOIDSG1_DUBINS_HH
+#ifndef DUBINS_HH
+#define DUBINS_HH
 
 #include <curve.hh>
 #include <utils.hh>
@@ -63,4 +63,4 @@ public:
 
 #include <Dubins.tt>
 
-#endif //CLOTHOIDSG1_DUBINS_HH
+#endif //DUBINS_HH

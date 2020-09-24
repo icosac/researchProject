@@ -1,5 +1,5 @@
-#ifndef CLOTHOIDSG1_SETTINGS_HH
-#define CLOTHOIDSG1_SETTINGS_HH
+#ifndef SETTINGS_HH
+#define SETTINGS_HH
 
 #include <clothoid.hh>
 #include <dubins.hh>
@@ -13,6 +13,6 @@ typedef Clothoid<double> CURVE;
 typedef Dubins<double> CURVE;
 #endif
 
-#endif //CLOTHOIDSG1_SETTINGS_HH
+#endif //SETTINGS_HH
 
 

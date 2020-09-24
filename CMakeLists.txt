@@ -31,7 +31,7 @@ IF(${TEST} MATCHES "GTEST")
     add_subdirectory(ExternalLibs/googletest)
     enable_testing()
 
-    add_executable(ConfigurationTest test/ConfigurationTest.cc)
+    add_executable(ConfigurationTest test/configurationTest.cc)
 
     target_link_libraries(ConfigurationTest gtest gtest_main)
     target_include_directories(ConfigurationTest PRIVATE ${gtest_SOURCE_DIR}/include ${gtest_SOURCE_DIR})
@@ -46,7 +46,7 @@ ELSEIF(${TEST} MATCHES "BOOST")
     set(Boost_USE_MULTITHREADED TRUE)
 
     add_definitions(-DBOOST_TEST_DYN_LINK)
-    add_executable(Configuration test/ConfigurationTest.cc)
+    add_executable(Configuration test/configurationTest.cc)
     target_link_libraries(Configuration
             ${Boost_FILESYSTEM_LIBRARY}
             ${Boost_SYSTEM_LIBRARY}

@@ -1,5 +1,5 @@
-#ifndef CLOTHOIDSG1_CONFIGURATION_HH
-#define CLOTHOIDSG1_CONFIGURATION_HH
+#ifndef CONFIGURATION_HH
+#define CONFIGURATION_HH
 
 #include <iostream>
 #include <sstream>
@@ -13,24 +13,27 @@ using namespace std;
 template<class T1=float>
 class Configuration2{
 private:
-  T1 _x, _y;     ///<Coordinates
-  Angle _th;     ///<Angle
-  K_T _k;  ///<Curvature
+  T1 _x, _y;      ///<Coordinates
+  Angle _th;      ///<Angle
+  K_T _k;         ///<Curvature
 
 public:
   Configuration2() : _x(0), _y(0), _th(0), _k(0) {}
   Configuration2(T1 x, T1 y, Angle th, K_T k=0) : _x(x), _y(y), _th(th), _k(k) {}
 
-  T1 x() const { return this->_x; }
-  T1 y() const { return this->_y; }
-  Angle th() const { return this->_th; }
-  K_T k() const { return this->_k; }
+  T1 x()      const { return this->_x;  }
+  T1 y()      const { return this->_y;  }
+  Angle th()  const { return this->_th; }
+  K_T k()     const { return this->_k;  }
 
   template<class T2>
   T1 x(const T2 x) { this->_x=((T1)x); return this->x(); }
+  
   template<class T2>
   T1 y(const T2 y) { this->_y=((T1)y); return this->y(); }
+  
   Angle th(const Angle th) { this->_th=th; return this->th(); }
+  
   K_T k(const real_type k) {
     this->_k=k;
     return this->k();
@@ -67,4 +70,4 @@ public:
   }
 };
 
-#endif //CLOTHOIDSG1_CONFIGURATION_HH
+#endif //CONFIGURATION_HH

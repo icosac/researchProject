@@ -1,5 +1,5 @@
-#ifndef CLOTHOIDSG1_UTILS_HH
-#define CLOTHOIDSG1_UTILS_HH
+#ifndef UTILS_HH
+#define UTILS_HH
 
 #include <iostream>
 #include <sstream>
@@ -60,4 +60,4 @@ inline bool eq(T x, T y) {
 #endif
 }
 
-#endif //CLOTHOIDSG1_UTILS_HH
+#endif //UTILS_HH

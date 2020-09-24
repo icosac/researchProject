@@ -1,5 +1,5 @@
-#ifndef CLOTHOIDSG1_CURVE_HH
-#define CLOTHOIDSG1_CURVE_HH
+#ifndef CURVE_HH
+#define CURVE_HH
 
 #include <configuration.hh>
 
@@ -10,8 +10,8 @@
 template<class T1>
 class Curve{
 private:
-  Configuration2<T1> _ci; ///<Initial `Configuration`
-  Configuration2<T1> _cf; ///<Final `Configuration`
+  Configuration2<T1> _ci; ///<Initial `Configuration2`
+  Configuration2<T1> _cf; ///<Final `Configuration2`
   CURVE_TYPE _type;
 
 public:
@@ -19,6 +19,7 @@ public:
    * @brief Void constructor.
    */
   Curve() : _ci(), _cf(), _type(CURVE_TYPE::INVALID) {}
+
   /*!
    * @brief Constructor to only set the type of the curve.
    */
@@ -37,7 +38,7 @@ public:
   CURVE_TYPE type () const { return this->_type; } ///< Returns type of curve.
 
   virtual LEN_T l() const = 0;                     ///< Returns the length of the curve.
-//  virtual LEN_T l(LEN_T l) = 0;                    ///< Sets and returns the length of the curve.
+//  virtual LEN_T l(LEN_T l) = 0;                   ///< Sets and returns the length of the curve.
 };
 
-#endif //CLOTHOIDSG1_CURVE_HH
+#endif //CURVE_HH
