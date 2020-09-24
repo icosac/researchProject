@@ -1,5 +1,5 @@
-#ifndef CLOTHOIDSG1_CONFIGURATION_HH
-#define CLOTHOIDSG1_CONFIGURATION_HH
+#ifndef CONFIGURATION_HH
+#define CONFIGURATION_HH
 
 #include <iostream>
 #include <sstream>
@@ -67,4 +67,4 @@ public:
   }
 };
 
-#endif //CLOTHOIDSG1_CONFIGURATION_HH
+#endif //CONFIGURATION_HH

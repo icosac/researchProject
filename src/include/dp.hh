@@ -1,5 +1,5 @@
-#ifndef CLOTHOIDSG1_DP_HH
-#define CLOTHOIDSG1_DP_HH
+#ifndef DP_HH
+#define DP_HH
 
 #include <settings.hh>
 #include <utils.hh>
@@ -74,4 +74,4 @@ namespace DP {
 
   void solveDP(std::vector<Configuration2<double> > points, int size, int discr);
 } //namespace DP
-#endif //CLOTHOIDSG1_DP_HH
+#endif //DP_HH

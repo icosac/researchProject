@@ -1,5 +1,5 @@
-#ifndef CLOTHOIDSG1_CLOTHOID_HH
-#define CLOTHOIDSG1_CLOTHOID_HH
+#ifndef CLOTHOID_HH
+#define CLOTHOID_HH
 
 #include <cmath>
 #include <iostream>
@@ -409,4 +409,4 @@ public:
 };
 
 
-#endif //CLOTHOIDSG1_CLOTHOID_HH
+#endif //CLOTHOID_HH
