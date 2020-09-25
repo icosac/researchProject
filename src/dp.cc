@@ -13,7 +13,6 @@ vector<Angle> bestAngles (DP::Cell** matrix, int rows, int cols, int discr){
 
   vector<Angle> ret(1,matrix[id][0].th());
   for (int i=1; i<cols; i++){
-//    ret.push_back(matrix[id][i].th());
     ret.push_back(matrix[id][i].th());
     id=DP::closestDiscr(ret.back(), discr);
   }

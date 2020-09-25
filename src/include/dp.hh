@@ -64,6 +64,7 @@ namespace DP {
       }
     };
 
+    //Finds the closest discriminant angle. 
     inline int closestDiscr(Angle th, int DISCR) {
       double app = th / (2 * m_pi) * DISCR;
       int a = (int) (app + 1.0e-5);
