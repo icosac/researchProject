@@ -1,14 +1,14 @@
 #ifndef CLOTHOIDSG1_SETTINGS_HH
 #define CLOTHOIDSG1_SETTINGS_HH
 
-#include <clothoid.hh>
+#include <clothoidG1.hh>
 #include <dubins.hh>
 
 //#define CLOTHOID
 #define DUBINS
 
 #if defined(CLOTHOID)
-typedef Clothoid<double> CURVE;
+typedef ClothoidG1<double> CURVE;
 #elif defined(DUBINS)
 typedef Dubins<double> CURVE;
 #endif

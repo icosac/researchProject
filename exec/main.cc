@@ -1,4 +1,4 @@
-#include<clothoid.hh>
+#include<clothoidG1.hh>
 #include<dp.hh>
 
 #include<iostream>
@@ -47,59 +47,24 @@ vector<Configuration2<double> > createPoints(){
   return ret;
 }
 
+#include<fstream>
+
+#define READ_FROM_FILE()                                                  \
+  ifstream input("build_clothoid.txt");                                   \
+  ofstream out ("matlab.txt", fstream::out);                              \
+    float x0, y0, th0, x1, y1, th1, k, dk, l;                             \
+    int i=0;                                                              \
+    while (input >> x0 >> y0 >> th0 >> x1 >> y1 >> th1 >> k >> dk >> l){  \
+      i++;                                                                \
+      Configuration2<float>ci(x0, y0, th0);                               \
+      Configuration2<float>cf(x1, y1, th1);                               \
+      ClothoidG1<float>c(ci, cf);
+
+#define CLOSE_FILE() } input.close();
+
 int main (){
   DP::solveDP(points, points.size(), DISCR);
+  READ_FROM_FILE()
+  CLOSE_FILE()
   return 0;
 }
-
-//class Poly {
-//private:
-//  int _b, _h;
-//public:
-//  Poly(int b, int h): _b(b), _h(h) {}
-//
-//  int b() const { return this->_b; }
-//  int h() const { return this->_h; }
-//
-//  virtual int area () const = 0;
-//  virtual int peri () const = 0;
-//};
-//
-//class Tri: public Poly{
-//public:
-//  Tri(int a, int b) : Poly(a,b) {}
-//
-//  int area() const {
-//    return (this->b())*(this->h())/2;
-//  }
-//
-////  int peri() const { return 1; }
-//};
-//
-//class Rect: public Poly {
-//public:
-//  Rect(int a, int b) : Poly(a,b) {}
-//
-//  int area() const {
-//    return (this->b())*(this->h());
-//  }
-//
-//  int peri() const {
-//    return (this->b()*2)+(this->h()*2);
-//  }
-//};
-//
-//void area(Poly* p){
-//  cout << p->area() << endl;
-//}
-//
-//void peri(Poly* p){
-//  cout << p->peri() << endl;
-//}
-//
-//#define RECT
-//#ifdef RECT
-//typedef Rect POLY;
-//#else
-//typedef Tri POLY;
-//#endif
