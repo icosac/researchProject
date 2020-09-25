@@ -1,5 +1,5 @@
-#ifndef CLOTHOIDSG1_CURVE_HH
-#define CLOTHOIDSG1_CURVE_HH
+#ifndef CURVE_HH
+#define CURVE_HH
 
 #include <configuration.hh>
 
@@ -40,4 +40,4 @@ public:
 //  virtual LEN_T l(LEN_T l) = 0;                    ///< Sets and returns the length of the curve.
 };
 
-#endif //CLOTHOIDSG1_CURVE_HH
+#endif //CURVE_HH

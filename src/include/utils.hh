@@ -1,5 +1,5 @@
-#ifndef CLOTHOIDSG1_UTILS_HH
-#define CLOTHOIDSG1_UTILS_HH
+#ifndef UTILS_HH
+#define UTILS_HH
 
 #include <iostream>
 #include <sstream>
@@ -56,4 +56,4 @@ inline bool eq(T x, T y, T EPSI=std::numeric_limits<T>::epsilon()) {
   return ((ABS(x, y)>(EPSI)) ? false : true);
 }
 
-#endif //CLOTHOIDSG1_UTILS_HH
+#endif //UTILS_HH

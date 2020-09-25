@@ -1,5 +1,5 @@
-#ifndef CLOTHOIDSG1_TYPEDEFS_HH
-#define CLOTHOIDSG1_TYPEDEFS_HH
+#ifndef TYPEDEFS_HH
+#define TYPEDEFS_HH
 
 //General
 typedef double real_type; ///<Typedef to describe the real type
@@ -17,4 +17,4 @@ namespace {
 
 enum ANGLE { INVALID = -1 };
 
-#endif //CLOTHOIDSG1_TYPEDEFS_HH
+#endif //TYPEDEFS_HH

@@ -32,8 +32,8 @@ IF(${TEST} MATCHES "GTEST")
     add_subdirectory(ExternalLibs/googletest)
     enable_testing()
 
-    add_executable(ConfigurationTest test/ConfigurationTest.cc)
     add_executable(ClothoidG1Test test/clothoidG1Test.cc)
+    add_executable(ConfigurationTest test/configurationTest.cc)
 
     target_link_libraries(ConfigurationTest gtest gtest_main)
     target_link_libraries(ClothoidG1Test gtest gtest_main ${LIB})
@@ -51,7 +51,8 @@ ELSEIF(${TEST} MATCHES "BOOST")
     set(Boost_USE_MULTITHREADED TRUE)
 
     add_definitions(-DBOOST_TEST_DYN_LINK)
-    add_executable(ConfigurationTest test/ConfigurationTest.cc)
+    
+    add_executable(ConfigurationTest test/configurationTest.cc)
     add_executable(ClothoidG1Test test/clothoidG1Test.cc)
     target_link_libraries(ConfigurationTest ${Boost_FILESYSTEM_LIBRARY} ${Boost_SYSTEM_LIBRARY} ${Boost_UNIT_TEST_FRAMEWORK_LIBRARY})
     target_link_libraries(ClothoidG1Test ${LIB} ${Boost_FILESYSTEM_LIBRARY} ${Boost_SYSTEM_LIBRARY} ${Boost_UNIT_TEST_FRAMEWORK_LIBRARY})
