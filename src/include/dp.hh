@@ -5,7 +5,7 @@
 #include <utils.hh>
 #include <typedefs.hh>
 #include <configuration.hh>
-#include <clothoid.hh>
+#include <clothoidG1.hh>
 #include <dubins.hh>
 
 #include <iostream>

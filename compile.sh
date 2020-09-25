@@ -6,7 +6,8 @@ then
 fi
 
 mkdir build 
-cd build 
+cp test/build_clothoid.txt build/
+cd build
 cmake .. -DTEST:STRING=$1
 make 
 ctest $2 

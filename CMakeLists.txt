@@ -7,6 +7,7 @@ project(DynamicCurve LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_FLAGS "-Wall -O3")
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 set(LIB libDynamicCurve)
 set(APP_EXEC dynamicCurve)
@@ -31,12 +32,16 @@ IF(${TEST} MATCHES "GTEST")
     add_subdirectory(ExternalLibs/googletest)
     enable_testing()
 
+    add_executable(ClothoidG1Test test/clothoidG1Test.cc)
     add_executable(ConfigurationTest test/configurationTest.cc)
 
     target_link_libraries(ConfigurationTest gtest gtest_main)
+    target_link_libraries(ClothoidG1Test gtest gtest_main ${LIB})
     target_include_directories(ConfigurationTest PRIVATE ${gtest_SOURCE_DIR}/include ${gtest_SOURCE_DIR})
+    target_include_directories(ClothoidG1Test PRIVATE ${gtest_SOURCE_DIR}/include ${gtest_SOURCE_DIR})
 
     gtest_discover_tests(ConfigurationTest)
+    gtest_discover_tests(ClothoidG1Test)
 
 ELSEIF(${TEST} MATCHES "BOOST")
     #BOOST_TEST
@@ -46,11 +51,12 @@ ELSEIF(${TEST} MATCHES "BOOST")
     set(Boost_USE_MULTITHREADED TRUE)
 
     add_definitions(-DBOOST_TEST_DYN_LINK)
-    add_executable(Configuration test/configurationTest.cc)
-    target_link_libraries(Configuration
-            ${Boost_FILESYSTEM_LIBRARY}
-            ${Boost_SYSTEM_LIBRARY}
-            ${Boost_UNIT_TEST_FRAMEWORK_LIBRARY})
+    
+    add_executable(ConfigurationTest test/configurationTest.cc)
+    add_executable(ClothoidG1Test test/clothoidG1Test.cc)
+    target_link_libraries(ConfigurationTest ${Boost_FILESYSTEM_LIBRARY} ${Boost_SYSTEM_LIBRARY} ${Boost_UNIT_TEST_FRAMEWORK_LIBRARY})
+    target_link_libraries(ClothoidG1Test ${LIB} ${Boost_FILESYSTEM_LIBRARY} ${Boost_SYSTEM_LIBRARY} ${Boost_UNIT_TEST_FRAMEWORK_LIBRARY})
 
-    add_test(NAME ConfigurationTest COMMAND Configuration)
+    add_test(NAME ConfigurationTest COMMAND ConfigurationTest)
+    add_test(NAME ClothoidG1Test COMMAND ClothoidG1Test)
 ENDIF()
