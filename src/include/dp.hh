@@ -73,6 +73,23 @@ namespace DP {
     }
   }//Anonymous namespace to hide information
 
-  void solveDP(std::vector<Configuration2<double> > points, int size, int discr);
+  void solveDP(std::vector<Configuration2<double> > points, int size, int discr, int startFromBottom=0, int stopFromTop=0);
 } //namespace DP
 #endif //DP_HH
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

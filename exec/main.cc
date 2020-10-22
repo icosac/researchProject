@@ -14,7 +14,7 @@ using namespace std;
 #define SIZE 349
 #define DISCR 360
 
-vector<Configuration2<double> > points={
+vector<Configuration2<double> > points2={
         Configuration2<double> (1, 1, ANGLE::INVALID),
         Configuration2<double> (3, 2, ANGLE::INVALID),
         Configuration2<double> (4, 0, ANGLE::INVALID),
@@ -62,8 +62,16 @@ vector<Configuration2<double> > createPoints(){
 
 #define CLOSE_FILE() } input.close();
 
+vector<Configuration2<double> > points={
+        Configuration2<double> (0, 0, -M_PI/3.0),
+        Configuration2<double> (-0.1, 0.3, ANGLE::INVALID),
+        Configuration2<double> (0.2, 0.8, ANGLE::INVALID),
+        Configuration2<double> (1, 1, -M_PI/6.0)
+};
+
 int main (){
-  DP::solveDP(points, points.size(), DISCR);
+  cout << points[0].th() << endl;
+  DP::solveDP(points, points.size(), DISCR, 1, 1);
   READ_FROM_FILE()
   CLOSE_FILE()
   return 0;

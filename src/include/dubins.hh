@@ -5,7 +5,7 @@
 #include <utils.hh>
 #include <settings.hh>
 
-#define KMAX 10
+#define KMAX 0.01
 
 #include <cmath>
 #include <limits>

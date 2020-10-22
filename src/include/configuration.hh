@@ -30,11 +30,9 @@ public:
   T1 x(const T2 x) { this->_x=((T1)x); return this->x(); }
   template<class T2>
   T1 y(const T2 y) { this->_y=((T1)y); return this->y(); }
+
   Angle th(const Angle th) { this->_th=th; return this->th(); }
-  K_T k(const real_type k) {
-    this->_k=k;
-    return this->k();
-  }
+  K_T k(const real_type k) { this->_k=k;   return this->k();  }
 
   template<class T2>
   Configuration2 copy (Configuration2<T2> conf){
