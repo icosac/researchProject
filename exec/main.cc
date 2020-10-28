@@ -12,7 +12,7 @@
 using namespace std;
 
 #define SIZE 349
-#define DISCR 360
+#define DISCR 6
 
 vector<Configuration2<double> > points2={
         Configuration2<double> (1, 1, ANGLE::INVALID),
@@ -70,9 +70,15 @@ vector<Configuration2<double> > points={
 };
 
 int main (){
-  cout << points[0].th() << endl;
-  DP::solveDP(points, points.size(), DISCR, 1, 1);
-  READ_FROM_FILE()
-  CLOSE_FILE()
+#if false
+  Configuration2<double> c1(0.0, 0.0, 1.43117);
+  Configuration2<double> c2(-0.1, 0.3, 2.07694);
+  CURVE c(c1, c2, 3);
+  cout << c.l() << endl;
+#else
+  DP::solveDP(points, DISCR);
+#endif
+  //READ_FROM_FILE()
+  //CLOSE_FILE()
   return 0;
 }

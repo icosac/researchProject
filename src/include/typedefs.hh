@@ -4,6 +4,7 @@
 //General
 typedef double real_type; ///<Typedef to describe the real type
 typedef int int_type;     ///<Typedef to describe integers
+typedef unsigned int uint;///<Typedef to abbreviate unsigned int
 
 //configuration.hh
 typedef float Angle;

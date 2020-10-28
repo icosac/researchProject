@@ -48,6 +48,15 @@ for (int i=0; i<discr; i++){   \
   cout << endl;                \
 }
 
+#define printVM(M, discr, size)     \
+for (int i=0; i<discr; i++){        \
+  cout << "th" << i;                \
+  for (int j=0; j<size; j++){       \
+    cout << M[i*size+j] << "\t";   \
+  }                                 \
+  cout << endl;                     \
+}
+
 template<class T>
 inline T ABS(T x, T y) {return (x>y ? (x-y) : (y-x)); }
 

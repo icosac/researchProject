@@ -37,33 +37,46 @@ void Dubins<T>::scaleToStandard(Angle& phi, real_type& lambda, Angle& sth0, Angl
 }
 
 template<class T>
-void Dubins<T>::computeBest(Angle th0, Angle th1, real_type lambda){
+void Dubins<T>::computeBest(Angle th0, Angle th1, real_type lambda, K_T& sKmax){
   K_T sk1=0.0, sk2=0.0, sk3=0.0;
   LEN_T ss1=0.0, ss2=0.0, ss3=0.0;
 
-  real_type invK  = real_type(1)/this->kmax();
+  real_type invK  = real_type(1)/sKmax;
   real_type sin_0 = sin(th0);
   real_type cos_0 = cos(th0);
   real_type sin_1 = sin(th1);
   real_type cos_1 = cos(th1);
 
-  real_type Ksq   = this->kmax()*this->kmax();
+  real_type Ksq   = sKmax*sKmax;
   real_type dcos  = cos(th0 - th1);
   real_type dcos2 = cos_0 - cos_1;
   real_type dsin  = sin_0 - sin_1;
   real_type scos  = cos_0 + cos_1;
   real_type ssin  = sin_0 + sin_1;
 
-  real_type dth   = th0 - th1;
+	real_type dth   = th0 - th1;
+
+  //std::cout << "invK: "  << invK  << " ";
+  //std::cout << "sin_0: " << sin_0 << " ";
+  //std::cout << "cos_0: " << cos_0 << " ";
+  //std::cout << "sin_1: " << sin_1 << " ";
+  //std::cout << "cos_1: " << cos_1 << " ";
+  //std::cout << "Ksq  : " << Ksq   << " ";
+  //std::cout << "dcos : " << dcos  << " ";
+  //std::cout << "dcos2: " << dcos2 << " ";
+  //std::cout << "dsin : " << dsin  << " ";
+  //std::cout << "scos : " << scos  << " ";
+  //std::cout << "ssin : " << ssin  << " ";
+  //std::cout << "dth: " << dth << std::endl;
 
   real_type len = std::numeric_limits<real_type>::max();
   real_type temp1, temp2, temp3, t1, t2, t3, lc;
 
   // LSL
   real_type C = cos_1 - cos_0;
-  real_type S = 2*this->kmax() + dsin;
+  real_type S = 2*sKmax + dsin;
   temp1 = std::atan2(C, S);
-  temp2 = 2 + 4*Ksq - 2*dcos + 4*this->kmax()*dsin;
+  temp2 = 2 + 4*Ksq - 2*dcos + 4*sKmax*dsin;
   if (temp2 >= 0) {
     temp3 = invK * std::sqrt(temp2);
     t1    = invK * mod2pi(temp1-th0);
@@ -79,9 +92,9 @@ void Dubins<T>::computeBest(Angle th0, Angle th1, real_type lambda){
 
   // RSR
   C = -C;
-  S = 2*this->kmax() - dsin;
+  S = 2*sKmax - dsin;
   temp1 = std::atan2(C, S);
-  temp2 = 2 + 4*Ksq - 2*dcos - 4*this->kmax()*dsin;
+  temp2 = 2 + 4*Ksq - 2*dcos - 4*sKmax*dsin;
   if (temp2 >= 0) {
     temp3 = invK * std::sqrt(temp2);
     t1    = invK * mod2pi(th0-temp1);
@@ -97,12 +110,12 @@ void Dubins<T>::computeBest(Angle th0, Angle th1, real_type lambda){
 
   // LSR
   C = scos;
-  S = 2*this->kmax() + ssin;
+  S = 2*sKmax + ssin;
   temp1 = std::atan2(-C, S);
-  temp2 = -2 + 4*Ksq + 2*dcos + 4*this->kmax()*ssin;
+  temp2 = -2 + 4*Ksq + 2*dcos + 4*sKmax*ssin;
   if (temp2 >= 0) {
     t2    = invK * std::sqrt(temp2);
-    temp3 = -std::atan2(-2, (t2*this->kmax()));
+    temp3 = -std::atan2(-2, (t2*sKmax));
     t1    = invK * mod2pi(-th0 + temp1 + temp3);
     t3    = invK * mod2pi(-th1 + temp1 + temp3);
     lc    = t1+t2+t3;
@@ -115,12 +128,12 @@ void Dubins<T>::computeBest(Angle th0, Angle th1, real_type lambda){
 
   // RSL
   // C = C
-  S = 2*this->kmax() - ssin;
+  S = 2*sKmax - ssin;
   temp1 = std::atan2(C, S);
-  temp2 = -2 + 4*Ksq + 2*dcos - 4*this->kmax()*ssin;
+  temp2 = -2 + 4*Ksq + 2*dcos - 4*sKmax*ssin;
   if (temp2 >= 0) {
     t2    = invK * std::sqrt(temp2);
-    temp3 = std::atan2(2, (t2*this->kmax()));
+    temp3 = std::atan2(2, (t2*sKmax));
     t1    = invK * mod2pi(th0 - temp1 + temp3);
     t3    = invK * mod2pi(th1 - temp1 + temp3);
     lc    = t1+t2+t3;
@@ -133,13 +146,13 @@ void Dubins<T>::computeBest(Angle th0, Angle th1, real_type lambda){
 
   // RLR
   C = dcos2;
-  S = 2*this->kmax() - dsin;
+  S = 2*sKmax - dsin;
   temp1 = std::atan2(C, S);
-  temp2 = 0.125 * (6 - 4*Ksq  + 2*dcos + 4*this->kmax()*dsin);
+  temp2 = 0.125 * (6 - 4*Ksq  + 2*dcos + 4*sKmax*dsin);
   if (std::abs(temp2) <= 1) {
     t2 = invK * mod2pi(2*M_PI - std::acos(temp2));
-    t1 = invK * mod2pi(th0 - temp1 + 0.5*t2*this->kmax());
-    t3 = invK * mod2pi(dth+(t2-t1)*this->kmax());
+    t1 = invK * mod2pi(th0 - temp1 + 0.5*t2*sKmax);
+    t3 = invK * mod2pi(dth+(t2-t1)*sKmax);
     lc = t1+t2+t3;
     if (lc < len) {
       len = lc; ss1 = t1; ss2 = t2; ss3 = t3;
@@ -150,13 +163,13 @@ void Dubins<T>::computeBest(Angle th0, Angle th1, real_type lambda){
 
   // LRL
   C = -C;
-  S = 2*this->kmax() + dsin;
+  S = 2*sKmax + dsin;
   temp1 = std::atan2(C, S);
-  temp2 = 0.125*(6 - 4*Ksq + 2*dcos - 4*this->kmax()*dsin);
+  temp2 = 0.125*(6 - 4*Ksq + 2*dcos - 4*sKmax*dsin);
   if (std::abs(temp2) <= 1) {
     t2 = invK * mod2pi(2*M_PI - std::acos(temp2));
-    t1 = invK * mod2pi(-th0 + temp1 + 0.5*t2*this->kmax());
-    t3 = invK * mod2pi(-dth + (t2-t1)*this->kmax());
+    t1 = invK * mod2pi(-th0 + temp1 + 0.5*t2*sKmax);
+    t3 = invK * mod2pi(-dth + (t2-t1)*sKmax);
     lc = t1+t2+t3;
     if (lc < len) {
       len = lc; ss1 = t1; ss2 = t2; ss3 = t3;
@@ -167,10 +180,12 @@ void Dubins<T>::computeBest(Angle th0, Angle th1, real_type lambda){
 
   //ScaleFromStandard
   this->s1(ss1*lambda);
-  this->k1(sk1*this->kmax());
+  this->k1(sk1*sKmax);
   this->s2(ss2*lambda);
-  this->k2(sk2*this->kmax());
+  this->k2(sk2*sKmax);
   this->s3(ss3*lambda);
-  this->k3(sk3*this->kmax());
-  this->l();
+  this->k3(sk3*sKmax);
+  //std::cout << "lambda: " << lambda << " s1: " << this->s1() << " s2: " << this->s2() << " s3: " << this->s3() << std::endl;
+  //std::cout << "k1: " << this->k1() << " k2: " << this->k2() << " k3: " << this->k3() << std::endl;
+
 }

@@ -31,8 +31,8 @@ public:
    */
   Curve(Configuration2<T1> ci, Configuration2<T1> cf, CURVE_TYPE type) : _ci(ci), _cf(cf), _type(CURVE_TYPE::INVALID){}
 
-  Configuration2<T1>* ci() { return &this->_ci; }  ///< Returns a pointer to the initial `Configuration2`.
-  Configuration2<T1>* cf() { return &this->_cf; }  ///< Returns a pointer to the final `Configuration2`.
+  Configuration2<T1>* ci() { return &(this->_ci); }  ///< Returns a pointer to the initial `Configuration2`.
+  Configuration2<T1>* cf() { return &(this->_cf); }  ///< Returns a pointer to the final `Configuration2`.
 
   CURVE_TYPE type () const { return this->_type; } ///< Returns type of curve.
 
