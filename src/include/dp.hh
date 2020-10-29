@@ -23,12 +23,12 @@ namespace DP {
       Angle _th;
       LEN_T _l; //Length of the curve
       Cell* _next;
-      int _i, _j;
+      int _i, _j, _id;
 
     public:
-      Cell() : _th(ANGLE::INVALID), _l(0), _next(NULL) {}
+      Cell() : _th(ANGLE::INVALID), _l(std::numeric_limits<LEN_T>::max()), _next(NULL) {}
 
-      Cell(Angle th, LEN_T l, Cell* next, int i=0, int j=0) : _th(th), _l(l),  _next(next), _i(i), _j(j) {}
+      Cell(Angle th, LEN_T l, Cell* next, int i=0, int j=0, int id=0) : _th(th), _l(l),  _next(next), _i(i), _j(j), _id(id) {}
 
       Angle th() const { return this->_th; }
 
@@ -38,6 +38,7 @@ namespace DP {
 
       int i() const { return this->_i; }
       int j() const { return this->_j; }
+      int id() const { return this->_id; }
 
       Angle th(Angle th) {
         this->_th = th;
@@ -60,6 +61,7 @@ namespace DP {
         this->next(d.next());
         this->_i=d.i();
         this->_j=d.j();
+        this->_id=d.id();
 
         return *this;
       }
@@ -73,7 +75,7 @@ namespace DP {
         if (pretty) {
           out << "th: " << this->th() << " l: " << this->l();
         } else {
-          out << "<" << (Angle) (this->th() * 1.0) << ", " << (LEN_T) (this->l()) << " (" << this->_i << ", " << this->_j << ")" << ">";
+          out << "<" << (Angle) (this->th() * 1.0) << ", " << (LEN_T) (this->l()) << " (" << this->_i << ", " << this->_j << ", " << this->_id << ")" << ">";
         }
         return out;
       }
@@ -94,7 +96,7 @@ namespace DP {
     
   }//Anonymous namespace to hide information
 
-  void solveDP    (std::vector<Configuration2<double> > points, int discr, int startFromBottom=0, int stopFromTop=0);
+  void solveDP    (std::vector<Configuration2<double> > points, int discr, const std::vector<bool> fixedAngles, std::vector<Angle>* angles=NULL);
   void solveDPOld (std::vector<Configuration2<double> > points, int size, int discr, int startFromBottom=0, int stopFromTop=0);
 } //namespace DP
 #endif //DP_HH

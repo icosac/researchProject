@@ -2,13 +2,14 @@
 #define UTILS_HH
 
 #include <iostream>
+#include <iomanip>
 #include <sstream>
 #include <stdexcept>
 #include <limits>
 
 #include <typedefs.hh>
 
-#define DEBUG
+//#define DEBUG
 
 #ifdef DEBUG
 #define COUT(x) cout << x;
@@ -52,7 +53,8 @@ for (int i=0; i<discr; i++){   \
 for (int i=0; i<discr; i++){        \
   cout << "th" << i;                \
   for (int j=0; j<size; j++){       \
-    cout << M[i*size+j] << "\t";   \
+    cout << setw(30);               \
+    cout << M[i*size+j] << "\t";    \
   }                                 \
   cout << endl;                     \
 }

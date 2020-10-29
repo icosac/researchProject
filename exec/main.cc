@@ -12,19 +12,7 @@
 using namespace std;
 
 #define SIZE 349
-#define DISCR 6
-
-vector<Configuration2<double> > points2={
-        Configuration2<double> (1, 1, ANGLE::INVALID),
-        Configuration2<double> (3, 2, ANGLE::INVALID),
-        Configuration2<double> (4, 0, ANGLE::INVALID),
-        Configuration2<double> (6, 2, ANGLE::INVALID),
-//        Configuration2<double> (10, 2, ANGLE::INVALID),
-//        Configuration2<double> (8, 4, ANGLE::INVALID),
-//        Configuration2<double> (3, 1, ANGLE::INVALID),
-//        Configuration2<double> (6, 2, ANGLE::INVALID),
-};
-
+#define DISCR 720
 
 //double X[SIZE] = {2.9265642,2.6734362,2.5109322,1.9078122,1.1859282,1.9249962,2.8265562,0.00468420000000025,-2.826567,-1.9437558,-1.1859438,-1.9062558,-2.501565,-2.6734386,-2.9265642,-2.6187522,-1.1406318,-0.8968758,-1.4562558,-1.9062558,-0.00468780000000013,1.9078122,1.4468682,0.8968722,1.1406282,2.6187522, 2.9265642 };
 //double Y[SIZE] = {-1.707808758,-1.707808758,-2.367185958,-2.582810358,-2.582810358,-1.167184758,0.915619242,3.178123242,0.915619242,-1.150000758,-2.582810358,-2.582810358,-2.393750358,-1.707808758,-1.707808758,-3.178123242,-3.178123242,-2.989063158,-0.915616758,0.925003242,2.953123242,0.925003242,-0.915616758,-2.989063158,-3.178123242,-3.178123242, -1.707808758 };
@@ -62,11 +50,20 @@ vector<Configuration2<double> > createPoints(){
 
 #define CLOSE_FILE() } input.close();
 
-vector<Configuration2<double> > points={
+vector<Configuration2<double> > kaya1={
         Configuration2<double> (0, 0, -M_PI/3.0),
         Configuration2<double> (-0.1, 0.3, ANGLE::INVALID),
         Configuration2<double> (0.2, 0.8, ANGLE::INVALID),
         Configuration2<double> (1, 1, -M_PI/6.0)
+};
+
+vector<Configuration2<double> > kaya2={
+        Configuration2<double> (0, 0, -M_PI/3.0),
+        Configuration2<double> (-0.1, 0.3, ANGLE::INVALID),
+        Configuration2<double> (0.2, 0.8, ANGLE::INVALID),
+        Configuration2<double> (1, 1, ANGLE::INVALID),
+        Configuration2<double> (0.5, 0.5, ANGLE::INVALID),
+        Configuration2<double> (0.5, 0, -M_PI/6.0)
 };
 
 int main (){
@@ -76,7 +73,7 @@ int main (){
   CURVE c(c1, c2, 3);
   cout << c.l() << endl;
 #else
-  DP::solveDP(points, DISCR);
+  DP::solveDP(kaya2, DISCR, std::vector<bool>{true, false, false, false, false, true});
 #endif
   //READ_FROM_FILE()
   //CLOSE_FILE()
