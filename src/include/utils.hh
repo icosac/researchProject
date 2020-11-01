@@ -63,7 +63,7 @@ template<class T>
 inline T ABS(T x, T y) {return (x>y ? (x-y) : (y-x)); }
 
 template<class T>
-inline bool eq(T x, T y, T EPSI=std::numeric_limits<T>::epsilon()) {
+inline bool eq(const T x, const T y, const T EPSI=std::numeric_limits<T>::epsilon()) {
   return ((ABS(x, y)>(EPSI)) ? false : true);
 }
 

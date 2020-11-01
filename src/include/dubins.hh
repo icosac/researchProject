@@ -77,6 +77,6 @@ public:
   
 };
 
-#include <Dubins.tt>
+#include <dubins.tt>
 
 #endif //DUBINS_HH

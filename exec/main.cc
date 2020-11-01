@@ -1,5 +1,12 @@
-#include<clothoidG1.hh>
-#include<dp.hh>
+//#define CLOTHOID
+#define DUBINS DUBINS
+
+#if defined(CLOTHOID)
+#include <clothoidG1.hh>
+#elif defined(DUBINS)
+#include <dubins.hh>
+#endif
+#include <dp.hh>
 
 #include<iostream>
 #include<cmath>
@@ -66,6 +73,44 @@ vector<Configuration2<double> > kaya2={
         Configuration2<double> (0.5, 0, -M_PI/6.0)
 };
 
+vector<Configuration2<double> > kaya4={
+       Configuration2<double>(0.5, 1.2, 5*M_PI/6.0),
+       Configuration2<double>(0.0, 0.5, ANGLE::INVALID),
+       Configuration2<double>(0.5, 0.5, ANGLE::INVALID),
+       Configuration2<double>(1.0, 0.5, ANGLE::INVALID),
+       Configuration2<double>(1.5, 0.5, ANGLE::INVALID),
+       Configuration2<double>(2.0, 0.5, ANGLE::INVALID),
+       Configuration2<double>(2.0, 0.0, ANGLE::INVALID),
+       Configuration2<double>(1.5, 0.0, ANGLE::INVALID),
+       Configuration2<double>(1.0, 0.0, ANGLE::INVALID),
+       Configuration2<double>(0.5, 0.0, ANGLE::INVALID),
+       Configuration2<double>(0.0, 0.0, ANGLE::INVALID),
+       Configuration2<double>(0.0, -0.5, 0)
+};
+
+vector<Configuration2<double> > kaya3={
+       Configuration2<double>(0.5, 1.2, 5.0*M_PI/6.0),
+       Configuration2<double>(0, 0.8, ANGLE::INVALID),
+       Configuration2<double>(0, 0.4, ANGLE::INVALID),
+       Configuration2<double>(0.1, 0, ANGLE::INVALID),
+       Configuration2<double>(0.4, 0.2, ANGLE::INVALID),
+       Configuration2<double>(0.5, 0.5, ANGLE::INVALID),
+       Configuration2<double>(0.6, 1, ANGLE::INVALID),
+       Configuration2<double>(1, 0.8, ANGLE::INVALID),
+       Configuration2<double>(1, 0, ANGLE::INVALID),
+       Configuration2<double>(1.4, 0.2, ANGLE::INVALID),
+       Configuration2<double>(1.2, 1, ANGLE::INVALID),
+       Configuration2<double>(1.5, 1.2, ANGLE::INVALID),
+       Configuration2<double>(2, 1.5, ANGLE::INVALID),
+       Configuration2<double>(1.5, 0.8, ANGLE::INVALID),
+       Configuration2<double>(1.5, 0, ANGLE::INVALID),
+       Configuration2<double>(1.7, 0.6, ANGLE::INVALID),
+       Configuration2<double>(1.9, 1, ANGLE::INVALID),
+       Configuration2<double>(2, 0.5, ANGLE::INVALID),
+       Configuration2<double>(1.9, 0, ANGLE::INVALID),
+       Configuration2<double>(2.5, 0.6, 0),
+};
+
 int main (){
 #if false
   Configuration2<double> c1(0.0, 0.0, 1.43117);
@@ -73,7 +118,16 @@ int main (){
   CURVE c(c1, c2, 3);
   cout << c.l() << endl;
 #else
-  DP::solveDP(kaya2, DISCR, std::vector<bool>{true, false, false, false, false, true});
+  std::vector<bool> fixedAngles;
+  for (int i=0; i<kaya4.size(); i++){
+    if (i==0 || i==kaya4.size()-1) {
+      fixedAngles.push_back(true);
+    }
+    else {
+      fixedAngles.push_back(false);
+    }
+  }
+  DP::solveDP<Dubins<double> >(kaya4, DISCR, fixedAngles);
 #endif
   //READ_FROM_FILE()
   //CLOSE_FILE()

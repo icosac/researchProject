@@ -86,6 +86,7 @@ namespace DP {
       }
     };
 
+    //TODO Remove this
     //Finds the closest discriminant angle. 
     inline int closestDiscr(Angle th, int DISCR) {
       double app = th / (2 * m_pi) * DISCR;
@@ -96,9 +97,13 @@ namespace DP {
     
   }//Anonymous namespace to hide information
 
-  void solveDP    (std::vector<Configuration2<double> > points, int discr, const std::vector<bool> fixedAngles, std::vector<Angle>* angles=NULL);
-  void solveDPOld (std::vector<Configuration2<double> > points, int size, int discr, int startFromBottom=0, int stopFromTop=0);
+  std::vector<Angle> bestAngles(DP::Cell* matrix, int discr, int size);
+  std::vector<Angle> solveDP (std::vector<Configuration2<double> > points, int discr, const std::vector<bool> fixedAngles, std::vector<Angle>* angles=NULL);
 } //namespace DP
+
+
+#include<dp.tt>
+
 #endif //DP_HH
 
 

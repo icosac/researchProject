@@ -32,31 +32,38 @@ IF(${TEST} MATCHES "GTEST")
     add_subdirectory(ExternalLibs/googletest)
     enable_testing()
 
-    add_executable(ClothoidG1Test test/clothoidG1Test.cc)
     add_executable(ConfigurationTest test/configurationTest.cc)
+    add_executable(DubinsTest test/dubinsTest.cc)
+    add_executable(ClothoidG1Test test/clothoidG1Test.cc)
 
     target_link_libraries(ConfigurationTest gtest gtest_main)
+    target_link_libraries(DubinsTest gtest gtest_main ${LIB})
     target_link_libraries(ClothoidG1Test gtest gtest_main ${LIB})
     target_include_directories(ConfigurationTest PRIVATE ${gtest_SOURCE_DIR}/include ${gtest_SOURCE_DIR})
+    target_include_directories(DubinsTest PRIVATE ${gtest_SOURCE_DIR}/include ${gtest_SOURCE_DIR})
     target_include_directories(ClothoidG1Test PRIVATE ${gtest_SOURCE_DIR}/include ${gtest_SOURCE_DIR})
 
     gtest_discover_tests(ConfigurationTest)
+    gtest_discover_tests(DubinsTest)
     gtest_discover_tests(ClothoidG1Test)
 
 ELSEIF(${TEST} MATCHES "BOOST")
     #BOOST_TEST
     add_definitions(-DBOOST)
+    add_definitions(-DBOOST_TEST_DYN_LINK)
+    
     enable_testing()
     find_package(Boost COMPONENTS system filesystem unit_test_framework REQUIRED)
     set(Boost_USE_MULTITHREADED TRUE)
-
-    add_definitions(-DBOOST_TEST_DYN_LINK)
     
     add_executable(ConfigurationTest test/configurationTest.cc)
     add_executable(ClothoidG1Test test/clothoidG1Test.cc)
+    add_executable(DubinsTest test/dubinsTest.cc)
     target_link_libraries(ConfigurationTest ${Boost_FILESYSTEM_LIBRARY} ${Boost_SYSTEM_LIBRARY} ${Boost_UNIT_TEST_FRAMEWORK_LIBRARY})
     target_link_libraries(ClothoidG1Test ${LIB} ${Boost_FILESYSTEM_LIBRARY} ${Boost_SYSTEM_LIBRARY} ${Boost_UNIT_TEST_FRAMEWORK_LIBRARY})
+    target_link_libraries(DubinsTest ${LIB} ${Boost_FILESYSTEM_LIBRARY} ${Boost_SYSTEM_LIBRARY} ${Boost_UNIT_TEST_FRAMEWORK_LIBRARY})
 
     add_test(NAME ConfigurationTest COMMAND ConfigurationTest)
     add_test(NAME ClothoidG1Test COMMAND ClothoidG1Test)
+    add_test(NAME DubinsTest COMMAND DubinsTest)
 ENDIF()

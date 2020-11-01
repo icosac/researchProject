@@ -25,9 +25,10 @@ public:
   Curve(CURVE_TYPE type=CURVE_TYPE::INVALID) : _ci(), _cf(), _type(type) {}
 
   /*!
-   * @brief Constructor that takes two `Configuration2` and a length.
+   * @brief Constructor that takes two `Configuration2` and the type of the curve.
    * @param ci Initial configuration.
    * @param cf Final configuration.
+   * @param type Type of the curve.
    */
   Curve(Configuration2<T1> ci, Configuration2<T1> cf, CURVE_TYPE type) : _ci(ci), _cf(cf), _type(CURVE_TYPE::INVALID){}
 
@@ -37,7 +38,6 @@ public:
   CURVE_TYPE type () const { return this->_type; } ///< Returns type of curve.
 
   virtual LEN_T l() const = 0;                     ///< Returns the length of the curve.
-//  virtual LEN_T l(LEN_T l) = 0;                    ///< Sets and returns the length of the curve.
 };
 
 #endif //CURVE_HH
