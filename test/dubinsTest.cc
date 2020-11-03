@@ -1,5 +1,6 @@
 #include<iostream>
 #include<sstream>
+#include<fstream>
 
 #include<dp.hh>
 #include <utils.hh>
@@ -7,7 +8,7 @@
 using namespace std;
 
 #define DISCR 720
-#define EPSILON 0.0001
+#define EPSILON 1e-4
 
 inline const char* toCString(std::stringstream msg){
   return msg.str().c_str();
@@ -38,12 +39,39 @@ LEN_T solve(std::vector<Configuration2<double> > kaya){
   return Length;
 }
 
+#define READ_FROM_FILE_DUBINS()                                                                            \
+  ifstream input("test/dubinsTest.txt");                                                                        \
+    real_type x0, y0, th0, x1, y1, th1, kmax, l, s1, s2, s3, k1, k2, k3;                                   \
+    int i=0;                                                                                               \
+    while (input >> kmax >> x0 >> y0 >> th0 >> x1 >> y1 >> th1 >> l >> s1 >> s2 >> s3 >> k1 >> k2 >> k3){  \
+      i++;                                                                                                 \
+      Configuration2<double>ci(x0, y0, th0);                                                            \
+      Configuration2<double>cf(x1, y1, th1);                                                            
+
+#define CLOSE_FILE_DUBINS() } input.close();
+
+
 #if defined(BOOST)
 #define BOOST_TEST_MODULE Dubins
 #include <boost/test/unit_test.hpp>
 #include <boost/format.hpp>
 
-BOOST_AUTO_TEST_SUITE(DubinsTest)
+BOOST_AUTO_TEST_SUITE(SingleDubinsTest)
+BOOST_AUTO_TEST_CASE(OneDubins){
+  READ_FROM_FILE_DUBINS()
+    Dubins<double> d(ci, cf, kmax);
+    if (!eq(d.l(), l, 1e-03)){ BOOST_ERROR(boost::format("Length l %1% does not match %2%\n") % d.l() % l); }
+    if (!eq(d.s1(), s1, 1e-03)){ BOOST_ERROR(boost::format("Length s1 %1% does not match %2%\n") % d.s1() % s1); }
+    if (!eq(d.s2(), s2, 1e-03)){ BOOST_ERROR(boost::format("Length s2 %1% does not match %2%\n") % d.s2() % s2); }
+    if (!eq(d.s3(), s3, 1e-03)){ BOOST_ERROR(boost::format("Length s3 %1% does not match %2%\n") % d.s3() % s3); }
+    if (!eq(d.k1(), k1, EPSILON)){ BOOST_ERROR(boost::format("Curvature k1 %1% does not match %2%\n") % d.k1() % k1); }
+    if (!eq(d.k2(), k2, EPSILON)){ BOOST_ERROR(boost::format("Curvature k2 %1% does not match %2%\n") % d.k2() % k2); }
+    if (!eq(d.k3(), k3, EPSILON)){ BOOST_ERROR(boost::format("Curvature k3 %1% does not match %2%\n") % d.k3() % k3); }
+  CLOSE_FILE_DUBINS()
+}
+BOOST_AUTO_TEST_SUITE_END()
+
+BOOST_AUTO_TEST_SUITE(MultiDubinsTest)
 BOOST_AUTO_TEST_CASE(KayaExample1){
   vector<Configuration2<double> > kaya1={
           Configuration2<double> (0, 0, -M_PI/3.0),
@@ -126,9 +154,20 @@ BOOST_AUTO_TEST_SUITE_END()
 #elif defined(GTEST)
 #include <gtest/gtest.h>
 
-#define TEST_COUT std::cerr << "[          ] [ INFO ]"
+#define TEST_COUT std::cout << "[          ] [ INFO ]"
 
-
+TEST(DubinsTest, OneDubins){//TODO Find bug for which ctest shows this test passed, but ./build/DubinsTest does not pass.
+  READ_FROM_FILE_DUBINS()
+    Dubins<double> d(ci, cf, kmax);
+    EXPECT_NEAR(d.l(), l, 1e-03);
+    EXPECT_NEAR(d.s1(), s1, 1e-03);
+    EXPECT_NEAR(d.s2(), s2, 1e-03);
+    EXPECT_NEAR(d.s3(), s3, 1e-03);
+    EXPECT_NEAR(d.k1(), k1, EPSILON);
+    EXPECT_NEAR(d.k2(), k2, EPSILON);
+    EXPECT_NEAR(d.k3(), k3, EPSILON);
+  CLOSE_FILE_DUBINS()
+}
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////
 //  _  __                      _         _   _      _        _____                           _           // 

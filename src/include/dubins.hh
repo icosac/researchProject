@@ -5,7 +5,7 @@
 #include <utils.hh>
 #include <settings.hh>
 
-#define KMAX 0.01
+#define DUBINS_DEFAULT_KMAX 0.01
 
 #include <cmath>
 #include <limits>
@@ -15,7 +15,7 @@ class Dubins : public Curve<T1> {
 public:
   enum D_TYPE {INVALID, LSL, RSR, LSR, RSL, RLR, LRL};
 private:
-  K_T _kmax=KMAX, _k1=0.0, _k2=0.0, _k3=0.0;
+  K_T _kmax=0.0, _k1=0.0, _k2=0.0, _k3=0.0;
   LEN_T _s1=0.0, _s2=0.0, _s3=0.0;
   D_TYPE _type;
 
@@ -25,7 +25,7 @@ public:
           _kmax(0),
           _type (D_TYPE::INVALID) {}
 
-  Dubins(Configuration2<T1> ci, Configuration2<T1> cf, K_T kmax = 0) :
+  Dubins(Configuration2<T1> ci, Configuration2<T1> cf, K_T kmax = DUBINS_DEFAULT_KMAX) :
           Curve<T1>(ci, cf, CURVE_TYPE::DUBINS),
           _kmax(kmax),
           _type(D_TYPE::INVALID) {

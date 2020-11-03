@@ -31,7 +31,6 @@ void Dubins<T>::scaleToStandard(Angle& phi, real_type& lambda, Angle& sth0, Angl
   phi = atan2(dy, dx);
   lambda = hypot(dx, dy)*0.5;
   sKmax = this->kmax() * lambda;
-  // put in range
   sth0 = mod2pi(this->ci()->th() - phi);
   sth1 = mod2pi(this->cf()->th() - phi);
 }
@@ -55,19 +54,6 @@ void Dubins<T>::computeBest(Angle th0, Angle th1, real_type lambda, K_T& sKmax){
   real_type ssin  = sin_0 + sin_1;
 
 	real_type dth   = th0 - th1;
-
-  //std::cout << "invK: "  << invK  << " ";
-  //std::cout << "sin_0: " << sin_0 << " ";
-  //std::cout << "cos_0: " << cos_0 << " ";
-  //std::cout << "sin_1: " << sin_1 << " ";
-  //std::cout << "cos_1: " << cos_1 << " ";
-  //std::cout << "Ksq  : " << Ksq   << " ";
-  //std::cout << "dcos : " << dcos  << " ";
-  //std::cout << "dcos2: " << dcos2 << " ";
-  //std::cout << "dsin : " << dsin  << " ";
-  //std::cout << "scos : " << scos  << " ";
-  //std::cout << "ssin : " << ssin  << " ";
-  //std::cout << "dth: " << dth << std::endl;
 
   real_type len = std::numeric_limits<real_type>::max();
   real_type temp1, temp2, temp3, t1, t2, t3, lc;
@@ -180,12 +166,9 @@ void Dubins<T>::computeBest(Angle th0, Angle th1, real_type lambda, K_T& sKmax){
 
   //ScaleFromStandard
   this->s1(ss1*lambda);
-  this->k1(sk1*sKmax);
+  this->k1(sk1*this->kmax());
   this->s2(ss2*lambda);
-  this->k2(sk2*sKmax);
+  this->k2(sk2*this->kmax());
   this->s3(ss3*lambda);
-  this->k3(sk3*sKmax);
-  //std::cout << "lambda: " << lambda << " s1: " << this->s1() << " s2: " << this->s2() << " s3: " << this->s3() << std::endl;
-  //std::cout << "k1: " << this->k1() << " k2: " << this->k2() << " k3: " << this->k3() << std::endl;
-
+  this->k3(sk3*this->kmax());
 }

@@ -8,9 +8,6 @@
 #include <clothoidG1.hh>
 #include <dubins.hh>
 
-#include <AsyPlot.hh>
-#include <DubinsUtils.hh>
-
 #include <iostream>
 #include <cmath>
 #include <vector>

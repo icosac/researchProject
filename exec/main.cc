@@ -112,6 +112,7 @@ vector<Configuration2<double> > kaya3={
 };
 
 int main (){
+  cout << "C++" << endl;
 #if false
   Configuration2<double> c1(0.0, 0.0, 1.43117);
   Configuration2<double> c2(-0.1, 0.3, 2.07694);

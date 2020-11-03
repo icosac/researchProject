@@ -5,7 +5,7 @@ CLR=clear && clear && clear
 CC=g++
 CCFLAGS=-std=c++11 -Wall -O3
 NV=nvcc
-NVFLAGS=-std=c++11 -arch=sm_35 -rdc=true --default-stream per-thread
+NVFLAGS=-std=c++11 -arch=sm_75 -rdc=true --default-stream per-thread
 
 AR=ar rcs
 
@@ -37,17 +37,17 @@ bin/cc/%.out: exec/%.cc
 bin/cu/%.out: exec/%.cu
 	$(NV) $(NVFLAGS) $(MORE_FLAGS) -o $@ $< $(LIBS)
 
-all: echo lib $(TESTCCEXEC)
+all: echo lib $(TESTCCEXEC) $(TESTNVEXEC)
 
 echo:
 	@echo "CCSRC: " $(CCSRC)
-	@echo "CUSRC: " $(NVSRC)
+	@echo "NVSRC: " $(NVSRC)
 	@echo "CCOBJ: " $(CCOBJ)
-	@echo "CUOBJ: " $(CUOBJ)
+	@echo "NVOBJ: " $(NVOBJ)
 	@echo "TESTCCSRC: " $(TESTCCSRC)
-	@echo "TESTCUSRC: " $(TESTCUSRC)
+	@echo "TESTNVSRC: " $(TESTNVSRC)
 	@echo "TESTCCEXEC: " $(TESTCCEXEC)
-	@echo "TESTCUEXEC: " $(TESTCUEXEC)
+	@echo "TESTNVEXEC: " $(TESTNVEXEC)
 
 lib: lib/$(LIB)
 

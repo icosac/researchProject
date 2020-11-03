@@ -1,9 +1,14 @@
-cmake_minimum_required(VERSION 3.10)
+cmake_minimum_required(VERSION 3.18)
 #set(CMAKE_CUDA_COMPILER "/usr/local/cuda-10.0/bin/nvcc") #Sometimes one needs to set the path to the compiler
 include(GoogleTest)
 
 project(DynamicCurve LANGUAGES CXX)
-#enable_language(CUDA)
+IF(${CUDA_ON} MATCHES ON)
+  enable_language(CUDA)
+  file(GLOB dynamicCurveExec "exec/main.cu")
+ELSE()
+  file(GLOB dynamicCurveExec "exec/main.cc")
+ENDIF()
 
 set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_FLAGS "-Wall -O3")
@@ -15,7 +20,6 @@ set(APP_EXEC dynamicCurve)
 include_directories(src/include)
 
 file(GLOB dynamicCurveSrc "src/*.cc")
-file(GLOB dynamicCurveExec "exec/main.cc")
 
 add_library(${LIB} STATIC ${dynamicCurveSrc})
 

@@ -23,7 +23,7 @@
       std::ostringstream ost ;              \
       ost << "On line: " << __LINE__        \
           << " file: " << __FILE__          \
-          << '\n' << MSG << '\n' ;          \
+          << MSG << '\n' ;          \
       throw std::runtime_error(ost.str()) ; \
     }
 #endif //ASSERT
