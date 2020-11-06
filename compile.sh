@@ -12,4 +12,4 @@ cp test/dubinsTest.txt build/
 cd build
 cmake .. -D$1 -DTEST:STRING=$2
 make 
-ctest $2
+#ctest $2

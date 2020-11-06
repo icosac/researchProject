@@ -1,3 +1,4 @@
+
 //#define CLOTHOID
 #define DUBINS DUBINS
 
@@ -119,16 +120,20 @@ int main (){
   CURVE c(c1, c2, 3);
   cout << c.l() << endl;
 #else
+#define KAYA kaya4
   std::vector<bool> fixedAngles;
-  for (int i=0; i<kaya4.size(); i++){
-    if (i==0 || i==kaya4.size()-1) {
+  for (int i=0; i<KAYA.size(); i++){
+    if (i==0 || i==KAYA.size()-1) {
       fixedAngles.push_back(true);
     }
     else {
       fixedAngles.push_back(false);
     }
   }
-  DP::solveDP<Dubins<double> >(kaya4, DISCR, fixedAngles);
+  std::vector<real_type> curveParamV={3.0};
+  real_type* curveParam=curveParamV.data();
+
+  DP::solveDP<Dubins<double> >(KAYA, DISCR, fixedAngles, curveParam, false);
 #endif
   //READ_FROM_FILE()
   //CLOSE_FILE()

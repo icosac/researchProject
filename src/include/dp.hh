@@ -12,6 +12,7 @@
 #include <cmath>
 #include <vector>
 #include <sstream>
+//#include <cmath>
 
 namespace DP {
   namespace {
@@ -93,9 +94,10 @@ namespace DP {
     }
     
   }//Anonymous namespace to hide information
-
+  
+  void guessInitialAngles(std::vector<Configuration2<double> >& points, const std::vector<bool> fixedAngles);
   std::vector<Angle> bestAngles(DP::Cell* matrix, int discr, int size);
-  std::vector<Angle> solveDP (std::vector<Configuration2<double> > points, int discr, const std::vector<bool> fixedAngles, std::vector<Angle>* angles=NULL);
+  std::vector<Angle> solveDP (std::vector<Configuration2<double> > points, int discr, const std::vector<bool> fixedAngles, real_type* params, bool guessInitialAnglesVal=false);
 } //namespace DP
 
 
