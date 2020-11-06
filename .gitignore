@@ -5,8 +5,11 @@ lib/
 *plug
 *prova*
 .idea/
-cmake-build-debug/
+cmake-build-debug*/
 input/
 output/
 Testing/
 build/
+.DS_Store
+Articles/
+dp_.cc

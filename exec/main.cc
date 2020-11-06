@@ -1,5 +1,13 @@
-#include<clothoid.hh>
-#include<dp.hh>
+
+//#define CLOTHOID
+#define DUBINS DUBINS
+
+#if defined(CLOTHOID)
+#include <clothoidG1.hh>
+#elif defined(DUBINS)
+#include <dubins.hh>
+#endif
+#include <dp.hh>
 
 #include<iostream>
 #include<cmath>
@@ -12,19 +20,7 @@
 using namespace std;
 
 #define SIZE 349
-#define DISCR 360
-
-vector<Configuration2<double> > points={
-        Configuration2<double> (1, 1, ANGLE::INVALID),
-        Configuration2<double> (3, 2, ANGLE::INVALID),
-        Configuration2<double> (4, 0, ANGLE::INVALID),
-        Configuration2<double> (6, 2, ANGLE::INVALID),
-//        Configuration2<double> (10, 2, ANGLE::INVALID),
-//        Configuration2<double> (8, 4, ANGLE::INVALID),
-//        Configuration2<double> (3, 1, ANGLE::INVALID),
-//        Configuration2<double> (6, 2, ANGLE::INVALID),
-};
-
+#define DISCR 720
 
 //double X[SIZE] = {2.9265642,2.6734362,2.5109322,1.9078122,1.1859282,1.9249962,2.8265562,0.00468420000000025,-2.826567,-1.9437558,-1.1859438,-1.9062558,-2.501565,-2.6734386,-2.9265642,-2.6187522,-1.1406318,-0.8968758,-1.4562558,-1.9062558,-0.00468780000000013,1.9078122,1.4468682,0.8968722,1.1406282,2.6187522, 2.9265642 };
 //double Y[SIZE] = {-1.707808758,-1.707808758,-2.367185958,-2.582810358,-2.582810358,-1.167184758,0.915619242,3.178123242,0.915619242,-1.150000758,-2.582810358,-2.582810358,-2.393750358,-1.707808758,-1.707808758,-3.178123242,-3.178123242,-2.989063158,-0.915616758,0.925003242,2.953123242,0.925003242,-0.915616758,-2.989063158,-3.178123242,-3.178123242, -1.707808758 };
@@ -47,59 +43,99 @@ vector<Configuration2<double> > createPoints(){
   return ret;
 }
 
+#include<fstream>
+
+#define READ_FROM_FILE()                                                  \
+  ifstream input("build_clothoid.txt");                                   \
+  ofstream out ("matlab.txt", fstream::out);                              \
+    float x0, y0, th0, x1, y1, th1, k, dk, l;                             \
+    int i=0;                                                              \
+    while (input >> x0 >> y0 >> th0 >> x1 >> y1 >> th1 >> k >> dk >> l){  \
+      i++;                                                                \
+      Configuration2<float>ci(x0, y0, th0);                               \
+      Configuration2<float>cf(x1, y1, th1);                               \
+      ClothoidG1<float>c(ci, cf);
+
+#define CLOSE_FILE() } input.close();
+
+vector<Configuration2<double> > kaya1={
+        Configuration2<double> (0, 0, -M_PI/3.0),
+        Configuration2<double> (-0.1, 0.3, ANGLE::INVALID),
+        Configuration2<double> (0.2, 0.8, ANGLE::INVALID),
+        Configuration2<double> (1, 1, -M_PI/6.0)
+};
+
+vector<Configuration2<double> > kaya2={
+        Configuration2<double> (0, 0, -M_PI/3.0),
+        Configuration2<double> (-0.1, 0.3, ANGLE::INVALID),
+        Configuration2<double> (0.2, 0.8, ANGLE::INVALID),
+        Configuration2<double> (1, 1, ANGLE::INVALID),
+        Configuration2<double> (0.5, 0.5, ANGLE::INVALID),
+        Configuration2<double> (0.5, 0, -M_PI/6.0)
+};
+
+vector<Configuration2<double> > kaya4={
+       Configuration2<double>(0.5, 1.2, 5*M_PI/6.0),
+       Configuration2<double>(0.0, 0.5, ANGLE::INVALID),
+       Configuration2<double>(0.5, 0.5, ANGLE::INVALID),
+       Configuration2<double>(1.0, 0.5, ANGLE::INVALID),
+       Configuration2<double>(1.5, 0.5, ANGLE::INVALID),
+       Configuration2<double>(2.0, 0.5, ANGLE::INVALID),
+       Configuration2<double>(2.0, 0.0, ANGLE::INVALID),
+       Configuration2<double>(1.5, 0.0, ANGLE::INVALID),
+       Configuration2<double>(1.0, 0.0, ANGLE::INVALID),
+       Configuration2<double>(0.5, 0.0, ANGLE::INVALID),
+       Configuration2<double>(0.0, 0.0, ANGLE::INVALID),
+       Configuration2<double>(0.0, -0.5, 0)
+};
+
+vector<Configuration2<double> > kaya3={
+       Configuration2<double>(0.5, 1.2, 5.0*M_PI/6.0),
+       Configuration2<double>(0, 0.8, ANGLE::INVALID),
+       Configuration2<double>(0, 0.4, ANGLE::INVALID),
+       Configuration2<double>(0.1, 0, ANGLE::INVALID),
+       Configuration2<double>(0.4, 0.2, ANGLE::INVALID),
+       Configuration2<double>(0.5, 0.5, ANGLE::INVALID),
+       Configuration2<double>(0.6, 1, ANGLE::INVALID),
+       Configuration2<double>(1, 0.8, ANGLE::INVALID),
+       Configuration2<double>(1, 0, ANGLE::INVALID),
+       Configuration2<double>(1.4, 0.2, ANGLE::INVALID),
+       Configuration2<double>(1.2, 1, ANGLE::INVALID),
+       Configuration2<double>(1.5, 1.2, ANGLE::INVALID),
+       Configuration2<double>(2, 1.5, ANGLE::INVALID),
+       Configuration2<double>(1.5, 0.8, ANGLE::INVALID),
+       Configuration2<double>(1.5, 0, ANGLE::INVALID),
+       Configuration2<double>(1.7, 0.6, ANGLE::INVALID),
+       Configuration2<double>(1.9, 1, ANGLE::INVALID),
+       Configuration2<double>(2, 0.5, ANGLE::INVALID),
+       Configuration2<double>(1.9, 0, ANGLE::INVALID),
+       Configuration2<double>(2.5, 0.6, 0),
+};
+
 int main (){
-  DP::solveDP(points, points.size(), DISCR);
+  cout << "C++" << endl;
+#if false
+  Configuration2<double> c1(0.0, 0.0, 1.43117);
+  Configuration2<double> c2(-0.1, 0.3, 2.07694);
+  CURVE c(c1, c2, 3);
+  cout << c.l() << endl;
+#else
+#define KAYA kaya4
+  std::vector<bool> fixedAngles;
+  for (int i=0; i<KAYA.size(); i++){
+    if (i==0 || i==KAYA.size()-1) {
+      fixedAngles.push_back(true);
+    }
+    else {
+      fixedAngles.push_back(false);
+    }
+  }
+  std::vector<real_type> curveParamV={3.0};
+  real_type* curveParam=curveParamV.data();
+
+  DP::solveDP<Dubins<double> >(KAYA, DISCR, fixedAngles, curveParam, false);
+#endif
+  //READ_FROM_FILE()
+  //CLOSE_FILE()
   return 0;
 }
-
-//class Poly {
-//private:
-//  int _b, _h;
-//public:
-//  Poly(int b, int h): _b(b), _h(h) {}
-//
-//  int b() const { return this->_b; }
-//  int h() const { return this->_h; }
-//
-//  virtual int area () const = 0;
-//  virtual int peri () const = 0;
-//};
-//
-//class Tri: public Poly{
-//public:
-//  Tri(int a, int b) : Poly(a,b) {}
-//
-//  int area() const {
-//    return (this->b())*(this->h())/2;
-//  }
-//
-////  int peri() const { return 1; }
-//};
-//
-//class Rect: public Poly {
-//public:
-//  Rect(int a, int b) : Poly(a,b) {}
-//
-//  int area() const {
-//    return (this->b())*(this->h());
-//  }
-//
-//  int peri() const {
-//    return (this->b()*2)+(this->h()*2);
-//  }
-//};
-//
-//void area(Poly* p){
-//  cout << p->area() << endl;
-//}
-//
-//void peri(Poly* p){
-//  cout << p->peri() << endl;
-//}
-//
-//#define RECT
-//#ifdef RECT
-//typedef Rect POLY;
-//#else
-//typedef Tri POLY;
-//#endif

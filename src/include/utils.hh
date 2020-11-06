@@ -2,13 +2,14 @@
 #define UTILS_HH
 
 #include <iostream>
+#include <iomanip>
 #include <sstream>
 #include <stdexcept>
 #include <limits>
 
 #include <typedefs.hh>
 
-#define DEBUG
+//#define DEBUG
 
 #ifdef DEBUG
 #define COUT(x) cout << x;
@@ -22,7 +23,7 @@
       std::ostringstream ost ;              \
       ost << "On line: " << __LINE__        \
           << " file: " << __FILE__          \
-          << '\n' << MSG << '\n' ;          \
+          << MSG << '\n' ;          \
       throw std::runtime_error(ost.str()) ; \
     }
 #endif //ASSERT
@@ -48,16 +49,22 @@ for (int i=0; i<discr; i++){   \
   cout << endl;                \
 }
 
+#define printVM(M, discr, size)     \
+for (int i=0; i<discr; i++){        \
+  cout << "th" << i;                \
+  for (int j=0; j<size; j++){       \
+    cout << setw(30);               \
+    cout << M[i*size+j] << "\t";    \
+  }                                 \
+  cout << endl;                     \
+}
+
 template<class T>
 inline T ABS(T x, T y) {return (x>y ? (x-y) : (y-x)); }
 
 template<class T>
-inline bool eq(T x, T y) {
-#ifndef EPSILON
-  return ((ABS(x, y)>(T)(std::numeric_limits<T>::epsilon())) ? false : true);
-#else
-  return ((ABS(x, y)>(EPSI<T>())) ? false : true);
-#endif
+inline bool eq(const T x, const T y, const T EPSI=std::numeric_limits<T>::epsilon()) {
+  return ((ABS(x, y)>(EPSI)) ? false : true);
 }
 
 #endif //UTILS_HH
