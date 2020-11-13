@@ -34,29 +34,46 @@ extern real_type const m_pi_2      ; // pi/2
 extern real_type const m_2pi       ; // 2*pi
 extern real_type const m_1_pi      ; // 1/pi
 extern real_type const m_1_sqrt_pi ; // 1/sqrt(pi)
+extern LEN_T     const MAX_LEN_T   ; //std::numeric_limits<LEN_T>::max()
 
-#define printV(v) \
-  cout << "<"; \
-  for (auto a : v) cout << a << " "; \
-  cout << ">" << endl;
+#define printCV(v, d)       \
+  printf("<");              \
+  for (uint i=0; i<d; i++){ \
+    printf("%s ", v[i]);    \
+  }                         \
+  printf("\n");
+
+#define printV(v)                         \
+  std::cout << "<";                       \
+  for (auto a : v) std::cout << a << " "; \
+  std::cout << ">" << endl;
 
 #define printM(M, discr, size) \
 for (int i=0; i<discr; i++){   \
-  cout << "th" << i;    \
-  for (int j=0; j<size; j++){\
+  cout << "th" << i;           \
+  for (int j=0; j<size; j++){  \
     cout << M[i][j] << "\t";   \
   }                            \
   cout << endl;                \
 }
 
-#define printVM(M, discr, size)     \
-for (int i=0; i<discr; i++){        \
-  cout << "th" << i;                \
-  for (int j=0; j<size; j++){       \
-    cout << setw(30);               \
-    cout << M[i*size+j] << "\t";    \
-  }                                 \
-  cout << endl;                     \
+#define printVM(M, discr, size)       \
+for (int i=0; i<discr; i++){          \
+  std::cout << "th" << i;             \
+  for (int j=0; j<size; j++){         \
+    std::cout << std::setw(30);       \
+    std::cout << M[i*size+j] << "\t"; \
+  }                                   \
+  std::cout << std::endl;             \
+}
+
+#define printCVM(M, discr, size)             \
+for (int i=0; i<discr; i++){                 \
+  printf("th%d", i);                         \
+  for (int j=0; j<size; j++){                \
+    printf("\t%-5f", (double)(M[i*size+j])); \
+  }                                          \
+  printf("\n");                              \
 }
 
 template<class T>

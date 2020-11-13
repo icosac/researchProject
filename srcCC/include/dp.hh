@@ -82,24 +82,20 @@ namespace DP {
         out << data.to_string().str();
         return out;
       }
+      
+      operator real_type(){ //TODO remove this function when finished debugging
+        real_type val=this->l();
+        if (false) val=this->th();
+        return (val>1000000 ? 999999 : val);
+      }
     };
+  } //Anonymous namespace to hide information
 
-    //TODO Remove this
-    //Finds the closest discriminant angle. 
-    inline int closestDiscr(Angle th, int DISCR) {
-      double app = th / (2 * m_pi) * DISCR;
-      int a = (int) (app + 1.0e-5);
-      int b = app;
-      return (a == b ? b : a);
-    }
-    
-  }//Anonymous namespace to hide information
-  
   void guessInitialAngles(std::vector<Configuration2<double> >& points, const std::vector<bool> fixedAngles);
   std::vector<Angle> bestAngles(DP::Cell* matrix, int discr, int size);
+  void solveCell(DP::Cell* matrix, uint discr, uint size, std::vector<bool> fixedAngles, Configuration2<real_type>& c0, Configuration2<real_type>& c1, int& bestK, LEN_T& bestL, Angle& bestA, Angle& a00, Angle& a01, real_type* params, int i);
   std::vector<Angle> solveDP (std::vector<Configuration2<double> > points, int discr, const std::vector<bool> fixedAngles, real_type* params, bool guessInitialAnglesVal=false);
 } //namespace DP
-
 
 #include<dp.tt>
 

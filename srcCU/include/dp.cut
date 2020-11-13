@@ -1,0 +1,180 @@
+//File included in src/include/dp.hh 
+#ifndef DP_TT
+#define DP_TT
+
+__constant__ LEN_T MAX_LEN_T = std::numeric_limits<LEN_T>::max();
+
+std::vector<Angle> bestAngles(DP::Cell* matrix, int discr, int size){
+  DP::Cell* best=&matrix[0];
+  //Find best path
+  for (int i=size; i<discr*size; i+=size){
+    if (best->l()>matrix[i].l()  && matrix[i].l()!=0){ //TODO The second check is actually a bug in solveCell, but I'm not in the right mind to find this bug, please fix later
+      best=&matrix[i];
+    }
+  }
+  //Retrieve best angles
+  vector<Angle> ret(1, best->th());
+  DP::Cell* next=best->next();
+  while (next!=NULL){
+    ret.push_back(next->th());
+    next=next->next();
+  }
+  return ret;
+}
+
+template<class CURVE>
+__global__ void solveCell(DP::Cell* matrix, uint discr, uint size, const bool* fixedAngles, 
+                          Configuration2<real_type> c0, Configuration2<real_type> c1, uint* bestK, LEN_T* bestL,
+                          Angle* bestA, Angle a00, Angle a01, real_type* params, int i
+                          ){
+  int k=threadIdx.x+blockDim.x*blockIdx.x;
+  if(k<discr){
+    //printf("k: %d\n", k);
+    //printf("discr %u\n", discr);
+    //printf("size %u\n", size);
+    //printf("c0.x() %f c0.y() %f c0.th() %f\n", c0.x(), c0.y(), c0.th());
+    //printf("c1.x() %f c1.y() %f c1.th() %f\n", c1.x(), c1.y(), c1.th());
+    //printf("bestL %f\n", *bestL);
+    //printf("bestK %d\n", *bestK);
+    //printf("bestA %d\n", *bestA);
+    //printf("params %f\n", params[0]);
+    //printf("i %d\n", i);
+    //printf("\n");
+
+    if (!fixedAngles[i]){ c1.th(a01+2*M_PI*k/(discr*1.0)); } //If angle is fixed I don't have to change it
+    CURVE c=CURVE(c0, c1, params); 
+    if (c.l()>0){
+      DP::Cell* next=(i==size-1 ? NULL : &matrix[k*size+(i+1)]);
+      LEN_T currL=c.l();
+      if (next!=NULL){
+        currL+=next->l();
+      }  
+      //if (currL<bestL[k] || *bestL==MAX_LEN_T){
+        bestL[k]=currL;
+        bestA[k]=c1.th();
+        bestK[k]=k;
+      //}
+    }
+    //if (fixedAngles[i]){ k=discr; } //If the angle is fixed I don't have to change it
+  }
+}
+
+template<class CURVE>
+std::vector<Angle> solveDP (std::vector<Configuration2<real_type> > points, int discr, const std::vector<bool> fixedAngles, std::vector<real_type> params, bool guessInitialAnglesVal=false){
+  //discr=2;
+  cudaError_t err=cudaSuccess;
+  uint size=points.size();
+  if (points.size()!=fixedAngles.size()){
+    cerr << "Number of points and number of fixed angles are not the same: " << points.size() << "!=" << fixedAngles.size() << endl;
+    return std::vector<Angle>();
+  }
+  if (guessInitialAnglesVal){
+    DP::guessInitialAngles(points, fixedAngles);
+  }
+  DP::Cell* matrix;
+  cudaMallocManaged(&matrix, sizeof(DP::Cell)*discr*size);
+  cudaCheckError(cudaGetLastError());
+  
+  bool* dev_fixedAngles=cudaSTDVectorToArray<bool>(fixedAngles);
+  real_type* dev_params=cudaSTDVectorToArray<real_type>(params);
+  
+  cudaCheckError(cudaGetLastError());
+  
+  for (int i=size-1; i>0; i--){
+    Configuration2<real_type>c0=points[i-1];
+    Configuration2<real_type>c1=points[i];
+    Angle a00=c0.th(), a01=c1.th();
+    for (uint j=0; j<discr; j++){
+      Angle* bestAA;
+      LEN_T* bestLA; 
+      uint* bestKA;
+      cudaMallocManaged(&bestAA, sizeof(Angle)*discr); 
+      cudaMallocManaged(&bestLA, sizeof(LEN_T)*discr); 
+      cudaMallocManaged(&bestKA, sizeof(uint)*discr); 
+      for(int k=0; k<discr; k++){
+        bestAA[k]=0.0;
+        bestLA[k]=std::numeric_limits<LEN_T>::max();
+        bestKA[k]=0.0;
+      }
+    
+      cudaCheckError(cudaGetLastError());
+      
+      if (!fixedAngles[i-1]){ c0.th(a00+m_2pi*j/(discr*1.0)); } //If angle is fixed I don't have to change it
+      size_t threads=1;
+      size_t blocks=1;
+      if (!fixedAngles[i]){
+        if (discr<512){
+          threads=discr;
+        }
+        else{
+          threads=512;
+          blocks=(int)(discr/512)+1;
+        }
+      }
+      
+      DP::solveCell<CURVE><<<blocks, threads>>>( matrix, discr, size, dev_fixedAngles, 
+                                            c0, c1, bestKA, bestLA, 
+                                            bestAA, a00, a01, dev_params, i
+                                          );
+      cudaDeviceSynchronize();
+      cudaCheckError(cudaGetLastError());
+
+      std::vector<LEN_T> bestLV (bestLA, bestLA+discr);
+      
+      LEN_T bestL=*(std::min_element(bestLV.begin(), bestLV.end()));
+      Angle bestA=bestAA[std::distance(bestLV.begin(), std::find(bestLV.begin(), bestLV.end(), bestL))];
+      uint bestK=bestKA[std::distance(bestLV.begin(), std::find(bestLV.begin(), bestLV.end(), bestL))];
+
+      if (bestL!=std::numeric_limits<LEN_T>::max()){
+        Cell* next=(i==size-1? NULL : &matrix[bestK*size+(i+1)]);
+        matrix[j*size+i]=Cell(bestA, bestL, next, i, j, j*size+i);
+      }
+      if (i==1){
+        matrix[size*j]=Cell(c0.th(), bestL, &matrix[size*j+i], 0, j, size*j);
+      }
+      if (fixedAngles[i-1]){ j=discr; } //If the angle is fixed I don't have to change it
+
+      cudaFree(bestAA);
+      cudaFree(bestLA);
+      cudaFree(bestKA);
+    }
+  }
+#ifdef DEBUG
+  cout << "Printing " << endl;
+  printVM(matrix, discr, size)
+  //Retrieve angles
+  cout << "Computing best angles" << endl;
+#endif
+  std::vector<Angle> bestA=DP::bestAngles(matrix, discr, size);
+#ifdef DEBUG
+  printV(bestA)
+#endif
+  
+  LEN_T Length=0.0;
+  for (unsigned int i=bestA.size()-1; i>0; i--){
+    points[i].th(bestA[i]);
+    points[i-1].th(bestA[i-1]);
+    CURVE c(points[i-1], points[i], params.data());
+    Length+=c.l();
+  }
+  cout << "Length: " << setprecision(20) << Length << endl;
+#ifdef DEBUG
+
+  cout << "Printing for Matlab" << endl;
+  cout << "X=[";
+  for (unsigned int i=0; i<points.size(); i++){ cout << points[i].x() << (i!=points.size()-1 ? ", " : "];\n"); }
+  cout << "Y=[";
+  for (unsigned int i=0; i<points.size(); i++){ cout << points[i].y() << (i!=points.size()-1 ? ", " : "];\n"); }
+  cout << "th=[";
+  for (unsigned int i=0; i<bestA.size(); i++){ cout << bestA[i] << (i!=bestA.size()-1 ? ", " : "];\n"); }
+  cout << "KMAX: " << params[0] << endl;
+#endif
+
+  cudaFree(matrix);
+  cudaFree(dev_fixedAngles);
+  cudaFree(dev_params);
+
+  return bestA;
+}
+
+#endif

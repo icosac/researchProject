@@ -1,4 +1,6 @@
-//File included in src/include/dp.hh
+//File included in src/include/dp.hh 
+#ifndef DP_TT
+#define DP_TT
 
 std::vector<Angle> DP::bestAngles(DP::Cell* matrix, int discr, int size){
   DP::Cell* best=&matrix[0];
@@ -19,7 +21,34 @@ std::vector<Angle> DP::bestAngles(DP::Cell* matrix, int discr, int size){
 }
 
 template<class CURVE>
+void DP::solveCell(DP::Cell* matrix, uint discr, uint size, std::vector<bool> fixedAngles, Configuration2<real_type>& c0, Configuration2<real_type>& c1, int& bestK, LEN_T& bestL, Angle& bestA, Angle& a00, Angle& a01, real_type* params, int i){
+  for (int k=0; k<discr; k++){
+    LEN_T currL=std::numeric_limits<LEN_T>::max();
+    if (!fixedAngles[i]){ c1.th(a01+m_2pi*k/(discr*1.0)); } //If angle is fixed I don't have to change it
+    CURVE c;
+    try{
+      c=CURVE(c0, c1, params); 
+    } catch (runtime_error* e){}
+    DP::Cell* next=(i==size-1 ? NULL : &matrix[k*size+(i+1)]);
+    if (c.l()>0){
+      currL=c.l();
+      if (next!=NULL){
+        currL+=next->l();
+      }  
+      if (currL<bestL || bestL==std::numeric_limits<LEN_T>::max()){
+        bestL=currL;
+        bestA=c1.th();
+        bestK=k;
+      }
+    }
+    if (fixedAngles[i]){ k=discr; } //If the angle is fixed I don't have to change it
+  }
+}
+
+
+template<class CURVE>
 std::vector<Angle> DP::solveDP (std::vector<Configuration2<double> > points, int discr, const std::vector<bool> fixedAngles, real_type* params, bool guessInitialAnglesVal=false){
+  cout << "solveDP" << endl;
   uint size=points.size();
   if (points.size()!=fixedAngles.size()){
     cerr << "Number of points and number of fixed angles are not the same: " << points.size() << "!=" << fixedAngles.size() << endl;
@@ -28,8 +57,9 @@ std::vector<Angle> DP::solveDP (std::vector<Configuration2<double> > points, int
   if (guessInitialAnglesVal){
     DP::guessInitialAngles(points, fixedAngles);
   }
+
   DP::Cell* matrix=new DP::Cell[discr*size];
-  
+
   for (uint i=size-1; i>0; i--){
     Configuration2<double>c0=points[i-1];
     Configuration2<double>c1=points[i];
@@ -38,30 +68,8 @@ std::vector<Angle> DP::solveDP (std::vector<Configuration2<double> > points, int
       Angle bestA=0.0;
       LEN_T bestL=std::numeric_limits<LEN_T>::max(); 
       int bestK=0;
-      //if (!fixedAngles[i-1]){ c0.th(m_2pi*(j*1.0)/(discr*1.0)); } //If angle is fixed I don't have to change it
       if (!fixedAngles[i-1]){ c0.th(a00+m_2pi*j/(discr*1.0)); } //If angle is fixed I don't have to change it
-      for (int k=0; k<discr; k++){
-        LEN_T currL=std::numeric_limits<LEN_T>::max();
-        if (!fixedAngles[i]){ c1.th(a01+m_2pi*k/(discr*1.0)); } //If angle is fixed I don't have to change it
-        //if (!fixedAngles[i]){ c1.th(m_2pi*(k*1.0)/(discr*1.0)); } //If angle is fixed I don't have to change it
-        CURVE c;
-        try{
-          c=CURVE(c0, c1, params); 
-        } catch (runtime_error* e){}
-        Cell* next=(i==size-1 ? NULL : &matrix[k*size+(i+1)]);
-        if (c.l()>0){
-          currL=c.l();
-          if (next!=NULL){
-            currL+=next->l();
-          }  
-          if (currL<bestL || bestL==std::numeric_limits<LEN_T>::max()){
-            bestL=currL;
-            bestA=c1.th();
-            bestK=k;
-          }
-        }
-        if (fixedAngles[i]){ k=discr; } //If the angle is fixed I don't have to change it
-      }
+      DP::solveCell<CURVE>(matrix, discr, size, fixedAngles, c0, c1, bestK, bestL, bestA, a00, a01, params, i);
       if (bestL!=std::numeric_limits<LEN_T>::max()){
         Cell* next=(i==size-1? NULL : &matrix[bestK*size+(i+1)]);
         matrix[j*size+i]=Cell(bestA, bestL, next, i, j, j*size+i);
@@ -107,4 +115,4 @@ std::vector<Angle> DP::solveDP (std::vector<Configuration2<double> > points, int
   return bestA;
 }
 
-
+#endif

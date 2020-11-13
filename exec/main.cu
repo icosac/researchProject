@@ -2,102 +2,96 @@
 #include<math.h>
 using namespace std;
 
-#include<utils.hh>
+//#define DEBUG
 
-template<class T>
-class Configuration {
-public:
-  T x, y, th;
+#include<utils.cuh>
+#include<dubins.cuh>
+#include<dp.cuh>
 
-  Configuration() : x(0), y(0), th(0) {}
-  Configuration(T _x, T _y, T _th) : x(_x), y(_y), th(_th) {}
-
-  __host__ __device__ T dist(Configuration B){
-    T a=pow(this->x-B.x, 2);
-    T b=pow(this->y-B.y, 2);
-    return (sqrt(a+b));
-  }
-
-  Configuration copy(const Configuration c){
-    this->x=c.x;
-    this->y=c.y;
-    this->th=c.th;
-    return *this;
-  }
-
-  Configuration operator= (Configuration c){
-    return this->copy(c);
-  }
-
-  std::stringstream to_string (std::string str="") const {
-    std::stringstream out;
-    out << (str!="" ? "" : str+" ") << "x: " << this->x << "  y: " << this->y << "  th: " << this->th;
-    return out;
-  }
-
-  friend std::ostream& operator<<(std::ostream &out, const Configuration& data) {
-    out << data.to_string().str();
-    return out;
-  }
+vector<Configuration2<double> > kaya1={
+        Configuration2<double> (0, 0, -M_PI/3.0),
+        Configuration2<double> (-0.1, 0.3, ANGLE::INVALID),
+        Configuration2<double> (0.2, 0.8, ANGLE::INVALID),
+        Configuration2<double> (1, 1, -M_PI/6.0)
 };
 
-class Cell {
-public:
-  int i, j;
-  double val;
-
-  Cell() : i(0), j(0), val(0.0) {}
-  Cell(int _i, int _j, double _val) : i(_i), j(_j), val(_val) {}
-
-  Cell copy(Cell c){
-    this->i=c.i;
-    this->j=c.j;
-    this->val=c.val;
-    return *this;
-  }
-
-  Cell operator= (Cell c){
-    return this->copy(c);
-  }
-  
-  std::stringstream to_string (std::string str="") const {
-    std::stringstream out;
-    out << (str!="" ? "" : str+" ") << this->val;
-    return out;
-  }
-
-  friend std::ostream& operator<<(std::ostream &out, const Cell& data) {
-    out << data.to_string().str();
-    return out;
-  }
+vector<Configuration2<double> > kaya2={
+        Configuration2<double> (0, 0, -M_PI/3.0),
+        Configuration2<double> (-0.1, 0.3, ANGLE::INVALID),
+        Configuration2<double> (0.2, 0.8, ANGLE::INVALID),
+        Configuration2<double> (1, 1, ANGLE::INVALID),
+        Configuration2<double> (0.5, 0.5, ANGLE::INVALID),
+        Configuration2<double> (0.5, 0, -M_PI/6.0)
 };
 
-#define DISC 4
-#define DIM 4
-#define SIZE DISC*DIM
+vector<Configuration2<double> > kaya4={
+       Configuration2<double>(0.5, 1.2, 5*M_PI/6.0),
+       Configuration2<double>(0.0, 0.5, ANGLE::INVALID),
+       Configuration2<double>(0.5, 0.5, ANGLE::INVALID),
+       Configuration2<double>(1.0, 0.5, ANGLE::INVALID),
+       Configuration2<double>(1.5, 0.5, ANGLE::INVALID),
+       Configuration2<double>(2.0, 0.5, ANGLE::INVALID),
+       Configuration2<double>(2.0, 0.0, ANGLE::INVALID),
+       Configuration2<double>(1.5, 0.0, ANGLE::INVALID),
+       Configuration2<double>(1.0, 0.0, ANGLE::INVALID),
+       Configuration2<double>(0.5, 0.0, ANGLE::INVALID),
+       Configuration2<double>(0.0, 0.0, ANGLE::INVALID),
+       Configuration2<double>(0.0, -0.5, 0)
+};
 
-inline void cudaCheckError(cudaError_t err, bool catchErr=true){
-  try{
-    ASSERT((err==cudaSuccess), (std::string("Cuda error: ")+cudaGetErrorString(err)))
-  }
-  catch(std::runtime_error e){
-    if (catchErr){
-      std::cout << e.what() << std::endl;
+vector<Configuration2<double> > kaya3={
+       Configuration2<double>(0.5, 1.2, 5.0*M_PI/6.0),
+       Configuration2<double>(0, 0.8, ANGLE::INVALID),
+       Configuration2<double>(0, 0.4, ANGLE::INVALID),
+       Configuration2<double>(0.1, 0, ANGLE::INVALID),
+       Configuration2<double>(0.4, 0.2, ANGLE::INVALID),
+       Configuration2<double>(0.5, 0.5, ANGLE::INVALID),
+       Configuration2<double>(0.6, 1, ANGLE::INVALID),
+       Configuration2<double>(1, 0.8, ANGLE::INVALID),
+       Configuration2<double>(1, 0, ANGLE::INVALID),
+       Configuration2<double>(1.4, 0.2, ANGLE::INVALID),
+       Configuration2<double>(1.2, 1, ANGLE::INVALID),
+       Configuration2<double>(1.5, 1.2, ANGLE::INVALID),
+       Configuration2<double>(2, 1.5, ANGLE::INVALID),
+       Configuration2<double>(1.5, 0.8, ANGLE::INVALID),
+       Configuration2<double>(1.5, 0, ANGLE::INVALID),
+       Configuration2<double>(1.7, 0.6, ANGLE::INVALID),
+       Configuration2<double>(1.9, 1, ANGLE::INVALID),
+       Configuration2<double>(2, 0.5, ANGLE::INVALID),
+       Configuration2<double>(1.9, 0, ANGLE::INVALID),
+       Configuration2<double>(2.5, 0.6, 0),
+};
+
+#define DISCR 2040
+
+int main (){
+  cout << "CUDA" << endl;
+#if false
+  Configuration2<double> c0 (-0.1, 0.3, -1);
+  Configuration2<double> c1 (0.2, 0.8, -1);
+  Dubins<real_type> c (c0, c1, 3.0);
+  cout << c.l() << endl;
+#else
+  #define KAYA kaya4
+  std::vector<bool> fixedAngles;
+  for (int i=0; i<KAYA.size(); i++){
+    if (i==0 || i==KAYA.size()-1) {
+      fixedAngles.push_back(true);
     }
-    else{
-      throw e;
+    else {
+      fixedAngles.push_back(false);
     }
   }
+  std::vector<real_type> curveParamV={3.0};
+  real_type* curveParam=curveParamV.data();
+
+  DP::solveDP<Dubins<double> >(KAYA, DISCR, fixedAngles, curveParamV, false);
+  //DP::ciao();
+#endif
+  return 0;
 }
 
-__global__ void kernel(Cell* matrix, int i, Configuration<double>* conf){
-  int tidx=threadIdx.x+blockDim.x*blockIdx.x;
-  int id=i+tidx*DIM;
-  printf("matrix[%d]: %d matrix[%d]: %d\n", id, matrix[id], (tidx*DIM+i+1), matrix[tidx*DIM+i+1]);
-  printf("conf[%d]: (%f, %f) conf[%d]: (%f, %f)\n", i, conf[i].x, conf[i].y, tidx, conf[tidx].x, conf[tidx].y);
-  matrix[id].val=matrix[tidx*DIM+i+1].val+conf[i].dist(conf[tidx]);
-}
-
+/*
 int main(){
   cudaError_t cudaErr=cudaSuccess;
 
@@ -138,3 +132,4 @@ int main(){
   cudaFree(matrix);
   return 0;
 }
+*/

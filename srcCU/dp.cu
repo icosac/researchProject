@@ -1,4 +1,5 @@
-#include <dp.hh>
+#ifdef CUDA_ON
+#include <dp.cuh>
 
 void DP::guessInitialAngles(std::vector<Configuration2<double> >& points, const std::vector<bool> fixedAngles){
   for (uint i=0; i<points.size()-1; i++){
@@ -10,4 +11,7 @@ void DP::guessInitialAngles(std::vector<Configuration2<double> >& points, const 
   }
 }
 
+
+
+#endif 
 

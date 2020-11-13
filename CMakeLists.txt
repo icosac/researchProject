@@ -6,8 +6,14 @@ project(DynamicCurve LANGUAGES CXX)
 IF(${CUDA_ON} MATCHES ON)
   enable_language(CUDA)
   file(GLOB dynamicCurveExec "exec/main.cu")
+  add_definitions(-DCUDA_ON)
+  set(CUDA_NVCC_FLAGS -std=c++11)
+  set(SRC "srcCU")
+  set(SRCF "${SRC}/*.cu")
 ELSE()
   file(GLOB dynamicCurveExec "exec/main.cc")
+  set(SRC "srcCC")
+  set(SRCF "${SRC}/*.cc")
 ENDIF()
 
 set(CMAKE_CXX_STANDARD 11)
@@ -17,9 +23,11 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(LIB libDynamicCurve)
 set(APP_EXEC dynamicCurve)
 
-include_directories(src/include)
+include_directories(${SRC}/include include)
 
-file(GLOB dynamicCurveSrc "src/*.cc")
+file(GLOB dynamicCurveSrc ${SRCF})
+
+message(STATUS "${dynamicCurveSrc}")
 
 add_library(${LIB} STATIC ${dynamicCurveSrc})
 
