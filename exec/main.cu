@@ -62,7 +62,7 @@ vector<Configuration2<double> > kaya3={
        Configuration2<double>(2.5, 0.6, 0),
 };
 
-#define DISCR 2040
+#define DISCR 2000
 
 int main (){
   cout << "CUDA" << endl;
@@ -72,7 +72,7 @@ int main (){
   Dubins<real_type> c (c0, c1, 3.0);
   cout << c.l() << endl;
 #else
-  #define KAYA kaya4
+  #define KAYA kaya2
   std::vector<bool> fixedAngles;
   for (int i=0; i<KAYA.size(); i++){
     if (i==0 || i==KAYA.size()-1) {

@@ -85,17 +85,27 @@ std::vector<Angle> solveDP (std::vector<Configuration2<real_type> > points, int 
     Configuration2<real_type>c1=points[i];
     Angle a00=c0.th(), a01=c1.th();
     for (uint j=0; j<discr; j++){
-      Angle* bestAA;
-      LEN_T* bestLA; 
-      uint* bestKA;
-      cudaMallocManaged(&bestAA, sizeof(Angle)*discr); 
-      cudaMallocManaged(&bestLA, sizeof(LEN_T)*discr); 
-      cudaMallocManaged(&bestKA, sizeof(uint)*discr); 
+      Angle* dev_bestAA;
+      Angle* bestAA=new Angle[discr];
+      LEN_T* dev_bestLA;
+      LEN_T* bestLA=new LEN_T[discr];
+      uint* dev_bestKA;
+      uint* bestKA=new uint[discr];
+
+      cudaMalloc(&dev_bestAA, sizeof(Angle)*discr); 
+      cudaMalloc(&dev_bestLA, sizeof(LEN_T)*discr); 
+      cudaMalloc(&dev_bestKA, sizeof(uint)*discr); 
+
       for(int k=0; k<discr; k++){
         bestAA[k]=0.0;
         bestLA[k]=std::numeric_limits<LEN_T>::max();
         bestKA[k]=0.0;
       }
+
+      cudaMemcpyAsync(dev_bestAA, bestAA, sizeof(Angle)*discr, cudaMemcpyHostToDevice);
+      cudaMemcpyAsync(dev_bestLA, bestLA, sizeof(LEN_T)*discr, cudaMemcpyHostToDevice);
+      cudaMemcpyAsync(dev_bestKA, bestKA, sizeof(uint)*discr, cudaMemcpyHostToDevice);
+      cudaDeviceSynchronize();
     
       cudaCheckError(cudaGetLastError());
       
@@ -113,10 +123,17 @@ std::vector<Angle> solveDP (std::vector<Configuration2<real_type> > points, int 
       }
       
       DP::solveCell<CURVE><<<blocks, threads>>>( matrix, discr, size, dev_fixedAngles, 
-                                            c0, c1, bestKA, bestLA, 
-                                            bestAA, a00, a01, dev_params, i
+                                            c0, c1, dev_bestKA, dev_bestLA, 
+                                            dev_bestAA, a00, a01, dev_params, i
                                           );
       cudaDeviceSynchronize();
+      cudaCheckError(cudaGetLastError());
+
+      cudaMemcpyAsync(bestAA, dev_bestAA, sizeof(Angle)*discr, cudaMemcpyDeviceToHost);
+      cudaMemcpyAsync(bestLA, dev_bestLA, sizeof(LEN_T)*discr, cudaMemcpyDeviceToHost);
+      cudaMemcpyAsync(bestKA, dev_bestKA, sizeof(uint)*discr, cudaMemcpyDeviceToHost);
+      cudaDeviceSynchronize();
+      
       cudaCheckError(cudaGetLastError());
 
       std::vector<LEN_T> bestLV (bestLA, bestLA+discr);
@@ -134,9 +151,12 @@ std::vector<Angle> solveDP (std::vector<Configuration2<real_type> > points, int 
       }
       if (fixedAngles[i-1]){ j=discr; } //If the angle is fixed I don't have to change it
 
-      cudaFree(bestAA);
-      cudaFree(bestLA);
-      cudaFree(bestKA);
+      cudaFree(dev_bestAA);
+      cudaFree(dev_bestLA);
+      cudaFree(dev_bestKA);
+      free(bestAA);
+      free(bestLA);
+      free(bestKA);
     }
   }
 #ifdef DEBUG
