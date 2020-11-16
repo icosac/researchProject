@@ -14,10 +14,10 @@ std::vector<Angle> bestAngles(DP::Cell* matrix, int discr, int size){
   }
   //Retrieve best angles
   vector<Angle> ret(1, best->th());
-  DP::Cell* next=best->next();
-  while (next!=NULL){
-    ret.push_back(next->th());
-    next=next->next();
+  uint nextID=best->next();
+  while (nextID!=0){
+    ret.push_back(matrix[nextID].th());
+    nextID=matrix[nextID].next();
   }
   return ret;
 }
@@ -95,11 +95,12 @@ __global__ void solveCol( DP::Cell* matrix, uint discr, uint size, const bool* f
     
     if (bestL!=MAX_LEN_T){
       Cell* next=(i==size-1? NULL : &matrix[bestK*size+(i+1)]);
+      uint nextID=(i==size-1 ? 0 : bestK*size+(i+1));
       //printf("[%d] id: %d bestL: %f\n", j, j*size+i, bestL);
-      matrix[j*size+i]=Cell(bestA, bestL, next, i, j, j*size+i);
+      matrix[j*size+i]=Cell(bestA, bestL, nextID, i, j, j*size+i);
     }
     if (i==1){
-      matrix[size*j]=Cell(c0.th(), bestL, &matrix[size*j+i], 0, j, size*j);
+      matrix[size*j]=Cell(c0.th(), bestL, (size*j+i), 0, j, size*j);
     }
   }
 
@@ -117,8 +118,9 @@ std::vector<Angle> solveDP (std::vector<Configuration2<real_type> > points, int 
   if (guessInitialAnglesVal){
     DP::guessInitialAngles(points, fixedAngles);
   }
-  DP::Cell* matrix;
-  cudaMallocManaged(&matrix, sizeof(DP::Cell)*discr*size);
+  DP::Cell* matrix=new DP::Cell[size*discr];
+  DP::Cell* dev_matrix;
+  cudaMalloc(&dev_matrix, sizeof(DP::Cell)*discr*size);
   cudaCheckError(cudaGetLastError());
   
   bool* dev_fixedAngles=cudaSTDVectorToArray<bool>(fixedAngles);
@@ -136,10 +138,13 @@ std::vector<Angle> solveDP (std::vector<Configuration2<real_type> > points, int 
       threads=1;
       blocks=1;
     }
-    solveCol<CURVE><<<blocks, threads>>>(matrix, discr, size, dev_fixedAngles, c0, c1, a00, a01, dev_params, i);
+    solveCol<CURVE><<<blocks, threads>>>(dev_matrix, discr, size, dev_fixedAngles, c0, c1, a00, a01, dev_params, i);
     cudaDeviceSynchronize();
     cudaCheckError(cudaGetLastError());
   }
+
+  cudaMemcpy(matrix, dev_matrix, sizeof(DP::Cell)*size*discr, cudaMemcpyDeviceToHost);
+  cudaCheckError(cudaGetLastError());
 
 #ifdef DEBUG
   cout << "Printing " << endl;
@@ -172,7 +177,8 @@ std::vector<Angle> solveDP (std::vector<Configuration2<real_type> > points, int 
   cout << "KMAX: " << params[0] << endl;
 #endif
 
-  cudaFree(matrix);
+  free(matrix);
+  cudaFree(dev_matrix);
   cudaFree(dev_fixedAngles);
   cudaFree(dev_params);
 

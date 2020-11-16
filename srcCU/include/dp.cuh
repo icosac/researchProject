@@ -21,19 +21,19 @@ namespace DP {
     private:
       Angle _th;
       LEN_T _l; //Length of the curve
-      Cell* _next;
+      uint _nextID;
       int _i, _j, _id;
 
     public:
-      Cell() : _th(ANGLE::INVALID), _l(std::numeric_limits<LEN_T>::max()), _next(NULL) {}
+      Cell() : _th(ANGLE::INVALID), _l(std::numeric_limits<LEN_T>::max()), _nextID(0) {}
 
-      BOTH Cell(Angle th, LEN_T l, Cell* next, int i=0, int j=0, int id=0) : _th(th), _l(l),  _next(next), _i(i), _j(j), _id(id) {}
+      BOTH Cell(Angle th, LEN_T l, uint nextID, int i=0, int j=0, int id=0) : _th(th), _l(l),  _nextID(nextID), _i(i), _j(j), _id(id) {}
 
       BOTH Angle th() const { return this->_th; }
 
       BOTH LEN_T l() const { return this->_l; }
       
-      BOTH Cell* next() const { return this->_next; }
+      BOTH uint next() const { return this->_nextID; }
 
       BOTH int i() const { return this->_i; }
       BOTH int j() const { return this->_j; }
@@ -49,8 +49,8 @@ namespace DP {
         return this->l();
       }
 
-      BOTH Cell* next(Cell* next){
-        this->_next = next;
+      BOTH uint next(uint nextID){
+        this->_nextID = nextID;
         return this->next();
       }
 
