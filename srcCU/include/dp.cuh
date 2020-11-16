@@ -27,34 +27,34 @@ namespace DP {
     public:
       Cell() : _th(ANGLE::INVALID), _l(std::numeric_limits<LEN_T>::max()), _next(NULL) {}
 
-      Cell(Angle th, LEN_T l, Cell* next, int i=0, int j=0, int id=0) : _th(th), _l(l),  _next(next), _i(i), _j(j), _id(id) {}
+      BOTH Cell(Angle th, LEN_T l, Cell* next, int i=0, int j=0, int id=0) : _th(th), _l(l),  _next(next), _i(i), _j(j), _id(id) {}
 
       BOTH Angle th() const { return this->_th; }
 
       BOTH LEN_T l() const { return this->_l; }
       
-      Cell* next() const { return this->_next; }
+      BOTH Cell* next() const { return this->_next; }
 
-      int i() const { return this->_i; }
-      int j() const { return this->_j; }
-      int id() const { return this->_id; }
+      BOTH int i() const { return this->_i; }
+      BOTH int j() const { return this->_j; }
+      BOTH int id() const { return this->_id; }
 
-      Angle th(Angle th) {
+      BOTH Angle th(Angle th) {
         this->_th = th;
         return this->th();
       }
 
-      LEN_T l(LEN_T l) {
+      BOTH LEN_T l(LEN_T l) {
         this->_l = l;
         return this->l();
       }
 
-      Cell* next(Cell* next){
+      BOTH Cell* next(Cell* next){
         this->_next = next;
         return this->next();
       }
 
-      Cell copy(const Cell &d) {
+      BOTH Cell copy(const Cell &d) {
         this->th(d.th());
         this->l(d.l());
         this->next(d.next());
@@ -65,7 +65,7 @@ namespace DP {
         return *this;
       }
 
-      Cell operator=(const Cell &d) {
+      BOTH Cell operator=(const Cell &d) {
         return copy(d);
       }
 

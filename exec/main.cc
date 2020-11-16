@@ -1,4 +1,4 @@
-//#define DEBUG
+#define DEBUG
 //#define CLOTHOID CLOTHOID //Need to rewrite CLOTHOID because of typedefs.hh
 #define DUBINS DUBINS
 
@@ -8,6 +8,7 @@
 #include <dubins.hh>
 #endif
 #include <dp.hh>
+#include <timeperf.hh>
 
 #include<iostream>
 #include<cmath>
@@ -20,7 +21,6 @@
 using namespace std;
 
 #define SIZE 349
-#define DISCR 2000
 
 //double X[SIZE] = {2.9265642,2.6734362,2.5109322,1.9078122,1.1859282,1.9249962,2.8265562,0.00468420000000025,-2.826567,-1.9437558,-1.1859438,-1.9062558,-2.501565,-2.6734386,-2.9265642,-2.6187522,-1.1406318,-0.8968758,-1.4562558,-1.9062558,-0.00468780000000013,1.9078122,1.4468682,0.8968722,1.1406282,2.6187522, 2.9265642 };
 //double Y[SIZE] = {-1.707808758,-1.707808758,-2.367185958,-2.582810358,-2.582810358,-1.167184758,0.915619242,3.178123242,0.915619242,-1.150000758,-2.582810358,-2.582810358,-2.393750358,-1.707808758,-1.707808758,-3.178123242,-3.178123242,-2.989063158,-0.915616758,0.925003242,2.953123242,0.925003242,-0.915616758,-2.989063158,-3.178123242,-3.178123242, -1.707808758 };
@@ -112,15 +112,44 @@ vector<Configuration2<double> > kaya3={
        Configuration2<double>(2.5, 0.6, 0),
 };
 
+vector<vector<Configuration2<double> > > Tests = {
+  kaya1, kaya2, kaya3, kaya4
+};
+
+vector<K_T> Ks = {3.0, 3.0, 5.0, 3.0};
+vector<uint> discrs = {4, 120, 360, 720, 2000};
+
+#define DISCR 6
+
 int main (){
   cout << "C++" << endl;
 #if false
-  Configuration2<double> c1(0.0, 0.0, 1.43117);
-  Configuration2<double> c2(-0.1, 0.3, 2.07694);
-  CURVE c(c1, c2, 3);
-  cout << c.l() << endl;
+  for (uint discr : discrs){
+    cout << "Discr: " << discr << endl;
+    for (uint j=0; j<Tests.size(); j++){
+      std::vector<bool> fixedAngles;
+      vector<Configuration2<double> > v=Tests[j];
+      for (int i=0; i<v.size(); i++){
+        if (i==0 || i==v.size()-1) {
+          fixedAngles.push_back(true);
+        }
+        else {
+          fixedAngles.push_back(false);
+        }
+      }
+      std::vector<real_type> curveParamV={Ks[j]};
+      real_type* curveParam=curveParamV.data();
+
+      TimePerf tp;
+      tp.start();
+      cout << "\t";
+      DP::solveDP<Dubins<double> >(v, discr, fixedAngles, curveParam, false);
+      auto time=tp.getTime();
+      cout << "\tExample " << j << " completed in " << time << " ms" << endl;
+    }
+  }
 #else
-#define KAYA kaya2
+#define KAYA kaya1
   std::vector<bool> fixedAngles;
   for (int i=0; i<KAYA.size(); i++){
     if (i==0 || i==KAYA.size()-1) {

@@ -60,6 +60,52 @@ __global__ void solveCell(DP::Cell* matrix, uint discr, uint size, const bool* f
 }
 
 template<class CURVE>
+__global__ void solveCol( DP::Cell* matrix, uint discr, uint size, const bool* fixedAngles, 
+                          Configuration2<real_type> c0, Configuration2<real_type> c1, 
+                          Angle a00, Angle a01, real_type* params, int i
+                        ){
+  int j=threadIdx.x+blockDim.x*blockIdx.x;
+  
+  if (j<discr){
+    Angle bestA=0.0;
+    LEN_T bestL=MAX_LEN_T; 
+    int bestK=0;
+
+    if (!fixedAngles[i-1]){ c0.th(a00+2*M_PI*j/(discr*1.0)); } //If angle is fixed I don't have to change it
+    
+    for (int k=0; k<discr; k++){ //SolveCell
+      LEN_T currL=MAX_LEN_T;
+      if (!fixedAngles[i]){ c1.th(a01+2*M_PI*k/(discr*1.0)); } //If angle is fixed I don't have to change it
+      CURVE c=CURVE(c0, c1, params); 
+      DP::Cell* next=(i==size-1 ? NULL : &matrix[k*size+(i+1)]);
+      if (c.l()>0){
+        currL=c.l();
+        if (next!=NULL){
+          currL+=next->l();
+        }  
+        if (currL<bestL || bestL==MAX_LEN_T){
+          bestL=currL;
+          bestA=c1.th();
+          bestK=k;
+        }
+      }
+      //printf("[%d] c.l(): %f bestL: %f\n", j, c.l(), bestL);
+      if (fixedAngles[i]){ k=discr; } //If the angle is fixed I don't have to change it
+    }
+    
+    if (bestL!=MAX_LEN_T){
+      Cell* next=(i==size-1? NULL : &matrix[bestK*size+(i+1)]);
+      //printf("[%d] id: %d bestL: %f\n", j, j*size+i, bestL);
+      matrix[j*size+i]=Cell(bestA, bestL, next, i, j, j*size+i);
+    }
+    if (i==1){
+      matrix[size*j]=Cell(c0.th(), bestL, &matrix[size*j+i], 0, j, size*j);
+    }
+  }
+
+}
+
+template<class CURVE>
 std::vector<Angle> solveDP (std::vector<Configuration2<real_type> > points, int discr, const std::vector<bool> fixedAngles, std::vector<real_type> params, bool guessInitialAnglesVal=false){
   //discr=2;
   cudaError_t err=cudaSuccess;
@@ -84,81 +130,17 @@ std::vector<Angle> solveDP (std::vector<Configuration2<real_type> > points, int 
     Configuration2<real_type>c0=points[i-1];
     Configuration2<real_type>c1=points[i];
     Angle a00=c0.th(), a01=c1.th();
-    for (uint j=0; j<discr; j++){
-      Angle* dev_bestAA;
-      Angle* bestAA=new Angle[discr];
-      LEN_T* dev_bestLA;
-      LEN_T* bestLA=new LEN_T[discr];
-      uint* dev_bestKA;
-      uint* bestKA=new uint[discr];
-
-      cudaMalloc(&dev_bestAA, sizeof(Angle)*discr); 
-      cudaMalloc(&dev_bestLA, sizeof(LEN_T)*discr); 
-      cudaMalloc(&dev_bestKA, sizeof(uint)*discr); 
-
-      for(int k=0; k<discr; k++){
-        bestAA[k]=0.0;
-        bestLA[k]=std::numeric_limits<LEN_T>::max();
-        bestKA[k]=0.0;
-      }
-
-      cudaMemcpyAsync(dev_bestAA, bestAA, sizeof(Angle)*discr, cudaMemcpyHostToDevice);
-      cudaMemcpyAsync(dev_bestLA, bestLA, sizeof(LEN_T)*discr, cudaMemcpyHostToDevice);
-      cudaMemcpyAsync(dev_bestKA, bestKA, sizeof(uint)*discr, cudaMemcpyHostToDevice);
-      cudaDeviceSynchronize();
-    
-      cudaCheckError(cudaGetLastError());
-      
-      if (!fixedAngles[i-1]){ c0.th(a00+m_2pi*j/(discr*1.0)); } //If angle is fixed I don't have to change it
-      size_t threads=1;
-      size_t blocks=1;
-      if (!fixedAngles[i]){
-        if (discr<512){
-          threads=discr;
-        }
-        else{
-          threads=512;
-          blocks=(int)(discr/512)+1;
-        }
-      }
-      
-      DP::solveCell<CURVE><<<blocks, threads>>>( matrix, discr, size, dev_fixedAngles, 
-                                            c0, c1, dev_bestKA, dev_bestLA, 
-                                            dev_bestAA, a00, a01, dev_params, i
-                                          );
-      cudaDeviceSynchronize();
-      cudaCheckError(cudaGetLastError());
-
-      cudaMemcpyAsync(bestAA, dev_bestAA, sizeof(Angle)*discr, cudaMemcpyDeviceToHost);
-      cudaMemcpyAsync(bestLA, dev_bestLA, sizeof(LEN_T)*discr, cudaMemcpyDeviceToHost);
-      cudaMemcpyAsync(bestKA, dev_bestKA, sizeof(uint)*discr, cudaMemcpyDeviceToHost);
-      cudaDeviceSynchronize();
-      
-      cudaCheckError(cudaGetLastError());
-
-      std::vector<LEN_T> bestLV (bestLA, bestLA+discr);
-      
-      LEN_T bestL=*(std::min_element(bestLV.begin(), bestLV.end()));
-      Angle bestA=bestAA[std::distance(bestLV.begin(), std::find(bestLV.begin(), bestLV.end(), bestL))];
-      uint bestK=bestKA[std::distance(bestLV.begin(), std::find(bestLV.begin(), bestLV.end(), bestL))];
-
-      if (bestL!=std::numeric_limits<LEN_T>::max()){
-        Cell* next=(i==size-1? NULL : &matrix[bestK*size+(i+1)]);
-        matrix[j*size+i]=Cell(bestA, bestL, next, i, j, j*size+i);
-      }
-      if (i==1){
-        matrix[size*j]=Cell(c0.th(), bestL, &matrix[size*j+i], 0, j, size*j);
-      }
-      if (fixedAngles[i-1]){ j=discr; } //If the angle is fixed I don't have to change it
-
-      cudaFree(dev_bestAA);
-      cudaFree(dev_bestLA);
-      cudaFree(dev_bestKA);
-      free(bestAA);
-      free(bestLA);
-      free(bestKA);
+    size_t threads=discr>512 ? 512 : discr;
+    size_t blocks=(int)(discr/threads)+1; 
+    if(fixedAngles[i-1]){
+      threads=1;
+      blocks=1;
     }
+    solveCol<CURVE><<<blocks, threads>>>(matrix, discr, size, dev_fixedAngles, c0, c1, a00, a01, dev_params, i);
+    cudaDeviceSynchronize();
+    cudaCheckError(cudaGetLastError());
   }
+
 #ifdef DEBUG
   cout << "Printing " << endl;
   printVM(matrix, discr, size)
