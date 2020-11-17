@@ -5,7 +5,7 @@ CLR=clear && clear && clear
 CC=g++
 CCFLAGS=-std=c++11 -O3
 CU=nvcc
-CUFLAGS=-std=c++11 -O3 -DCUDA_ON --compiler-options -Wall -rdc=true --default-stream per-thread 
+CUFLAGS=-std=c++11 -O3 -DCUDA_ON --compiler-options -Wall --default-stream per-thread 
 
 AR=ar rcs
 
