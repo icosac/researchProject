@@ -8,6 +8,7 @@ using namespace std;
 #include<dubins.cuh>
 #include<dp.cuh>
 #include<timeperf.hh>
+#include<constants.cuh>
 
 #include<tests.hh>
 
@@ -16,14 +17,14 @@ vector<vector<Configuration2<double> > > Tests = {
 };
 
 vector<K_T> Ks = {3.0, 3.0, 5.0, 3.0, 3.0, 0.1};
-vector<uint> discrs = {4, 120, 360, 720, 2000};
+vector<uint> discrs = {4, 120, 360, 720, 1440, 2880};
 
-#define DISCR 2000
+#define DISCR 2880
 
 int main (){
   cout << "CUDA" << endl;
   cudaFree(0);
-#if true
+#if false
   for (uint discr : discrs){
     cout << "Discr: " << discr << endl;
     for (uint j=0; j<Tests.size(); j++){
@@ -43,14 +44,14 @@ int main (){
       TimePerf tp;
       tp.start();
       cout << "\t";
-      DP::solveDP<Dubins<double> >(v, discr, fixedAngles, curveParamV, false);
+      DP::solveDP<Dubins<double> >(v, discr, fixedAngles, curveParamV, true);
       auto time=tp.getTime();
       cout << "\tExample " << j+1 << " completed in " << time << " ms" << endl;
     }
   }
   
 #else
-  #define KAYA albert
+  #define KAYA omega
   std::vector<bool> fixedAngles;
   for (int i=0; i<KAYA.size(); i++){
     if (i==0 || i==KAYA.size()-1) {
@@ -60,10 +61,14 @@ int main (){
       fixedAngles.push_back(false);
     }
   }
-  std::vector<real_type> curveParamV={0.1};
+  std::vector<real_type> curveParamV={3.0};
   real_type* curveParam=curveParamV.data();
-
+  TimePerf tp;
+  tp.start();
   DP::solveDP<Dubins<double> >(KAYA, DISCR, fixedAngles, curveParamV, true);
+  auto time=tp.getTime();
+  cout << "Elapsed: " << time << " ms" << endl;
+
 #endif
   return 0;
 }

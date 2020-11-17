@@ -3,69 +3,88 @@ OS=$(shell uname)
 CLR=clear && clear && clear
 
 CC=g++
-CCFLAGS=-std=c++11 -Wall -O3
-NV=nvcc
-NVFLAGS=-std=c++11 -arch=sm_75 -rdc=true --default-stream per-thread
+CCFLAGS=-std=c++11 -O3
+CU=nvcc
+CUFLAGS=-std=c++11 -O3 -DCUDA_ON --compiler-options -Wall -rdc=true --default-stream per-thread 
 
 AR=ar rcs
 
-CCSRC=$(wildcard src/*.cc)
-NVSRC=$(wildcard src/*.cu)
-CCOBJ=$(subst src/,src/obj/cc/,$(patsubst %.cc,%.o, $(CCSRC)))
-NVOBJ=$(subst src/,src/obj/cu/,$(patsubst %.cu,%.o, $(NVSRC)))
+CCSRC=$(wildcard srcCC/*.cc)
+CUSRC=$(wildcard srcCU/*.cu)
+CCOBJ=$(subst srcCC/,srcCC/obj/cc/,$(patsubst %.cc,%.o, $(CCSRC)))
+CUOBJ=$(subst srcCU/,srcCU/obj/cu/,$(patsubst %.cu,%.o, $(CUSRC)))
 
 TESTCCSRC=$(wildcard exec/*.cc)
-TESTNVSRC=$(wildcard exec/*.cu)
+TESTCUSRC=$(wildcard exec/*.cu)
 TESTCCEXEC=$(subst exec/,bin/cc/,$(patsubst %.cc,%.out, $(TESTCCSRC)))
-TESTNVEXEC=$(subst exec/,bin/cu/,$(patsubst %.cu,%.out, $(TESTNVSRC)))
+TESTCUEXEC=$(subst exec/,bin/cu/,$(patsubst %.cu,%.out, $(TESTCUSRC)))
 
-INCLUDE=src/include
-INC=-I./lib/include
-LIBS=-L./lib $(INC) -lClothoids
-LIB=libClothoids.a #LIB_DUBINS
+INCLUDECC=srcCC/include
+INCLUDECU=srcCU/include
+INCCC=-I./lib/includeCC
+INCCU=-I./lib/includeCU
+LIBSCC=-L./lib $(INCCC) -lClothoidsCC
+LIBSCU=-L./lib $(INCCU) -lClothoidsCU
+LIBCC=libClothoidsCC.a #LIB_DUBINS
+LIBCU=libClothoidsCU.a #LIB_DUBINS
 MORE_FLAGS=
 
-src/obj/cc/%.o: src/%.cc
-	$(CC) $(CCFLAGS) $(MORE_FLAGS) -c -o $@ $< $(LIBS)
+srcCC/obj/cc/%.o: srcCC/%.cc
+	$(CC) $(CCFLAGS) $(MORE_FLAGS) -c -o $@ $< $(LIBSCC)
 
-src/obj/cu/%.o: src/%.cu
-	$(NV) $(NVFLAGS) $(MORE_FLAGS) -c -o $@ $< $(LIBS)
+srcCU/obj/cu/%.o: srcCU/%.cu
+	$(CU) $(CUFLAGS) $(MORE_FLAGS) -c -o $@ $< $(LIBSCU)
 
 bin/cc/%.out: exec/%.cc
-	$(CC) $(CCFLAGS) $(MORE_FLAGS) -o $@ $< $(LIBS)
+	$(CC) $(CCFLAGS) $(MORE_FLAGS) -o $@ $< $(LIBSCC)
 
-bin/cu/%.out: exec/%.cu
-	$(NV) $(NVFLAGS) $(MORE_FLAGS) -o $@ $< $(LIBS)
+exec/%.cu.o: exec/%.cu
+	$(CU) $(CUFLAGS) $(MORE_FLAGS) -c -o $@ $< $(LIBSCU)
 
-all: echo lib $(TESTCCEXEC) $(TESTNVEXEC)
+bin/cu/%.out: exec/%.cu.o 
+	$(CU) $(CUFLAGS) $(MORE_FLAGS) -o $@ $< $(LIBSCU)
+
+
+all: echo lib $(TESTCCEXEC) $(TESTCUEXEC)
 
 echo:
 	@echo "CCSRC: " $(CCSRC)
-	@echo "NVSRC: " $(NVSRC)
+	@echo "CUSRC: " $(CUSRC)
 	@echo "CCOBJ: " $(CCOBJ)
-	@echo "NVOBJ: " $(NVOBJ)
+	@echo "CUOBJ: " $(CUOBJ)
 	@echo "TESTCCSRC: " $(TESTCCSRC)
-	@echo "TESTNVSRC: " $(TESTNVSRC)
+	@echo "TESTCUSRC: " $(TESTCUSRC)
 	@echo "TESTCCEXEC: " $(TESTCCEXEC)
-	@echo "TESTNVEXEC: " $(TESTNVEXEC)
+	@echo "TESTCUEXEC: " $(TESTCUEXEC)
 
-lib: lib/$(LIB)
+lib: lib/$(LIBCC) lib/$(LIBCU)
 
-mvlib:
+mvlibCC:
 	@rm -rf lib/include
-	$(MKDIR) lib
-	$(MKDIR) lib/include
-	cp -f $(INCLUDE)/*.hh lib/include
-	cp -f $(INCLUDE)/*.tt lib/include
+	$(MKDIR) lib/includeCC
+	cp -f include/*.hh lib/includeCC
+	cp -f $(INCLUDECC)/*.hh lib/includeCC
+	cp -f $(INCLUDECC)/*.tt lib/includeCC
 
-lib/$(LIB): mvlib obj/ bin/ $(CCOBJ) #TODO add CUDA support
-	$(AR) lib/$(LIB) $(CCOBJ)
+mvlibCU:
+	@rm -rf lib/includeCU
+	$(MKDIR) lib/includeCU
+	cp -f include/*.hh lib/includeCU
+	cp -f $(INCLUDECU)/*.cut lib/includeCU
+	cp -f $(INCLUDECU)/*.cuh lib/includeCU
+
+lib/$(LIBCC): mvlibCC obj/ bin/ $(CCOBJ) #TODO add CUDA support
+	$(AR) lib/$(LIBCC) $(CCOBJ)
+
+lib/$(LIBCU): mvlibCU obj/ bin/ $(CUOBJ) 
+	$(AR) lib/$(LIBCU) $(CUOBJ)
 
 clean_lib:
 	rm -rf lib/
 
 clean_obj:
-	rm -rf src/obj/
+	rm -rf srcCC/obj/
+	rm -rf srcCU/obj/
 
 clean_bin:
 	rm -rf bin
@@ -79,6 +98,6 @@ bin/:
 	$(MKDIR) bin/cc
 	$(MKDIR) bin/cu
 obj/:
-	$(MKDIR) src/obj/cc
-	$(MKDIR) src/obj/cu
+	$(MKDIR) srcCC/obj/cc
+	$(MKDIR) srcCU/obj/cu
 

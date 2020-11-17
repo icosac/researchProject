@@ -4,6 +4,8 @@
 #include <curve.cuh>
 #include <utils.cuh>
 #include <settings.hh>
+#include <constants.cuh>
+
 
 #define DUBINS_DEFAULT_KMAX 0.01
 
@@ -42,7 +44,7 @@ public:
     solve();
   }
 
-  Dubins(Configuration2<T1> ci, Configuration2<T1> cf, real_type kmax) :
+  BOTH Dubins(Configuration2<T1> ci, Configuration2<T1> cf, real_type kmax) :
           Curve<T1>(ci, cf, CURVE_TYPE::DUBINS),
           _Dtype(D_TYPE::INVALID),
           _kmax(kmax) 

@@ -1,9 +1,10 @@
-//File included in src/include/dp.hh 
-#ifndef DP_TT
-#define DP_TT
+//File included in src/include/dp.cuh 
+#ifndef DP_CUT
+#define DP_CUT
 
-__constant__ LEN_T MAX_LEN_T = std::numeric_limits<LEN_T>::max();
-
+#ifdef CIAO
+#error ciao
+#endif
 std::vector<Angle> bestAngles(DP::Cell* matrix, int discr, int size){
   DP::Cell* best=&matrix[0];
   //Find best path

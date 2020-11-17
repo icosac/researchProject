@@ -34,7 +34,6 @@ extern real_type const m_pi_2      ; // pi/2
 extern real_type const m_2pi       ; // 2*pi
 extern real_type const m_1_pi      ; // 1/pi
 extern real_type const m_1_sqrt_pi ; // 1/sqrt(pi)
-extern LEN_T     const MAX_LEN_T   ; //std::numeric_limits<LEN_T>::max()
 
 #define printCV(v, d)       \
   printf("<");              \

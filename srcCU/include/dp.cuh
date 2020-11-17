@@ -5,8 +5,8 @@
 #include <utils.cuh>
 #include <typedefs.hh>
 #include <configuration.cuh>
-#include <clothoidG1.hh>
 #include <dubins.cuh>
+#include <constants.cuh>
 
 #include <iostream>
 #include <cmath>

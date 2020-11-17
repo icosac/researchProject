@@ -1,7 +1,5 @@
 #define M_2PI (M_PI*2);
 
-__constant__ LEN_T MAX_LEN_T = std::numeric_limits<LEN_T>::max();
-
 BOTH static inline Angle
 mod2pi(Angle ang){
 	while (ang < 0) ang += M_2PI;
