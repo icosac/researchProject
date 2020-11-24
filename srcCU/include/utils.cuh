@@ -59,7 +59,7 @@ for (int i=0; i<discr; i++){   \
 
 #define printVM(M, discr, size)       \
 for (int i=0; i<discr; i++){          \
-  std::cout << "th" << i;             \
+  std::cout << "l" << i;             \
   for (int j=0; j<size; j++){         \
     std::cout << std::setw(30);       \
     std::cout << M[i*size+j] << "\t"; \
@@ -112,6 +112,12 @@ inline T* cudaSTDVectorToArray(std::vector<T> v){
   }
 
   return a;
+}
+
+inline int cudaGetdeviceID(){
+  int deviceID;
+  cudaGetDevice(&deviceID);
+  return deviceID;
 }
 
 #endif //UTILS_HH

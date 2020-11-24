@@ -23,7 +23,7 @@ public:
   /*!
    * @brief Constructor to only set the type of the curve.
    */
-  Curve(CURVE_TYPE type=CURVE_TYPE::INVALID) : _ci(), _cf(), _type(type), _params(NULL) {}
+  BOTH Curve(CURVE_TYPE type=CURVE_TYPE::INVALID) : _ci(), _cf(), _type(type), _params(NULL) {}
 
   /*!
    * @brief Constructor that takes two `Configuration2` and the type of the curve.
@@ -37,11 +37,11 @@ public:
   BOTH Configuration2<T1>* ci() { return &(this->_ci); }   ///< Returns a pointer to the initial `Configuration2`.
   BOTH Configuration2<T1>* cf() { return &(this->_cf); }   ///< Returns a pointer to the final `Configuration2`.
 
-  CURVE_TYPE type () const { return this->_type; }    ///< Returns type of curve.
+  CURVE_TYPE type () const { return this->_type; }         ///< Returns type of curve.
   
-  real_type* params () const { return this->_params; }         ///< Returns the parameters of the curve.
+  real_type* params () const { return this->_params; }     ///< Returns the parameters of the curve.
 
-  __host__ __device__ virtual LEN_T l() const = 0;                        ///< Returns the length of the curve.
+  BOTH virtual LEN_T l() const = 0;                        ///< Returns the length of the curve.
 };
 
 #endif //CURVE_HH

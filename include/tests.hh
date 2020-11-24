@@ -1,13 +1,26 @@
 #pragma once
 
-vector<Configuration2<double> > kaya1={
+class Run{
+public:
+  std::string name, test_name;
+  double time;
+  uint discr;
+
+  Run (std::string _name, uint _discr, double _time, std::string _test_name) : name(_name), discr(_discr), time(_time), test_name(_test_name) {}
+
+  void write(std::fstream& out){
+    out << "{\"name\" : \"" << name << "\", \"test_name\" : \"" << test_name << "\", \"discr\" : " << discr << ", \"time\" : " << time << "},\n";
+  }
+};
+
+std::vector<Configuration2<double> > kaya1={
         Configuration2<double> (0, 0, -M_PI/3.0),
         Configuration2<double> (-0.1, 0.3, ANGLE::INVALID),
         Configuration2<double> (0.2, 0.8, ANGLE::INVALID),
         Configuration2<double> (1, 1, -M_PI/6.0)
 };
 
-vector<Configuration2<double> > kaya2={
+std::vector<Configuration2<double> > kaya2={
         Configuration2<double> (0, 0, -M_PI/3.0),
         Configuration2<double> (-0.1, 0.3, ANGLE::INVALID),
         Configuration2<double> (0.2, 0.8, ANGLE::INVALID),
@@ -16,7 +29,7 @@ vector<Configuration2<double> > kaya2={
         Configuration2<double> (0.5, 0, -M_PI/6.0)
 };
 
-vector<Configuration2<double> > kaya3={
+std::vector<Configuration2<double> > kaya3={
        Configuration2<double>(0.5, 1.2, 5.0*M_PI/6.0),
        Configuration2<double>(0, 0.8, ANGLE::INVALID),
        Configuration2<double>(0, 0.4, ANGLE::INVALID),
@@ -39,7 +52,7 @@ vector<Configuration2<double> > kaya3={
        Configuration2<double>(2.5, 0.6, 0),
 };
 
-vector<Configuration2<double> > kaya4={
+std::vector<Configuration2<double> > kaya4={
        Configuration2<double>(0.5, 1.2, 5*M_PI/6.0),
        Configuration2<double>(0.0, 0.5, ANGLE::INVALID),
        Configuration2<double>(0.5, 0.5, ANGLE::INVALID),
@@ -54,7 +67,7 @@ vector<Configuration2<double> > kaya4={
        Configuration2<double>(0.0, -0.5, 0)
 };
 
-vector<Configuration2<double> > omega ={
+std::vector<Configuration2<double> > omega ={
       Configuration2<double>(2.9265642, -1.707808758, 9/10*M_PI),
       Configuration2<double>(2.6734362, -1.707808758, ANGLE::INVALID),
       Configuration2<double>(2.5109322, -2.367185958, ANGLE::INVALID),
@@ -84,7 +97,7 @@ vector<Configuration2<double> > omega ={
       Configuration2<double>(2.9265642, -1.707808758, 9/10*M_PI),
 };
 
-vector<Configuration2<double> > albert ={
+std::vector<Configuration2<double> > albert ={
       Configuration2<double>(-475.906, 116.543, 3.927),
       Configuration2<double>(-397.488, 193.652, ANGLE::INVALID),
       Configuration2<double>(-301.255, 291.346, ANGLE::INVALID),
