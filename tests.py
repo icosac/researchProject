@@ -32,7 +32,7 @@ def main():
             tests.append(r.test_name)
         if not r.name in devices:
             devices.append(r.name)
-        if not r.discr in discrs:#and r.discr>300:
+        if not r.discr in discrs and r.discr>300:
             discrs.append(r.discr)
     discrs.sort()
     print(tests)
@@ -75,13 +75,13 @@ def main():
                 if v==0:
                     values.append(0)
                 else:
-                    # values.append(v)
-                    values.append(log(8*v,2))
+                    values.append(v)
+                    # values.append(log(8*v,2))
             rect=ax.bar(x+(j-(l-1)/2)*width, values, width, label=devices[j], color=colors[j])
             rects.append(rect)
 
 
-        ax.set_ylabel('log times in ms')
+        ax.set_ylabel('Times in ms')
         ax.set_xlabel('#Discretizations')
         ax.set_title(tests[i])
         ax.set_xticks(x)

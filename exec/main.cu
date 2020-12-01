@@ -59,7 +59,7 @@ int main (){
   // cudaDeviceSynchronize();
   // // return 0;
 
-#if true
+#if false
   fstream json_out; json_out.open("tests.json", std::fstream::app);
   // std::cout << "\t\t        \tMatrix\t\tCol\tCol-Matrix" << std::endl;
   for (uint discr : discrs){
