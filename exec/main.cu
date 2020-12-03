@@ -75,12 +75,12 @@ int main (){
       std::vector<real_type> curveParamV={Ks[j]};
       real_type* curveParam=curveParamV.data();
 
-      system((std::string("tegrastats --interval 50 --start --logfile xavier")+std::to_string(testI)+".log").c_str());
-      sleep(1);
+      system((std::string("tegrastats --interval 50 --start --logfile ")+std::to_string(testI)+".log").c_str());
+      sleep(2);
       
       TimePerf tp, tp1;
+      
       tp.start();
-      // cout << "\t";
       DP::solveDPMatrix<Dubins<double> >(v, discr, fixedAngles, curveParamV, false);
       auto time1=tp.getTime();
       Run r1(deviceProperties.name, discr, time1, testsNames[j]);
@@ -92,9 +92,9 @@ int main (){
       // Run r2("Xavier", discr, time2, testsNames[j]);
       // r2.write(json_out);
       
+      sleep(2);
       system("tegrastats --stop");
       testI++;
-      sleep(1);
       // cout << "\tExample " << j+1 << std::setw(20) << std::setprecision(5) << time1 << "ms\t" << std::setw(20) << std::setprecision(5) <<  time2 << "ms\t" << std::setw(10) << (time2-time1) << "ms" << endl;
     }
   }
