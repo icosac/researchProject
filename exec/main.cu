@@ -1,6 +1,9 @@
 #include<iostream>
 #include<fstream>
+#include<string>
 #include<math.h>
+#include<stdlib.h>
+#include<unistd.h>
 using namespace std;
 
 // #define DEBUG
@@ -36,7 +39,7 @@ vector<vector<Configuration2<double> > > Tests = {
 vector<K_T> Ks = {3.0, 3.0, 5.0, 3.0, 3.0, 0.1};
 vector<uint> discrs = {4, 120, 360, 720, 1440, 2880};
 
-#define DISCR 8 
+#define DISCR 1440
 
 __global__ void kernel(){
   printf("ciao\n");
@@ -46,20 +49,16 @@ int main (){
   cout << "CUDA" << endl;
   cudaFree(0);
 
-  // int devicesCount;
-  // cudaGetDeviceCount(&devicesCount);
-  // for(int deviceIndex = 0; deviceIndex < devicesCount; ++deviceIndex){
-  //   cudaDeviceProp deviceProperties;
-  //   cudaGetDeviceProperties(&deviceProperties, deviceIndex);
-  //   printf("[%d] %s\n", deviceIndex, deviceProperties.name);
-  // }
-  // cudaSetDevice(0);
+  int devicesCount;
+  cudaGetDeviceCount(&devicesCount);
+  for(int deviceIndex = 0; deviceIndex < devicesCount; ++deviceIndex){
+    cudaDeviceProp deviceProperties;
+    cudaGetDeviceProperties(&deviceProperties, deviceIndex);
+    printf("[%d] %s\n", deviceIndex, deviceProperties.name);
+  }
 
-  // kernel<<<1,2>>>();
-  // cudaDeviceSynchronize();
-  // // return 0;
-
-#if true
+#if true 
+  int testI=0;
   fstream json_out; json_out.open("tests.json", std::fstream::app);
   // std::cout << "\t\t        \tMatrix\t\tCol\tCol-Matrix" << std::endl;
   for (uint discr : discrs){
@@ -78,19 +77,26 @@ int main (){
       std::vector<real_type> curveParamV={Ks[j]};
       real_type* curveParam=curveParamV.data();
 
+      system((std::string("tegrastats --interval 50 --start --logfile xavier")+std::to_string(testI)+".log").c_str());
+      sleep(1);
+      
       TimePerf tp, tp1;
       tp.start();
       // cout << "\t";
       DP::solveDPMatrix<Dubins<double> >(v, discr, fixedAngles, curveParamV, false);
       auto time1=tp.getTime();
-      tp1.start();
-      DP::solveDP<Dubins<double> >(v, discr, fixedAngles, curveParamV, false);
-      auto time2=tp1.getTime();
-      // Run r1("GT 750 Matrix", discr, time1, testsNames[j]);
-      // r1.write(json_out);
-      Run r2("RTX 2060 --arch", discr, time2, testsNames[j]);
-      r2.write(json_out);
+      Run r1(deviceProperties.name, discr, time1, testsNames[j]);
+      r1.write(json_out);
       
+      // tp1.start();
+      // DP::solveDP<Dubins<double> >(v, discr, fixedAngles, curveParamV, false);
+      // auto time2=tp1.getTime();
+      // Run r2("Xavier", discr, time2, testsNames[j]);
+      // r2.write(json_out);
+      
+      system("tegrastats --stop");
+      testI++;
+      sleep(1);
       // cout << "\tExample " << j+1 << std::setw(20) << std::setprecision(5) << time1 << "ms\t" << std::setw(20) << std::setprecision(5) <<  time2 << "ms\t" << std::setw(10) << (time2-time1) << "ms" << endl;
     }
   }
@@ -98,7 +104,7 @@ int main (){
   json_out.close();
   
 #else
-  #define KAYA example1
+  #define KAYA omega
   std::vector<bool> fixedAngles;
   for (int i=0; i<KAYA.size(); i++){
     if (i==0 || i==KAYA.size()-1) {
