@@ -3,6 +3,9 @@ cmake_minimum_required(VERSION 3.10)
 include(GoogleTest)
 
 project(DynamicCurve LANGUAGES CXX)
+set(LIB libDynamicCurve)
+set(APP_EXEC dynamicCurve)
+
 IF(${CUDA_ON} MATCHES ON)
   enable_language(CUDA)
   file(GLOB dynamicCurveExec "exec/main.cu")
@@ -21,9 +24,6 @@ ENDIF()
 set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_FLAGS "-Wall -O3")
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
-
-set(LIB libDynamicCurve)
-set(APP_EXEC dynamicCurve)
 
 include_directories(${SRC}/include include)
 

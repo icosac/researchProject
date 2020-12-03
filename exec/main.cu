@@ -51,11 +51,9 @@ int main (){
 
   int devicesCount;
   cudaGetDeviceCount(&devicesCount);
-  for(int deviceIndex = 0; deviceIndex < devicesCount; ++deviceIndex){
-    cudaDeviceProp deviceProperties;
-    cudaGetDeviceProperties(&deviceProperties, deviceIndex);
-    printf("[%d] %s\n", deviceIndex, deviceProperties.name);
-  }
+  cudaDeviceProp deviceProperties;
+  cudaGetDeviceProperties(&deviceProperties, 0);
+  printf("[%d] %s\n", 0, deviceProperties.name);
 
 #if true 
   int testI=0;
