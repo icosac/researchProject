@@ -14,7 +14,7 @@ CUSRC=$(wildcard srcCU/*.cu)
 CCOBJ=$(subst srcCC/,srcCC/obj/cc/,$(patsubst %.cc,%.o, $(CCSRC)))
 CUOBJ=$(subst srcCU/,srcCU/obj/cu/,$(patsubst %.cu,%.o, $(CUSRC)))
 
-TESTCCSRC=$(wildcard exec/*.cc)
+TESTCCSRC=$(filter-out exec/generate.cc, $(wildcard exec/*.cc))
 TESTCUSRC=$(wildcard exec/*.cu)
 TESTCCEXEC=$(subst exec/,bin/cc/,$(patsubst %.cc,%.out, $(TESTCCSRC)))
 TESTCUEXEC=$(subst exec/,bin/cu/,$(patsubst %.cu,%.out, $(TESTCUSRC)))
@@ -45,7 +45,7 @@ bin/cu/%.out: exec/%.cu.o
 	$(CU) $(CUFLAGS) $(MORE_FLAGS) -o $@ $< $(LIBSCU)
 
 
-all: echo CPU GPU 
+all: echo #CPU GPU 
 
 CPU: lib/$(LIBCC) $(TESTCCEXEC)
 
