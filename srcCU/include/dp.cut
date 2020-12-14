@@ -2,7 +2,7 @@
 #ifndef DP_CUT
 #define DP_CUT
 
-#define THREADS 512
+#define THREADS 128
 
 std::vector<Angle> bestAngles(DP::Cell* matrix, int discr, int size){
   DP::Cell* best=&matrix[0];
@@ -290,7 +290,8 @@ std::vector<Angle> solveDPMatrix (std::vector<Configuration2<real_type> > points
     guessInitialAngles(points, fixedAngles);
   }
 
-  DP::Cell* matrix=new DP::Cell[size*discr];
+  DP::Cell* matrix;
+  cudaMallocHost(&matrix, (sizeof(DP::Cell)*size*discr));
   DP::Cell* dev_matrix;
   cudaMalloc(&dev_matrix, sizeof(DP::Cell)*size*(discr+addAngles));
   
@@ -317,8 +318,8 @@ std::vector<Angle> solveDPMatrix (std::vector<Configuration2<real_type> > points
     Configuration2<real_type> c1=points[i+1];
 
     size_t threads=discr>THREADS ? THREADS : discr;
-    size_t blocks=numberOfSMs; 
-    // size_t blocks=((int)(discr/threads)+1)*numberOfSMs; 
+    //size_t blocks=numberOfSMs; 
+    size_t blocks=((int)(discr/threads)+1)*numberOfSMs; 
     if(fixedAngles[i]){
       threads=1;
       blocks=1;
@@ -360,7 +361,8 @@ std::vector<Angle> solveDPMatrix (std::vector<Configuration2<real_type> > points
   for (unsigned int i=0; i<bestA.size(); i++){ cout << bestA[i] << (i!=bestA.size()-1 ? ", " : "];\n"); }
   cout << "KMAX: " << params[0] << endl;
 #endif
-  
+  cudaFreeHost(matrix);
+
   cudaFree(dev_matrix);
   cudaFree(dev_params);
   cudaFree(dev_fixedAngles);

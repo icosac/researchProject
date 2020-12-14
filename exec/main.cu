@@ -37,13 +37,9 @@ vector<vector<Configuration2<double> > > Tests = {
 };
 
 vector<K_T> Ks = {3.0, 3.0, 5.0, 3.0, 3.0, 0.1};
-vector<uint> discrs = {4, 120, 360, 720, 1440, 2880};
+vector<uint> discrs = {4, 120, 360, 720, 1440};//, 2880};
 
-#define DISCR 1440
-
-__global__ void kernel(){
-  printf("ciao\n");
-}
+#define DISCR 2880
 
 int main (){
   cout << "CUDA" << endl;
@@ -55,13 +51,13 @@ int main (){
   cudaGetDeviceProperties(&deviceProperties, 0);
   printf("[%d] %s\n", 0, deviceProperties.name);
 
-#if true 
+#if true
   int testI=0;
-  fstream json_out; json_out.open("tests.json", std::fstream::app);
   // std::cout << "\t\t        \tMatrix\t\tCol\tCol-Matrix" << std::endl;
   for (uint discr : discrs){
     cout << "Discr: " << discr << endl;
     for (uint j=0; j<Tests.size(); j++){
+      fstream json_out; json_out.open("tests.json", std::fstream::app);
       std::vector<bool> fixedAngles;
       vector<Configuration2<double> > v=Tests[j];
       for (int i=0; i<v.size(); i++){
@@ -96,8 +92,10 @@ int main (){
       system("tegrastats --stop");
       testI++;
       // cout << "\tExample " << j+1 << std::setw(20) << std::setprecision(5) << time1 << "ms\t" << std::setw(20) << std::setprecision(5) <<  time2 << "ms\t" << std::setw(10) << (time2-time1) << "ms" << endl;
+      json_out.close();
     }
   }
+  fstream json_out; json_out.open("tests.json", std::fstream::app);
   json_out << "]}\n";
   json_out.close();
   
@@ -119,10 +117,10 @@ int main (){
   tp.start();
   DP::solveDPMatrix<Dubins<double> >(KAYA, DISCR, fixedAngles, curveParamV, false);
   auto time1=tp.getTime();
-  tp1.start();
-  DP::solveDP<Dubins<double> >(KAYA, DISCR, fixedAngles, curveParamV, false);
-  auto time2=tp1.getTime();
-  cout << "Elapsed: " << std::setw(10) << time1 << "ms\t" << std::setw(10) << time2 << "ms\t" << std::setw(10) << (time2-time1) << "ms" << endl;
+  // tp1.start();
+  // DP::solveDP<Dubins<double> >(KAYA, DISCR, fixedAngles, curveParamV, false);
+  // auto time2=tp1.getTime();
+  cout << "Elapsed: " << std::setw(10) << time1 << "ms\t" << endl; //<< std::setw(10) << time2 << "ms\t" << std::setw(10) << (time2-time1) << "ms" << endl;
 #endif
   return 0;
 }
