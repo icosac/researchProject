@@ -13,6 +13,10 @@ class Run:
         self.time=time
         self.test_name=test_name
         self.power_file=power_file
+        self.n=1
+
+    def __eq__(self, other):
+        return (self.name==other.name and self.discr==other.discr and self.test_name==other.test_name)
 
     def __str__(self):
         return (self.name+" "+self.test_name+" "+str(self.discr)+" "+str(self.time)+" "+self.power_file)
@@ -99,15 +103,30 @@ def main():
         pass
 
 
-    #Read data from json file
+    #Read data from json file and add every possible thing
     runs=[]
     with open(input_file) as json_file:
         data=json.load(json_file)
         for p in data['run']:
+            r=Run("", 0, 0, "")
             try:
-                runs.append(Run(p['name'], p['discr'], p['time'], p['test_name'], p['power_file']))
+                r=Run(p['name'], p['discr'], p['time'], p['test_name'], p['power_file'])
             except:
-                runs.append(Run(p['name'], p['discr'], p['time'], p['test_name']))
+                r=Run(p['name'], p['discr'], p['time'], p['test_name'])
+            found=False
+            for i in range(len(runs)):
+                if runs[i]==r:
+                    runs[i].time+=r.time 
+                    runs[i].n+=1
+                    found=True
+
+            if not found:
+                runs.append(r)
+
+    #Run through all runs and check which had multiple times.
+    for r in runs:
+        if r.n>1:
+            r.time=(r.time/r.n)
 
     #Add data to structures
     tests=[]
@@ -210,7 +229,7 @@ def main():
             ax[d].set_yticks(list(np.arange(0, longest_y, longest_y/5))+[longest_y])
             ax[d].legend()
         # plt.show()
-        plt.savefig((str(i)+"_b.png"), transparent=True)
+        plt.savefig("images/"+(str(i)+"_b.png"), transparent=True)
 
 
 
