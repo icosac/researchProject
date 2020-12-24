@@ -1,140 +1,127 @@
 #include<iostream>
+#include<fstream>
+#include<string>
 #include<math.h>
+#include<stdlib.h>
+#include<unistd.h>
 using namespace std;
 
-#include<utils.hh>
+// #define DEBUG
 
-template<class T>
-class Configuration {
-public:
-  T x, y, th;
+#include<utils.cuh>
+#include<dubins.cuh>
+#include<dp.cuh>
+#include<timeperf.hh>
+#include<constants.cuh>
 
-  Configuration() : x(0), y(0), th(0) {}
-  Configuration(T _x, T _y, T _th) : x(_x), y(_y), th(_th) {}
+#include<tests.hh>
 
-  __host__ __device__ T dist(Configuration B){
-    T a=pow(this->x-B.x, 2);
-    T b=pow(this->y-B.y, 2);
-    return (sqrt(a+b));
-  }
-
-  Configuration copy(const Configuration c){
-    this->x=c.x;
-    this->y=c.y;
-    this->th=c.th;
-    return *this;
-  }
-
-  Configuration operator= (Configuration c){
-    return this->copy(c);
-  }
-
-  std::stringstream to_string (std::string str="") const {
-    std::stringstream out;
-    out << (str!="" ? "" : str+" ") << "x: " << this->x << "  y: " << this->y << "  th: " << this->th;
-    return out;
-  }
-
-  friend std::ostream& operator<<(std::ostream &out, const Configuration& data) {
-    out << data.to_string().str();
-    return out;
-  }
+vector<Configuration2<real_type> > example1 = {
+  Configuration2<real_type>(0,0,-2.0*M_PI/8.0),
+  Configuration2<real_type>(2,2,ANGLE::INVALID),
+  Configuration2<real_type>(6,-1,ANGLE::INVALID),
+  Configuration2<real_type>(8,1,2.0*M_PI/8.0)
 };
 
-class Cell {
-public:
-  int i, j;
-  double val;
+vector<std::string> testsNames = { 
+  "Kaya Example 1",
+  "Kaya Example 2",
+  "Kaya Example 3",
+  "Kaya Example 4",
+  "Omega",
+  "Circuit"
+}; 
 
-  Cell() : i(0), j(0), val(0.0) {}
-  Cell(int _i, int _j, double _val) : i(_i), j(_j), val(_val) {}
-
-  Cell copy(Cell c){
-    this->i=c.i;
-    this->j=c.j;
-    this->val=c.val;
-    return *this;
-  }
-
-  Cell operator= (Cell c){
-    return this->copy(c);
-  }
-  
-  std::stringstream to_string (std::string str="") const {
-    std::stringstream out;
-    out << (str!="" ? "" : str+" ") << this->val;
-    return out;
-  }
-
-  friend std::ostream& operator<<(std::ostream &out, const Cell& data) {
-    out << data.to_string().str();
-    return out;
-  }
+vector<vector<Configuration2<double> > > Tests = {
+  kaya1, kaya2, kaya3, kaya4, omega, albert
 };
 
-#define DISC 4
-#define DIM 4
-#define SIZE DISC*DIM
+vector<K_T> Ks = {3.0, 3.0, 5.0, 3.0, 3.0, 0.1};
+vector<uint> discrs = {4, 120, 360, 720, 1440};//, 2880};
 
-inline void cudaCheckError(cudaError_t err, bool catchErr=true){
-  try{
-    ASSERT((err==cudaSuccess), (std::string("Cuda error: ")+cudaGetErrorString(err)))
-  }
-  catch(std::runtime_error e){
-    if (catchErr){
-      std::cout << e.what() << std::endl;
+#define DISCR 2880
+
+int main (){
+  cout << "CUDA" << endl;
+  cudaFree(0);
+
+  int devicesCount;
+  cudaGetDeviceCount(&devicesCount);
+  cudaDeviceProp deviceProperties;
+  cudaGetDeviceProperties(&deviceProperties, 0);
+  printf("[%d] %s\n", 0, deviceProperties.name);
+
+#if true
+  int testI=0;
+  // std::cout << "\t\t        \tMatrix\t\tCol\tCol-Matrix" << std::endl;
+  for (uint discr : discrs){
+    cout << "Discr: " << discr << endl;
+    for (uint j=0; j<Tests.size(); j++){
+      //fstream json_out; json_out.open("tests.json", std::fstream::app);
+      std::vector<bool> fixedAngles;
+      vector<Configuration2<double> > v=Tests[j];
+      for (int i=0; i<v.size(); i++){
+        if (i==0 || i==v.size()-1) {
+          fixedAngles.push_back(true);
+        }
+        else {
+          fixedAngles.push_back(false);
+        }
+      }
+      std::vector<real_type> curveParamV={Ks[j]};
+      real_type* curveParam=curveParamV.data();
+
+      //system((std::string("tegrastats --interval 50 --start --logfile ")+std::to_string(testI)+".log").c_str());
+      //sleep(2);
+      
+      TimePerf tp, tp1;
+      
+      tp.start();
+      DP::solveDPMatrix<Dubins<double> >(v, discr, fixedAngles, curveParamV, false);
+      auto time1=tp.getTime();
+      Run r1(deviceProperties.name, discr, time1, testsNames[j]);
+      //r1.write(json_out);
+      
+      // tp1.start();
+      // DP::solveDP<Dubins<double> >(v, discr, fixedAngles, curveParamV, false);
+      // auto time2=tp1.getTime();
+      // Run r2("Xavier", discr, time2, testsNames[j]);
+      // r2.write(json_out);
+      
+      //sleep(2);
+      //system("tegrastats --stop");
+      //testI++;
+      cout << "\tExample " << j+1 << std::setw(20) << std::setprecision(5) << time1 << "ms\t" << std::endl;// std::setw(20) << std::setprecision(5) <<  time2 << "ms\t" << std::setw(10) << (time2-time1) << "ms" << endl;
+      //json_out.close();
     }
-    else{
-      throw e;
-    }
   }
-}
-
-__global__ void kernel(Cell* matrix, int i, Configuration<double>* conf){
-  int tidx=threadIdx.x+blockDim.x*blockIdx.x;
-  int id=i+tidx*DIM;
-  printf("matrix[%d]: %d matrix[%d]: %d\n", id, matrix[id], (tidx*DIM+i+1), matrix[tidx*DIM+i+1]);
-  printf("conf[%d]: (%f, %f) conf[%d]: (%f, %f)\n", i, conf[i].x, conf[i].y, tidx, conf[tidx].x, conf[tidx].y);
-  matrix[id].val=matrix[tidx*DIM+i+1].val+conf[i].dist(conf[tidx]);
-}
-
-int main(){
-  cudaError_t cudaErr=cudaSuccess;
-
-  Cell* matrix; 
-  Configuration<double>* conf;
+  //fstream json_out; json_out.open("tests.json", std::fstream::app);
+  //json_out << "]}\n";
+  //json_out.close();
   
-  cudaMallocManaged(&matrix, SIZE*sizeof(Cell));
-  cudaMallocManaged(&conf, DIM*sizeof(Configuration<double>));
-
-  for (int i=DIM; i>0; i--){
-    conf[i-1].x=i;
-    conf[i-1].y=i;
-    conf[i-1].th=0;
-  }
-
-  for (int i=0; i<DIM; i++){
-    for (int j=0; j<DISC; j++){
-      matrix[i*DISC+j].val=i*DISC+j;
+#else
+  #define KAYA omega
+  std::vector<bool> fixedAngles;
+  for (int i=0; i<KAYA.size(); i++){
+    if (i==0 || i==KAYA.size()-1) {
+      fixedAngles.push_back(true);
+    }
+    else {
+      fixedAngles.push_back(false);
     }
   }
-  printVM(matrix, DISC, DIM)
-
-  for (int i=0; i<DIM; i++){
-    for (int j=0; j<DISC; j++){
-      matrix[i*DISC+j].val=0;
-    }
-  }
+  std::vector<real_type> curveParamV={2.0};
+  real_type* curveParam=curveParamV.data();
   
-  for (int i=DIM-1; i>0; i--){
-    kernel<<<1, DISC>>>(matrix, i, conf);
-    cudaCheckError(cudaGetLastError());
-    cudaErr=cudaDeviceSynchronize();  
-    cudaCheckError(cudaErr);
-    printVM(matrix, DISC, DIM)
-    cout << endl;
-  }
-
-  cudaFree(matrix);
+  TimePerf tp, tp1;
+  tp.start();
+  DP::solveDPMatrix<Dubins<double> >(KAYA, DISCR, fixedAngles, curveParamV, false);
+  auto time1=tp.getTime();
+  // tp1.start();
+  // DP::solveDP<Dubins<double> >(KAYA, DISCR, fixedAngles, curveParamV, false);
+  // auto time2=tp1.getTime();
+  cout << "Elapsed: " << std::setw(10) << time1 << "ms\t" << endl; //<< std::setw(10) << time2 << "ms\t" << std::setw(10) << (time2-time1) << "ms" << endl;
+#endif
   return 0;
 }
+

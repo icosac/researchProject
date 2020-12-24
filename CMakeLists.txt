@@ -1,25 +1,38 @@
-cmake_minimum_required(VERSION 3.18)
+cmake_minimum_required(VERSION 3.10)
 #set(CMAKE_CUDA_COMPILER "/usr/local/cuda-10.0/bin/nvcc") #Sometimes one needs to set the path to the compiler
 include(GoogleTest)
 
 project(DynamicCurve LANGUAGES CXX)
-IF(${CUDA_ON} MATCHES ON)
-  enable_language(CUDA)
-  file(GLOB dynamicCurveExec "exec/main.cu")
-ELSE()
-  file(GLOB dynamicCurveExec "exec/main.cc")
-ENDIF()
-
-set(CMAKE_CXX_STANDARD 11)
-set(CMAKE_CXX_FLAGS "-Wall -O3")
-set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
-
 set(LIB libDynamicCurve)
 set(APP_EXEC dynamicCurve)
 
-include_directories(src/include)
+set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS} "-Wall -O3")
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
-file(GLOB dynamicCurveSrc "src/*.cc")
+IF(${CUDA_ON} MATCHES ON)
+  enable_language(CUDA)
+  file(GLOB dynamicCurveExec "exec/main.cu")
+  add_definitions(-DCUDA_ON)
+  #I chose not to use -rdc=true simply because the behavior of __device__ and __constant__ is meant to be local to the file
+  set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} -std=c++11 -O3 -arch=sm_75 -DCUDA_ON --default-stream per-thread")
+  #set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} -std=c++11 -O3 -DCUDA_ON --default-stream per-thread --compiler-options -Wall")
+  set(SRC "srcCU")
+  set(SRCF "${SRC}/*.cu")
+ELSE()
+  file(GLOB dynamicCurveExec "exec/main.cc")
+  set(SRC "srcCC")
+  set(SRCF "${SRC}/*.cc")
+ENDIF()
+
+message(STATUS "Compiling C++ with: " -std=c++${CMAKE_CXX_STANDARD} ${CMAKE_CXX_FLAGS})
+message(STATUS "Compiling CUDA with: " ${CMAKE_CUDA_FLAGS})
+
+include_directories(${SRC}/include include)
+
+file(GLOB dynamicCurveSrc ${SRCF})
+
+message(STATUS "${dynamicCurveSrc}")
 
 add_library(${LIB} STATIC ${dynamicCurveSrc})
 

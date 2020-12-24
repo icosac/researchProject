@@ -1,0 +1,374 @@
+//File included in src/include/dp.cuh 
+#ifndef DP_CUT
+#define DP_CUT
+
+#define THREADS 128
+
+std::vector<Angle> bestAngles(DP::Cell* matrix, int discr, int size){
+  DP::Cell* best=&matrix[0];
+  //Find best path
+  for (int i=size; i<discr*size; i+=size){
+    if (best->l()>matrix[i].l()  && matrix[i].l()!=0){ //TODO The second check is actually a bug in solveCell, but I'm not in the right mind to find this bug, please fix later
+      best=&matrix[i];
+    }
+  }
+  //Retrieve best angles
+  vector<Angle> ret(1, best->th());
+  uint nextID=best->next();
+  while (nextID!=0){
+    ret.push_back(matrix[nextID].th());
+    nextID=matrix[nextID].next();
+  }
+  return ret;
+}
+
+std::vector<Angle> bestAnglesMatrix(DP::Cell* matrix, int discr, int size, const std::vector<bool>& fixedAngles){
+  DP::Cell* best=&matrix[0];
+
+  if (!fixedAngles[0]){
+    for(int i=1; i<discr; i++){
+      if (matrix[i].l()<best->l())
+        best=&matrix[i];
+    }
+  }
+
+  vector<Angle> ret(1, best->th());
+  uint nextID=best->next();
+  while (nextID!=0){
+    ret.push_back(matrix[nextID].th());
+    nextID=matrix[nextID].next();
+  }
+  return ret;
+}
+
+
+template<class CURVE>
+__global__ void solveCell(DP::Cell* matrix, uint discr, uint size, const bool* fixedAngles, 
+                          Configuration2<real_type> c0, Configuration2<real_type> c1, uint* bestK, LEN_T* bestL,
+                          Angle* bestA, Angle a00, Angle a01, real_type* params, int i
+                          ){
+  int k=threadIdx.x+blockDim.x*blockIdx.x;
+  if(k<discr){
+    if (!fixedAngles[i]){ c1.th(a01+2*M_PI*k/(discr*1.0)); } //If angle is fixed I don't have to change it
+    CURVE c=CURVE(c0, c1, params); 
+    if (c.l()>0){
+      DP::Cell* next=(i==size-1 ? NULL : &matrix[k*size+(i+1)]);
+      LEN_T currL=c.l();
+      if (next!=NULL){
+        currL+=next->l();
+      }  
+        bestL[k]=currL;
+        bestA[k]=c1.th();
+        bestK[k]=k;
+    }
+  }
+}
+
+template<class CURVE>
+__global__ void solveCol( DP::Cell* matrix, uint discr, uint size, const bool* fixedAngles, 
+                          Configuration2<real_type> c0, Configuration2<real_type> c1, 
+                          Angle a00, Angle a01, real_type* params, int i
+                        ){
+  uint tidx=threadIdx.x+blockDim.x*blockIdx.x;
+  uint stride=blockDim.x*gridDim.x;
+
+  uint j=tidx;
+  // if (j<discr){
+  for (; j<discr; j+=stride){
+    Angle bestA=0.0;
+    LEN_T bestL=MAX_LEN_T; 
+    int bestK=0;
+
+    if (!fixedAngles[i-1]){ c0.th(a00+2*M_PI*j/(discr*1.0)); } //If angle is fixed I don't have to change it
+    
+    for (int k=0; k<discr; k++){ //SolveCell
+      LEN_T currL=MAX_LEN_T;
+      if (!fixedAngles[i]){ c1.th(a01+2*M_PI*k/(discr*1.0)); } //If angle is fixed I don't have to change it
+      CURVE c=CURVE(c0, c1, params); 
+      DP::Cell* next=(i==size-1 ? NULL : &matrix[k*size+(i+1)]);
+      if (c.l()>0){
+        currL=c.l();
+        if (next!=NULL){
+          currL+=next->l();
+        }  
+        if (currL<bestL || bestL==MAX_LEN_T){
+          bestL=currL;
+          bestA=c1.th();
+          bestK=k;
+        }
+      }
+      if (fixedAngles[i]){ k=discr; } //If the angle is fixed I don't have to change it
+    }
+    
+    if (bestL!=MAX_LEN_T){
+      Cell* next=(i==size-1? NULL : &matrix[bestK*size+(i+1)]);
+      uint nextID=(i==size-1 ? 0 : bestK*size+(i+1));
+      matrix[j*size+i]=Cell(bestA, bestL, nextID, i, j, j*size+i);
+    }
+    if (i==1){
+      matrix[size*j]=Cell(c0.th(), bestL, (size*j+i), 0, j, size*j);
+    }
+    if(fixedAngles[i-1]) j=discr;
+  }
+}
+
+template<class CURVE>
+std::vector<Angle> solveDP (std::vector<Configuration2<real_type> > points, int discr, const std::vector<bool> fixedAngles, std::vector<real_type> params, bool guessInitialAnglesVal=false){
+  cudaError_t err=cudaSuccess;
+  int numberOfSMs; cudaDeviceGetAttribute(&numberOfSMs, cudaDevAttrMultiProcessorCount, cudaGetdeviceID());
+  
+  uint size=points.size();
+  if (points.size()!=fixedAngles.size()){
+    cerr << "Number of points and number of fixed angles are not the same: " << points.size() << "!=" << fixedAngles.size() << endl;
+    return std::vector<Angle>();
+  }
+  if (guessInitialAnglesVal){
+    DP::guessInitialAngles(points, fixedAngles);
+  }
+  DP::Cell* matrix=new DP::Cell[size*discr];
+  DP::Cell* dev_matrix;
+  cudaMalloc(&dev_matrix, sizeof(DP::Cell)*discr*size);
+  cudaCheckError(cudaGetLastError());
+  
+  bool* dev_fixedAngles=cudaSTDVectorToArray<bool>(fixedAngles);
+  real_type* dev_params=cudaSTDVectorToArray<real_type>(params);
+  
+  cudaCheckError(cudaGetLastError());
+  
+  for (int i=size-1; i>0; i--){
+    Configuration2<real_type>c0=points[i-1];
+    Configuration2<real_type>c1=points[i];
+    Angle a00=c0.th(), a01=c1.th();
+    size_t threads=discr>THREADS ? THREADS : discr;
+    size_t blocks=numberOfSMs; 
+    // size_t blocks=((int)(discr/threads)+1)*numberOfSMs; 
+    if(fixedAngles[i-1]){
+      threads=1;
+      blocks=1;
+    }
+    solveCol<CURVE><<<blocks, threads>>>(dev_matrix, discr, size, dev_fixedAngles, c0, c1, a00, a01, dev_params, i);
+    cudaDeviceSynchronize();
+    cudaCheckError(cudaGetLastError());
+  }
+
+  cudaMemcpy(matrix, dev_matrix, sizeof(DP::Cell)*size*discr, cudaMemcpyDeviceToHost);
+  cudaCheckError(cudaGetLastError());
+
+#ifdef DEBUG
+  cout << "Printing " << endl;
+  printVM(matrix, discr, size)
+  //Retrieve angles
+  cout << "Computing best angles" << endl;
+#endif
+  std::vector<Angle> bestA=DP::bestAngles(matrix, discr, size);
+#ifdef DEBUG
+  printV(bestA)
+#endif
+  
+#ifdef DEBUG
+  LEN_T Length=0.0;
+  for (unsigned int i=bestA.size()-1; i>0; i--){
+    points[i].th(bestA[i]);
+    points[i-1].th(bestA[i-1]);
+    CURVE c(points[i-1], points[i], params.data());
+    Length+=c.l();
+  }
+  cout << "Length: " << setprecision(20) << Length << endl;
+
+  cout << "Printing for Matlab" << endl;
+  cout << "X=[";
+  for (unsigned int i=0; i<points.size(); i++){ cout << points[i].x() << (i!=points.size()-1 ? ", " : "];\n"); }
+  cout << "Y=[";
+  for (unsigned int i=0; i<points.size(); i++){ cout << points[i].y() << (i!=points.size()-1 ? ", " : "];\n"); }
+  cout << "th=[";
+  for (unsigned int i=0; i<bestA.size(); i++){ cout << bestA[i] << (i!=bestA.size()-1 ? ", " : "];\n"); }
+  cout << "KMAX: " << params[0] << endl;
+#endif
+
+  free(matrix);
+  cudaFree(dev_matrix);
+  cudaFree(dev_fixedAngles);
+  cudaFree(dev_params);
+
+  return bestA;
+}
+
+template<class CURVE>
+__global__ void solveMatrixCell ( DP::Cell* matrix, uint discr, Configuration2<real_type> c0, Configuration2<real_type> c1,
+                                  real_type* params, int i, int j, real_type* results, uint* next_r){
+    int h=threadIdx.x+blockDim.x*blockIdx.x;
+    if (h<discr){
+      c0.th(matrix[i*discr+j].th());
+      c1.th(matrix[(i+1)*discr+h].th());
+
+      CURVE c=CURVE(c0, c1, params);
+      LEN_T currL=c.l()+matrix[(i+1)*discr+h].l();
+
+      results[h]=currL;
+      next_r[h]=(i+1)*discr+h;
+
+      //if (currL<matrix[i*discr+j].l()){
+      //  matrix[i*discr+j].l(currL);
+      //  matrix[i*discr+j].next((i+1)*discr+h);
+      //}
+    }
+}
+template<class CURVE> 
+__global__ void solveMatrixCol1 (DP::Cell* matrix, uint discr, uint size, const bool* fixedAngles, 
+                                Configuration2<real_type> c0, Configuration2<real_type> c1, 
+                                real_type* params, int i){
+  uint tidx=threadIdx.x+blockDim.x*blockIdx.x;
+  uint stride=blockDim.x*gridDim.x;
+
+  uint j=tidx;
+  for (; j<discr; j+=stride){
+    real_type* results=(real_type*)malloc(sizeof(real_type)*discr);
+    uint* next_r=(uint*)malloc(sizeof(uint)*discr);
+    size_t threads=THREADS;
+    size_t blocks=(int)(discr/threads)+1;
+    if (fixedAngles[i+1]) {
+      threads=1;
+      blocks=1;
+    }
+
+    // solveMatrixCell<CURVE><<<blocks, threads>>>(matrix, discr, c0, c1, params, i, j, results, next_r);
+    
+    real_type bestL=MAX_LEN_T;
+    int next_id=0;
+    for (uint h=0; h<discr; h++){
+      if (bestL>results[h]){
+        bestL=results[h];
+        next_id=next_r[h];
+      }
+    }
+    if(bestL!=MAX_LEN_T){
+      matrix[i*discr+j].l(bestL);
+      matrix[i*discr+j].next(next_id);
+    }
+
+    free(results);
+    free(next_r);
+
+    if(fixedAngles[i]) j=discr;
+  }
+}
+
+template<class CURVE> 
+__global__ void solveMatrixCol (DP::Cell* matrix, uint discr, uint size, const bool* fixedAngles, 
+                                Configuration2<real_type> c0, Configuration2<real_type> c1, 
+                                real_type* params, int i){
+  uint tidx=threadIdx.x+blockDim.x*blockIdx.x;
+  uint stride=blockDim.x*gridDim.x;
+
+  uint j=tidx;
+  // if (j<discr){
+  for (; j<discr; j+=stride){
+    for (uint h=0; h<discr; h++){
+      c0.th(matrix[i*discr+j].th());
+      c1.th(matrix[(i+1)*discr+h].th());
+
+      CURVE c=CURVE(c0, c1, params);
+      LEN_T currL=c.l()+matrix[(i+1)*discr+h].l();
+      if (currL<matrix[i*discr+j].l()){
+        matrix[i*discr+j].l(currL);
+        matrix[i*discr+j].next((i+1)*discr+h);
+      }
+      if (fixedAngles[i+1]) {h=discr;}
+    }
+    if(fixedAngles[i]) j=discr;
+  }
+}
+
+template<class CURVE>
+std::vector<Angle> solveDPMatrix (std::vector<Configuration2<real_type> > points, int discr, const std::vector<bool> fixedAngles, std::vector<real_type> params, bool guessInitialAnglesVal=false){
+
+  int numberOfSMs; cudaDeviceGetAttribute(&numberOfSMs, cudaDevAttrMultiProcessorCount, cudaGetdeviceID());
+  uint addAngles=0;
+  size_t size=points.size();
+
+  if(guessInitialAnglesVal && addAngles>0){
+    guessInitialAngles(points, fixedAngles);
+  }
+
+  DP::Cell* matrix;
+  cudaMallocHost(&matrix, (sizeof(DP::Cell)*size*discr));
+  DP::Cell* dev_matrix;
+  cudaMalloc(&dev_matrix, sizeof(DP::Cell)*size*(discr+addAngles));
+  
+  bool* dev_fixedAngles=cudaSTDVectorToArray<bool>(fixedAngles);
+  real_type* dev_params=cudaSTDVectorToArray<real_type>(params);  
+
+  for (uint i=0; i<size; i++){ //TODO change back, remove l=-1 if fixedAngles
+    LEN_T l = (i==size-1 ? 0 : std::numeric_limits<LEN_T>::max());
+    for (uint j=0; j<discr; j++){
+      if (fixedAngles[i]){
+        matrix[i*discr+j]=DP::Cell(points[i].th(), (j==0 ? l : -1), 0, i, j, i*discr);
+
+      }
+      else {
+        matrix[i*discr+j]=DP::Cell(2*M_PI*j/discr, l, 0, i, j, i*discr+j);
+      }
+    }
+  }
+  cudaMemcpy(dev_matrix, matrix, sizeof(DP::Cell)*size*discr, cudaMemcpyHostToDevice);
+  cudaCheckError(cudaGetLastError());
+
+  for (int i=size-2; i>=0; i--){
+    Configuration2<real_type> c0=points[i];
+    Configuration2<real_type> c1=points[i+1];
+
+    size_t threads=discr>THREADS ? THREADS : discr;
+    //size_t blocks=numberOfSMs; 
+    size_t blocks=((int)(discr/threads)+1)*numberOfSMs; 
+    if(fixedAngles[i]){
+      threads=1;
+      blocks=1;
+    }
+    solveMatrixCol<CURVE><<<blocks, threads>>>(dev_matrix, discr, size, dev_fixedAngles, c0, c1, dev_params, i);
+    cudaDeviceSynchronize();
+    cudaCheckError(cudaGetLastError());
+  }
+  cudaMemcpy(matrix, dev_matrix, sizeof(DP::Cell)*size*discr, cudaMemcpyDeviceToHost);
+  cudaCheckError(cudaGetLastError());
+
+#ifdef DEBUG
+  cout << "Printing " << endl;
+  printVM(matrix, size, discr)
+  //Retrieve angles
+  cout << "Computing best angles" << endl;
+#endif
+  std::vector<Angle> bestA=DP::bestAnglesMatrix(matrix, discr, size, fixedAngles);
+#ifdef DEBUG
+  printV(bestA)
+#endif
+  
+#ifdef DEBUG
+  LEN_T Length=0.0;
+  for (unsigned int i=bestA.size()-1; i>0; i--){
+    points[i].th(bestA[i]);
+    points[i-1].th(bestA[i-1]);
+    CURVE c(points[i-1], points[i], params.data());
+    Length+=c.l();
+  }
+  cout << "Length: " << setprecision(20) << Length << endl;
+
+  cout << "Printing for Matlab" << endl;
+  cout << "X=[";
+  for (unsigned int i=0; i<points.size(); i++){ cout << points[i].x() << (i!=points.size()-1 ? ", " : "];\n"); }
+  cout << "Y=[";
+  for (unsigned int i=0; i<points.size(); i++){ cout << points[i].y() << (i!=points.size()-1 ? ", " : "];\n"); }
+  cout << "th=[";
+  for (unsigned int i=0; i<bestA.size(); i++){ cout << bestA[i] << (i!=bestA.size()-1 ? ", " : "];\n"); }
+  cout << "KMAX: " << params[0] << endl;
+#endif
+  cudaFreeHost(matrix);
+
+  cudaFree(dev_matrix);
+  cudaFree(dev_params);
+  cudaFree(dev_fixedAngles);
+
+  return std::vector<Angle>();
+}
+
+
+#endif
