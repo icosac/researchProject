@@ -57,7 +57,7 @@ int main (){
   for (uint discr : discrs){
     cout << "Discr: " << discr << endl;
     for (uint j=0; j<Tests.size(); j++){
-      fstream json_out; json_out.open("tests.json", std::fstream::app);
+      //fstream json_out; json_out.open("tests.json", std::fstream::app);
       std::vector<bool> fixedAngles;
       vector<Configuration2<double> > v=Tests[j];
       for (int i=0; i<v.size(); i++){
@@ -71,8 +71,8 @@ int main (){
       std::vector<real_type> curveParamV={Ks[j]};
       real_type* curveParam=curveParamV.data();
 
-      system((std::string("tegrastats --interval 50 --start --logfile ")+std::to_string(testI)+".log").c_str());
-      sleep(2);
+      //system((std::string("tegrastats --interval 50 --start --logfile ")+std::to_string(testI)+".log").c_str());
+      //sleep(2);
       
       TimePerf tp, tp1;
       
@@ -80,7 +80,7 @@ int main (){
       DP::solveDPMatrix<Dubins<double> >(v, discr, fixedAngles, curveParamV, false);
       auto time1=tp.getTime();
       Run r1(deviceProperties.name, discr, time1, testsNames[j]);
-      r1.write(json_out);
+      //r1.write(json_out);
       
       // tp1.start();
       // DP::solveDP<Dubins<double> >(v, discr, fixedAngles, curveParamV, false);
@@ -88,16 +88,16 @@ int main (){
       // Run r2("Xavier", discr, time2, testsNames[j]);
       // r2.write(json_out);
       
-      sleep(2);
-      system("tegrastats --stop");
-      testI++;
-      // cout << "\tExample " << j+1 << std::setw(20) << std::setprecision(5) << time1 << "ms\t" << std::setw(20) << std::setprecision(5) <<  time2 << "ms\t" << std::setw(10) << (time2-time1) << "ms" << endl;
-      json_out.close();
+      //sleep(2);
+      //system("tegrastats --stop");
+      //testI++;
+      cout << "\tExample " << j+1 << std::setw(20) << std::setprecision(5) << time1 << "ms\t" << std::endl;// std::setw(20) << std::setprecision(5) <<  time2 << "ms\t" << std::setw(10) << (time2-time1) << "ms" << endl;
+      //json_out.close();
     }
   }
-  fstream json_out; json_out.open("tests.json", std::fstream::app);
-  json_out << "]}\n";
-  json_out.close();
+  //fstream json_out; json_out.open("tests.json", std::fstream::app);
+  //json_out << "]}\n";
+  //json_out.close();
   
 #else
   #define KAYA omega
