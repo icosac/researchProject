@@ -5,6 +5,7 @@
     "enabled" : false,
     "additional_info" : "", 
     "perf_exec" : "",
+    "exec" : "",
     "exec_t" : 0
   },
   "CPU" : {

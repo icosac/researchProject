@@ -15,7 +15,7 @@ IF(${CUDA_ON} MATCHES ON)
   file(GLOB dynamicCurveExec "exec/main.cu")
   add_definitions(-DCUDA_ON)
   #I chose not to use -rdc=true simply because the behavior of __device__ and __constant__ is meant to be local to the file
-  set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} -rdc=true -lcudadevrt -std=c++11 -O3 -arch=sm_72 -DCUDA_ON --default-stream per-thread")
+  set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} -rdc=true -std=c++11 -O3 -arch=sm_72 -DCUDA_ON --default-stream per-thread")
   #set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} -std=c++11 -O3 -DCUDA_ON --default-stream per-thread --compiler-options -Wall")
   set(SRC "srcCU")
   set(SRCF "${SRC}/*.cu")

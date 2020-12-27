@@ -65,13 +65,13 @@ int main (int argc, char* argv[]){
   cudaGetDeviceProperties(&deviceProperties, 0);
   printf("[%d] %s\n", 0, deviceProperties.name);
 
-#if true
+#if false
   int testI=0;
   // std::cout << "\t\t        \tMatrix\t\tCol\tCol-Matrix" << std::endl;
   for (uint discr : discrs){
     cout << "Discr: " << discr << endl;
     for (uint j=0; j<Tests.size(); j++){
-      fstream json_out; json_out.open("testResults/tests.json", std::fstream::app);
+      //fstream json_out; json_out.open("testResults/tests.json", std::fstream::app);
       std::vector<bool> fixedAngles;
       vector<Configuration2<double> > v=Tests[j];
       for (int i=0; i<v.size(); i++){
@@ -90,17 +90,17 @@ int main (int argc, char* argv[]){
       std::string powerName=std::to_string(testI)+".log";
       std::string powerFile=path+powerName;
 
-      system((std::string("mkdir -p ")+path).c_str());
-      system((std::string("tegrastats --interval 50 --start --logfile ")+powerName).c_str());
-      sleep(2);
+      //system((std::string("mkdir -p ")+path).c_str());
+      //system((std::string("tegrastats --interval 50 --start --logfile ")+powerName).c_str());
+      //sleep(2);
       
       TimePerf tp, tp1;
       
       tp.start();
-      DP::solveDPMatrix<Dubins<double> >(v, discr, fixedAngles, curveParamV, false);
+      DP::solveDPAllIn1<Dubins<double> >(v, discr, fixedAngles, curveParamV, false);
       auto time1=tp.getTime();
-      Run r1(nameTest(deviceProperties.name, variant).c_str(), discr, time1, testsNames[j], (nExec!="" ? powerFile : ""));
-      r1.write(json_out);
+      //Run r1(nameTest(deviceProperties.name, variant).c_str(), discr, time1, testsNames[j], (nExec!="" ? powerFile : ""));
+      //r1.write(json_out);
       
       //tp1.start();
       //DP::solveDP<Dubins<double> >(v, discr, fixedAngles, curveParamV, false);
@@ -108,11 +108,11 @@ int main (int argc, char* argv[]){
       //Run r2("Xavier", discr, time2, testsNames[j]);
       //r2.write(json_out);
       
-      sleep(2);
-      system((std::string("tegrastats --stop && mv ")+powerName+" "+powerFile).c_str());
-      testI++;
-      // cout << "\tExample " << j+1 << std::setw(20) << std::setprecision(5) << time1 << "ms\t" << std::setw(20) << std::setprecision(5) <<  time2 << "ms\t" << std::setw(10) << (time2-time1) << "ms" << endl;
-      json_out.close();
+      //sleep(2);
+      //system((std::string("tegrastats --stop && mv ")+powerName+" "+powerFile).c_str());
+      //testI++;
+      cout << "\tExample " << j+1 << std::setw(20) << std::setprecision(5) << time1 << "ms\t" << std::setw(20) << std::setprecision(5) <<  time2 << "ms\t" << std::setw(10) << (time2-time1) << "ms" << endl;
+      //json_out.close();
     }
   }
   //fstream json_out; json_out.open("tests.json", std::fstream::app);
@@ -120,7 +120,7 @@ int main (int argc, char* argv[]){
   //json_out.close();
   
 #else
-  #define KAYA omega
+  #define KAYA kaya4
   std::vector<bool> fixedAngles;
   for (int i=0; i<KAYA.size(); i++){
     if (i==0 || i==KAYA.size()-1) {
@@ -130,17 +130,19 @@ int main (int argc, char* argv[]){
       fixedAngles.push_back(false);
     }
   }
-  std::vector<real_type> curveParamV={2.0};
+  std::vector<real_type> curveParamV={3.0};
   real_type* curveParam=curveParamV.data();
   
   TimePerf tp, tp1;
   tp.start();
-  DP::solveDPMatrix<Dubins<double> >(KAYA, DISCR, fixedAngles, curveParamV, false);
+  DP::solveDPAllIn1<Dubins<double> >(KAYA, DISCR, fixedAngles, curveParamV, false);
   auto time1=tp.getTime();
-  // tp1.start();
-  // DP::solveDP<Dubins<double> >(KAYA, DISCR, fixedAngles, curveParamV, false);
-  // auto time2=tp1.getTime();
-  cout << "Elapsed: " << std::setw(10) << time1 << "ms\t" << endl; //<< std::setw(10) << time2 << "ms\t" << std::setw(10) << (time2-time1) << "ms" << endl;
+
+  tp1.start();
+  //DP::solveDP<Dubins<double> >(KAYA, DISCR, fixedAngles, curveParamV, false);
+  DP::solveDPMatrix<Dubins<double> >(KAYA, DISCR, fixedAngles, curveParamV, false);
+  auto time2=tp1.getTime();
+  cout << "Elapsed: " << std::setw(10) << time1 << "ms\t" << std::setw(10) << time2 << "ms\t" << std::setw(10) << (time2-time1) << "ms" << endl;
 #endif
   return 0;
 }
