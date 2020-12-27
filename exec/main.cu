@@ -37,7 +37,7 @@ vector<vector<Configuration2<double> > > Tests = {
 };
 
 vector<K_T> Ks = {3.0, 3.0, 5.0, 3.0, 3.0, 0.1};
-vector<uint> discrs = {4, 120, 360, 720, 1440, 2880};
+vector<uint> discrs = {4, 120, 360, 720, 1440};
 
 #define DISCR 1440
 
@@ -65,7 +65,7 @@ int main (int argc, char* argv[]){
   cudaGetDeviceProperties(&deviceProperties, 0);
   printf("[%d] %s\n", 0, deviceProperties.name);
 
-#if false
+#if true
   int testI=0;
   // std::cout << "\t\t        \tMatrix\t\tCol\tCol-Matrix" << std::endl;
   for (uint discr : discrs){
@@ -108,10 +108,10 @@ int main (int argc, char* argv[]){
       //Run r2("Xavier", discr, time2, testsNames[j]);
       //r2.write(json_out);
       
-      //sleep(2);
+      sleep(2);
       //system((std::string("tegrastats --stop && mv ")+powerName+" "+powerFile).c_str());
       //testI++;
-      cout << "\tExample " << j+1 << std::setw(20) << std::setprecision(5) << time1 << "ms\t" << std::setw(20) << std::setprecision(5) <<  time2 << "ms\t" << std::setw(10) << (time2-time1) << "ms" << endl;
+      cout << "\tExample " << j+1 << std::setw(20) << std::setprecision(5) << time1 << "ms\t" << std::endl; //<< std::setw(20) << std::setprecision(5) <<  time2 << "ms\t" << std::setw(10) << (time2-time1) << "ms" << endl;
       //json_out.close();
     }
   }
@@ -120,7 +120,7 @@ int main (int argc, char* argv[]){
   //json_out.close();
   
 #else
-  #define KAYA kaya4
+  #define KAYA kaya2
   std::vector<bool> fixedAngles;
   for (int i=0; i<KAYA.size(); i++){
     if (i==0 || i==KAYA.size()-1) {

@@ -178,10 +178,11 @@ def main():
         rects=[]
 
         fig=plt.figure(figsize=(6.4*3, 4.8*3), constrained_layout=True)
-        spec=fig.add_gridspec((int(len(discrs)/2)+1), 2)
+        spec=fig.add_gridspec((int((len(discrs)+1)/2)+1), 2)
         ax=[]
-        for d in range(len(discrs)+1):
-            if d==0 and (len(discrs))%2==0:
+        newL=len(discrs)+1
+        for d in range(newL):
+            if d==0:
                 ax.append(fig.add_subplot(spec[0, :]))
             else:
                 x_=int((d+1)/2)
@@ -204,7 +205,7 @@ def main():
 
         longest_x=0.0
         longest_y=0.0
-        for d in range(1, len(discrs)+1):
+        for d in range(1, newL):
             ax[d].set_ylabel("Power (W)")
             ax[d].set_xlabel("Time in ms")
             ax[d].set_title(str(discrs[d-1])+" discretizations")
@@ -224,7 +225,7 @@ def main():
                     longest_x=t[-1]
                 if max(p)>longest_y:
                     longest_y=max(p)
-        for d in range(1, len(discrs)+1):
+        for d in range(1, newL):
             ax[d].set_xticks(list(np.arange(0, longest_x, int(longest_x/10)))+[longest_x])
             ax[d].set_yticks(list(np.arange(0, longest_y, longest_y/5))+[longest_y])
             ax[d].legend()
