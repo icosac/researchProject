@@ -403,7 +403,7 @@ __global__ void computeMore(DP::Cell* matrix, real_type* results, const bool* fi
 
       CURVE c=CURVE(c0, c1, params);
       if (c.l()>0){
-        results[(iter*jump*discr+cell)*discr+inCell]=c.l();
+        results[cell*discr+inCell]=c.l();
       }
     }
   }
@@ -419,16 +419,17 @@ __global__ void bestAnglesPerCell(DP::Cell* matrix, real_type* results, const bo
       LEN_T bestL=MAX_LEN_T;
       uint nextID=0;
       uint pos=((jump*iter+j)*discr+i)*discr;
+      uint posRes=(i+j*discr)*discr;
       //printf("tidx: %u iter: %d jump: %d pos: %u\n", tidx, (int)iter, (int)jump, pos);
       for (int h=0; h<discr; h++){ //The inner cells of the row I'm considering
-        if (((int)(pos/(discr*discr)))==(size-2) && results[pos+h]<bestL){ //If it's the last row and the length is shorter than bestL, then
-          //printf("[%u] %f, %f\n", pos, bestL, results[pos+h]);
-          bestL=results[pos+h];
+        if (((int)(pos/(discr*discr)))==(size-2) && results[posRes+h]<bestL){ //If it's the last row and the length is shorter than bestL, then
+          //printf("[%u] %f, %f\n", pos, bestL, results[posRes+h]);
+          bestL=results[posRes+h];
           nextID=iter*jump*discr+(j+1)*discr+h;
         }
         else if(((int)(pos/(discr*discr)))<(size-2)){ //Otherwise consider also the next length
           //printf("tidx: %u, pos: %u, j: %d h: %d, id: %u\n", tidx, pos, j, h, id);
-          LEN_T currL=results[pos+h]+matrix[iter*jump*discr+(j+1)*discr+h];
+          LEN_T currL=results[posRes+h]+matrix[iter*jump*discr+(j+1)*discr+h];
           if (currL<bestL){
             bestL=currL;
             //nextID=((iter+1)*discr*jump)*discr+l;
@@ -463,8 +464,6 @@ std::vector<Angle> solveDPAllIn1 (std::vector<Configuration2<real_type> > points
   cudaMallocHost(&matrix, sizeof(DP::Cell)*size*discr);
   DP::Cell* dev_matrix;
   cudaMalloc(&dev_matrix, sizeof(DP::Cell)*size*(discr+addAngles));
-  real_type* dev_results;
-  cudaMalloc(&dev_results, sizeof(real_type)*size*discr*discr);
   //real_type* results;
   //cudaMallocHost(&results, sizeof(real_type)*size*discr*discr);
   
@@ -493,20 +492,25 @@ std::vector<Angle> solveDPAllIn1 (std::vector<Configuration2<real_type> > points
   size_t totThreads=jump*discr*discr;
   size_t threads=totThreads>THREADS ? THREADS : totThreads;
   size_t blocks=((int)(totThreads/threads)+1)*numberOfSMs; 
-
-  for (int i=iter-1; i>=0; i--){
-    computeMore<CURVE><<<blocks, threads>>>(dev_matrix, dev_results, dev_fixedAngles, dev_params, dev_points, jump, discr, size, i);
+  
+  real_type *dev_results1, *dev_results2;
+  cudaMalloc(&dev_results1, sizeof(real_type)*jump*discr*discr);
+  cudaMalloc(&dev_results2, sizeof(real_type)*jump*discr*discr);
+    
+  for (int i=iter-1; i>=0; i--){  
+    computeMore<CURVE><<<blocks, threads>>>(dev_matrix, dev_results1, dev_fixedAngles, dev_params, dev_points, jump, discr, size, i);
     cudaDeviceSynchronize();
+    cudaMemcpy(dev_results2, dev_results1, sizeof(real_type)*jump*discr*discr, cudaMemcpyDeviceToDevice);
     cudaCheckError(cudaGetLastError());
 
-    bestAnglesPerCell<<<blocks, threads>>>(dev_matrix, dev_results, dev_fixedAngles, size, discr, i, jump);
+    bestAnglesPerCell<<<blocks, threads>>>(dev_matrix, dev_results2, dev_fixedAngles, size, discr, i, jump);
 
     #ifdef DEBUG
     cudaDeviceSynchronize();
     cudaCheckError(cudaGetLastError());
     
     printf("\n");
-    printResults<<<1, 1>>>(dev_results, discr, size);
+    printResults<<<1, 1>>>(dev_results2, discr, size);
     #endif
   }
   cudaMemcpy(matrix, dev_matrix, sizeof(DP::Cell)*size*discr, cudaMemcpyDeviceToHost);
@@ -548,7 +552,8 @@ std::vector<Angle> solveDPAllIn1 (std::vector<Configuration2<real_type> > points
   cudaFree(dev_params);
   cudaFree(dev_fixedAngles);
   cudaFree(dev_points);
-  cudaFree(dev_results);
+  cudaFree(dev_results1);
+  cudaFree(dev_results2);
 
   return bestA;
 }
