@@ -442,7 +442,7 @@ __global__ void bestAnglesPerCell(DP::Cell* matrix, real_type* results, const bo
       }
       if (((int)(pos/(discr*discr)))<(size-1)){
         //printf("[%u] Writing %f in %d\n", pos, bestL, (int)(pos/discr));
-        matrix[(int)(pos/discr)]=DP::Cell(matrix[(int)(pos/discr)].th(), bestL, nextID, 0, matrix[(int)(pos/discr)].i(), matrix[(int)(pos/discr)].j(), matrix[(int)(pos/discr)].id());
+        matrix[(int)(pos/discr)]=DP::Cell(matrix[(int)(pos/discr)].th(), bestL, nextID, matrix[(int)(pos/discr)].i(), matrix[(int)(pos/discr)].j(), matrix[(int)(pos/discr)].id());
       }
     }
   }
@@ -472,14 +472,14 @@ std::vector<Angle> solveDPAllIn1 (std::vector<Configuration2<real_type> > points
   real_type* dev_params=cudaSTDVectorToArray<real_type>(params);  
   Configuration2<real_type>* dev_points=cudaSTDVectorToArray<Configuration2<real_type> >(points);
 
-  for (uint i=0; i<size; i++){ //TODO change back, remove l=-1 if fixedAngles
+  for (uint i=0; i<size; i++){
     LEN_T l = (i==size-1 ? 0 : std::numeric_limits<LEN_T>::max());
     for (uint j=0; j<discr; j++){
       if (fixedAngles[i]){
-        matrix[i*discr+j]=DP::Cell(points[i].th(), (j==0 ? l : -1), 0, 0, i, j, i*discr);
+        matrix[i*discr+j]=DP::Cell(points[i].th(), l, 0, i, j, i*discr);
       }
       else {
-        matrix[i*discr+j]=DP::Cell(2*M_PI*j/discr, l, 0, 0, i, j, i*discr+j);
+        matrix[i*discr+j]=DP::Cell(2*M_PI*j/discr, l, 0, i, j, i*discr+j);
       }
     }
   }

@@ -14,9 +14,8 @@ IF(${CUDA_ON} MATCHES ON)
   enable_language(CUDA)
   file(GLOB dynamicCurveExec "exec/main.cu")
   add_definitions(-DCUDA_ON)
-  #I chose not to use -rdc=true simply because the behavior of __device__ and __constant__ is meant to be local to the file
-  set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} -rdc=true -std=c++11 -O3 -arch=sm_72 -DCUDA_ON --default-stream per-thread")
-  #set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} -std=c++11 -O3 -DCUDA_ON --default-stream per-thread --compiler-options -Wall")
+  set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} -std=c++11 -O3 -arch=sm_75 -DCUDA_ON --default-stream per-thread --compiler-options -Wall")
+  set(CUDA_SEPARABLE_COMPILATION ON)
   set(SRC "srcCU")
   set(SRCF "${SRC}/*.cu")
 ELSE()
@@ -36,7 +35,8 @@ message(STATUS "${dynamicCurveSrc}")
 
 add_library(${LIB} STATIC ${dynamicCurveSrc})
 
-add_executable(${APP_EXEC} ${dynamicCurveSrc} ${dynamicCurveExec})
+#add_executable(${APP_SRC} ${dynamicCurveSrc})
+add_executable(${APP_EXEC} ${dynamicCurveExec})
 
 target_link_libraries(${APP_EXEC} ${LIB})
 target_include_directories(${APP_EXEC} PRIVATE src/include/)
