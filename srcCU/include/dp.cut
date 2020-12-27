@@ -4,6 +4,8 @@
 
 #define THREADS 128
 
+#include<dp1.cuh>
+
 std::vector<Angle> bestAngles(DP::Cell* matrix, int discr, int size){
   DP::Cell* best=&matrix[0];
   //Find best path
@@ -193,7 +195,7 @@ std::vector<Angle> solveDP (std::vector<Configuration2<real_type> > points, int 
   return bestA;
 }
 
-template<class CURVE>
+template<class CURVE> 
 __global__ void solveMatrixCell ( DP::Cell* matrix, uint discr, Configuration2<real_type> c0, Configuration2<real_type> c1,
                                   real_type* params, int i, int j, real_type* results, uint* next_r){
     int h=threadIdx.x+blockDim.x*blockIdx.x;
@@ -213,6 +215,7 @@ __global__ void solveMatrixCell ( DP::Cell* matrix, uint discr, Configuration2<r
       //}
     }
 }
+
 template<class CURVE> 
 __global__ void solveMatrixCol1 (DP::Cell* matrix, uint discr, uint size, const bool* fixedAngles, 
                                 Configuration2<real_type> c0, Configuration2<real_type> c1, 
@@ -231,7 +234,7 @@ __global__ void solveMatrixCol1 (DP::Cell* matrix, uint discr, uint size, const 
       blocks=1;
     }
 
-    // solveMatrixCell<CURVE><<<blocks, threads>>>(matrix, discr, c0, c1, params, i, j, results, next_r);
+    solveMatrixCell<CURVE><<<blocks, threads>>>(matrix, discr, c0, c1, params, i, j, results, next_r);
     
     real_type bestL=MAX_LEN_T;
     int next_id=0;
@@ -319,12 +322,23 @@ std::vector<Angle> solveDPMatrix (std::vector<Configuration2<real_type> > points
 
     size_t threads=discr>THREADS ? THREADS : discr;
     //size_t blocks=numberOfSMs; 
-    size_t blocks=((int)(discr/threads)+1)*numberOfSMs; 
+    size_t nBlocksGivenThreads=(int)(discr/threads);
+    size_t blocks=1;
+    if (nBlocksGivenThreads>0 && nBlocksGivenThreads<numberOfSMs){
+      blocks=nBlocksGivenThreads;
+    }
+    else if (nBlocksGivenThreads==0){
+      blocks=1;
+    }
+    else{
+      blocks=((int)(nBlocksGivenThreads/numberOfSMs))*numberOfSMs;
+    }
+    //size_t blocks=((int)(discr/threads)+1)*numberOfSMs; 
     if(fixedAngles[i]){
       threads=1;
       blocks=1;
     }
-    solveMatrixCol<CURVE><<<blocks, threads>>>(dev_matrix, discr, size, dev_fixedAngles, c0, c1, dev_params, i);
+    solveMatrixCol1<CURVE><<<blocks, threads>>>(dev_matrix, discr, size, dev_fixedAngles, c0, c1, dev_params, i);
     cudaDeviceSynchronize();
     cudaCheckError(cudaGetLastError());
   }
@@ -342,7 +356,6 @@ std::vector<Angle> solveDPMatrix (std::vector<Configuration2<real_type> > points
   printV(bestA)
 #endif
   
-#ifdef DEBUG
   LEN_T Length=0.0;
   for (unsigned int i=bestA.size()-1; i>0; i--){
     points[i].th(bestA[i]);
@@ -351,6 +364,7 @@ std::vector<Angle> solveDPMatrix (std::vector<Configuration2<real_type> > points
     Length+=c.l();
   }
   cout << "Length: " << setprecision(20) << Length << endl;
+#ifdef DEBUG
 
   cout << "Printing for Matlab" << endl;
   cout << "X=[";

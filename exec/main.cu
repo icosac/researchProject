@@ -12,7 +12,7 @@ using namespace std;
 #include<dubins.cuh>
 #include<dp.cuh>
 #include<timeperf.hh>
-#include<constants.cuh>
+// #include<constants.cuh>
 
 #include<tests.hh>
 
@@ -37,11 +37,25 @@ vector<vector<Configuration2<double> > > Tests = {
 };
 
 vector<K_T> Ks = {3.0, 3.0, 5.0, 3.0, 3.0, 0.1};
-vector<uint> discrs = {4, 120, 360, 720, 1440};//, 2880};
+vector<uint> discrs = {4, 120, 360, 720, 1440, 2880};
 
-#define DISCR 2880
+#define DISCR 1440
 
-int main (){
+std::string nameTest(std::string name, std::string add=""){
+  if (add==""){
+    return name;
+  }
+  else{
+    return name+" "+add;
+  }
+}
+
+int main (int argc, char* argv[]){
+  std::string nExec="1";
+  if (argc!=1){
+    nExec=std::string(argv[1]);
+  }
+  cout << nExec << endl;
   cout << "CUDA" << endl;
   cudaFree(0);
 
@@ -57,7 +71,7 @@ int main (){
   for (uint discr : discrs){
     cout << "Discr: " << discr << endl;
     for (uint j=0; j<Tests.size(); j++){
-      fstream json_out; json_out.open("tests.json", std::fstream::app);
+      fstream json_out; json_out.open("testResults/tests.json", std::fstream::app);
       std::vector<bool> fixedAngles;
       vector<Configuration2<double> > v=Tests[j];
       for (int i=0; i<v.size(); i++){
@@ -70,8 +84,14 @@ int main (){
       }
       std::vector<real_type> curveParamV={Ks[j]};
       real_type* curveParam=curveParamV.data();
+      
+      std::string variant="fewBlocks";
+      std::string path=variant+"/"+nExec+"/";
+      std::string powerName=std::to_string(testI)+".log";
+      std::string powerFile=path+powerName;
 
-      system((std::string("tegrastats --interval 50 --start --logfile ")+std::to_string(testI)+".log").c_str());
+      system((std::string("mkdir -p ")+path).c_str());
+      system((std::string("tegrastats --interval 50 --start --logfile ")+powerName).c_str());
       sleep(2);
       
       TimePerf tp, tp1;
@@ -79,25 +99,25 @@ int main (){
       tp.start();
       DP::solveDPMatrix<Dubins<double> >(v, discr, fixedAngles, curveParamV, false);
       auto time1=tp.getTime();
-      Run r1(deviceProperties.name, discr, time1, testsNames[j]);
+      Run r1(nameTest(deviceProperties.name, variant).c_str(), discr, time1, testsNames[j], (nExec!="" ? powerFile : ""));
       r1.write(json_out);
       
-      // tp1.start();
-      // DP::solveDP<Dubins<double> >(v, discr, fixedAngles, curveParamV, false);
-      // auto time2=tp1.getTime();
-      // Run r2("Xavier", discr, time2, testsNames[j]);
-      // r2.write(json_out);
+      //tp1.start();
+      //DP::solveDP<Dubins<double> >(v, discr, fixedAngles, curveParamV, false);
+      //auto time2=tp1.getTime();
+      //Run r2("Xavier", discr, time2, testsNames[j]);
+      //r2.write(json_out);
       
       sleep(2);
-      system("tegrastats --stop");
+      system((std::string("tegrastats --stop && mv ")+powerName+" "+powerFile).c_str());
       testI++;
       // cout << "\tExample " << j+1 << std::setw(20) << std::setprecision(5) << time1 << "ms\t" << std::setw(20) << std::setprecision(5) <<  time2 << "ms\t" << std::setw(10) << (time2-time1) << "ms" << endl;
       json_out.close();
     }
   }
-  fstream json_out; json_out.open("tests.json", std::fstream::app);
-  json_out << "]}\n";
-  json_out.close();
+  //fstream json_out; json_out.open("tests.json", std::fstream::app);
+  //json_out << "]}\n";
+  //json_out.close();
   
 #else
   #define KAYA omega
