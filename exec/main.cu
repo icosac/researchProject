@@ -37,9 +37,9 @@ vector<vector<Configuration2<double> > > Tests = {
 };
 
 vector<K_T> Ks = {3.0, 3.0, 5.0, 3.0, 3.0, 0.1};
-vector<uint> discrs = {4, 120, 360, 720, 1440};//, 2880};
+vector<uint> discrs = {4, 120, 360, 720, 1440, 2880};
 
-#define DISCR 2880
+#define DISCR 1440
 
 int main (){
   cout << "CUDA" << endl;
@@ -51,7 +51,7 @@ int main (){
   cudaGetDeviceProperties(&deviceProperties, 0);
   printf("[%d] %s\n", 0, deviceProperties.name);
 
-#if true
+#if false
   int testI=0;
   // std::cout << "\t\t        \tMatrix\t\tCol\tCol-Matrix" << std::endl;
   for (uint discr : discrs){
@@ -77,7 +77,7 @@ int main (){
       TimePerf tp, tp1;
       
       tp.start();
-      DP::solveDPMatrix<Dubins<double> >(v, discr, fixedAngles, curveParamV, false);
+      DP::solveDPAllIn1<Dubins<double> >(v, discr, fixedAngles, curveParamV, false);
       auto time1=tp.getTime();
       Run r1(deviceProperties.name, discr, time1, testsNames[j]);
       //r1.write(json_out);
@@ -110,17 +110,19 @@ int main (){
       fixedAngles.push_back(false);
     }
   }
-  std::vector<real_type> curveParamV={2.0};
+  std::vector<real_type> curveParamV={3.0};
   real_type* curveParam=curveParamV.data();
   
   TimePerf tp, tp1;
   tp.start();
-  DP::solveDPMatrix<Dubins<double> >(KAYA, DISCR, fixedAngles, curveParamV, false);
+  DP::solveDPAllIn1<Dubins<double> >(KAYA, DISCR, fixedAngles, curveParamV, false);
   auto time1=tp.getTime();
-  // tp1.start();
-  // DP::solveDP<Dubins<double> >(KAYA, DISCR, fixedAngles, curveParamV, false);
-  // auto time2=tp1.getTime();
-  cout << "Elapsed: " << std::setw(10) << time1 << "ms\t" << endl; //<< std::setw(10) << time2 << "ms\t" << std::setw(10) << (time2-time1) << "ms" << endl;
+
+  tp1.start();
+  //DP::solveDP<Dubins<double> >(KAYA, DISCR, fixedAngles, curveParamV, false);
+  DP::solveDPMatrix<Dubins<double> >(KAYA, DISCR, fixedAngles, curveParamV, false);
+  auto time2=tp1.getTime();
+  cout << "Elapsed: " << std::setw(10) << time1 << "ms\t" << std::setw(10) << time2 << "ms\t" << std::setw(10) << (time2-time1) << "ms" << endl;
 #endif
   return 0;
 }

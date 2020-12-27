@@ -281,7 +281,6 @@ __global__ void solveMatrixCol (DP::Cell* matrix, uint discr, uint size, const b
 
 template<class CURVE>
 std::vector<Angle> solveDPMatrix (std::vector<Configuration2<real_type> > points, int discr, const std::vector<bool> fixedAngles, std::vector<real_type> params, bool guessInitialAnglesVal=false){
-
   int numberOfSMs; cudaDeviceGetAttribute(&numberOfSMs, cudaDevAttrMultiProcessorCount, cudaGetdeviceID());
   uint addAngles=0;
   size_t size=points.size();
@@ -342,7 +341,6 @@ std::vector<Angle> solveDPMatrix (std::vector<Configuration2<real_type> > points
   printV(bestA)
 #endif
   
-#ifdef DEBUG
   LEN_T Length=0.0;
   for (unsigned int i=bestA.size()-1; i>0; i--){
     points[i].th(bestA[i]);
@@ -351,6 +349,7 @@ std::vector<Angle> solveDPMatrix (std::vector<Configuration2<real_type> > points
     Length+=c.l();
   }
   cout << "Length: " << setprecision(20) << Length << endl;
+#ifdef DEBUG
 
   cout << "Printing for Matlab" << endl;
   cout << "X=[";
@@ -367,8 +366,182 @@ std::vector<Angle> solveDPMatrix (std::vector<Configuration2<real_type> > points
   cudaFree(dev_params);
   cudaFree(dev_fixedAngles);
 
-  return std::vector<Angle>();
+  return bestA;
 }
+
+template<class CURVE>
+__global__ void computeMore(DP::Cell* matrix, real_type* results, const bool* fixedAngles,
+                            real_type* params, const Configuration2<real_type>* points, 
+                            size_t jump, size_t discr, size_t size, size_t iter){ //TODO It may be possible to remove cmp and use iter and i to compute the position
+  uint tidx=threadIdx.x+blockDim.x*blockIdx.x;
+  uint stride=blockDim.x*gridDim.x;
+
+  uint j=tidx;
+  if (j<discr*jump*discr){ //j must be less than the number of rows (jump) times the number of inner cells per cell, times the number of cells per row
+    uint cell=(int)(tidx/discr);  //The big cell
+    uint inCell=tidx%discr;       //The small cell insider the big cell
+    uint cmpId=(int)(cell/discr); //The row in this call
+    uint pos=iter*jump+cmpId;     //The row w.r.t. the whole matrix
+
+    if (pos<size-1){ 
+      Configuration2<real_type> c0=points[pos];
+      Configuration2<real_type> c1=points[pos+1];
+
+      if (!fixedAngles[pos])   {c0.th(matrix[cell+iter*jump*discr].th());}
+      if (!fixedAngles[pos+1]) {c1.th(matrix[inCell+(pos+1)*discr].th());}
+
+      CURVE c=CURVE(c0, c1, params);
+      if (c.l()>0){
+        results[(iter*jump*discr+cell)*discr+inCell]=c.l();
+      }
+    }
+  }
+}
+
+__global__ void bestAnglesPerCell(DP::Cell* matrix, real_type* results, const bool* fixedAngles, 
+                                      size_t size, size_t discr, size_t iter, size_t jump){
+
+  uint tidx=threadIdx.x+blockDim.x*blockIdx.x;
+  uint i=tidx;
+  if (i<discr){ //It would be soooooo beautiful to increase the performances of this
+    for (int j=jump-1; j>=0; j--){
+      LEN_T bestL=MAX_LEN_T;
+      uint nextID=0;
+      uint pos=((jump*iter+j)*discr+i)*discr;
+      //printf("tidx: %u iter: %d jump: %d pos: %u\n", tidx, (int)iter, (int)jump, pos);
+      for (int h=0; h<discr; h++){ //The inner cells of the row I'm considering
+        if (((int)(pos/(discr*discr)))==(size-2) && results[pos+h]<bestL){ //If it's the last row and the length is shorter than bestL, then
+          //printf("[%u] %f, %f\n", pos, bestL, results[pos+h]);
+          bestL=results[pos+h];
+          nextID=iter*jump*discr+(j+1)*discr+h;
+        }
+        else if(((int)(pos/(discr*discr)))<(size-2)){ //Otherwise consider also the next length
+          //printf("tidx: %u, pos: %u, j: %d h: %d, id: %u\n", tidx, pos, j, h, id);
+          LEN_T currL=results[pos+h]+matrix[iter*jump*discr+(j+1)*discr+h];
+          if (currL<bestL){
+            bestL=currL;
+            //nextID=((iter+1)*discr*jump)*discr+l;
+            nextID=iter*jump*discr+(j+1)*discr+h;
+            //printf("[%u] %f and %f\n", pos, currL, bestL);
+          }
+          else{
+            //printf("[%u] %f<%f\n", pos, currL, bestL);
+          }
+        }
+      }
+      if (((int)(pos/(discr*discr)))<(size-1)){
+        //printf("[%u] Writing %f in %d\n", pos, bestL, (int)(pos/discr));
+        matrix[(int)(pos/discr)]=DP::Cell(matrix[(int)(pos/discr)].th(), bestL, nextID, 0, matrix[(int)(pos/discr)].i(), matrix[(int)(pos/discr)].j(), matrix[(int)(pos/discr)].id());
+      }
+    }
+  }
+}
+
+template<class CURVE>
+std::vector<Angle> solveDPAllIn1 (std::vector<Configuration2<real_type> > points, int discr, const std::vector<bool> fixedAngles, std::vector<real_type> params, bool guessInitialAnglesVal=false){
+
+  int numberOfSMs; cudaDeviceGetAttribute(&numberOfSMs, cudaDevAttrMultiProcessorCount, cudaGetdeviceID());
+  uint addAngles=0;
+  size_t size=points.size();
+
+  if(guessInitialAnglesVal && addAngles>0){
+    guessInitialAngles(points, fixedAngles);
+  }
+
+  DP::Cell* matrix;
+  cudaMallocHost(&matrix, sizeof(DP::Cell)*size*discr);
+  DP::Cell* dev_matrix;
+  cudaMalloc(&dev_matrix, sizeof(DP::Cell)*size*(discr+addAngles));
+  real_type* dev_results;
+  cudaMalloc(&dev_results, sizeof(real_type)*size*discr*discr);
+  //real_type* results;
+  //cudaMallocHost(&results, sizeof(real_type)*size*discr*discr);
+  
+  bool* dev_fixedAngles=cudaSTDVectorToArray<bool>(fixedAngles);
+  real_type* dev_params=cudaSTDVectorToArray<real_type>(params);  
+  Configuration2<real_type>* dev_points=cudaSTDVectorToArray<Configuration2<real_type> >(points);
+
+  for (uint i=0; i<size; i++){ //TODO change back, remove l=-1 if fixedAngles
+    LEN_T l = (i==size-1 ? 0 : std::numeric_limits<LEN_T>::max());
+    for (uint j=0; j<discr; j++){
+      if (fixedAngles[i]){
+        matrix[i*discr+j]=DP::Cell(points[i].th(), (j==0 ? l : -1), 0, 0, i, j, i*discr);
+      }
+      else {
+        matrix[i*discr+j]=DP::Cell(2*M_PI*j/discr, l, 0, 0, i, j, i*discr+j);
+      }
+    }
+  }
+  cudaMemcpy(dev_matrix, matrix, sizeof(DP::Cell)*size*discr, cudaMemcpyHostToDevice);
+  cudaCheckError(cudaGetLastError());
+
+  size_t jump=3, iter=0;
+  if ((size-1)%jump==0) { iter=(size-1)/jump; }
+  else                  { iter=(size_t)(((size-1)+jump)/jump); }
+
+  size_t totThreads=jump*discr*discr;
+  size_t threads=totThreads>THREADS ? THREADS : totThreads;
+  size_t blocks=((int)(totThreads/threads)+1)*numberOfSMs; 
+
+  for (int i=iter-1; i>=0; i--){
+    computeMore<CURVE><<<blocks, threads>>>(dev_matrix, dev_results, dev_fixedAngles, dev_params, dev_points, jump, discr, size, i);
+    cudaDeviceSynchronize();
+    cudaCheckError(cudaGetLastError());
+
+    bestAnglesPerCell<<<blocks, threads>>>(dev_matrix, dev_results, dev_fixedAngles, size, discr, i, jump);
+
+    #ifdef DEBUG
+    cudaDeviceSynchronize();
+    cudaCheckError(cudaGetLastError());
+    
+    printf("\n");
+    printResults<<<1, 1>>>(dev_results, discr, size);
+    #endif
+  }
+  cudaMemcpy(matrix, dev_matrix, sizeof(DP::Cell)*size*discr, cudaMemcpyDeviceToHost);
+  cudaCheckError(cudaGetLastError());
+
+#ifdef DEBUG
+  cout << "Printing " << endl;
+  printVM(matrix, size, discr)
+  //Retrieve angles
+  cout << "Computing best angles" << endl;
+#endif
+  std::vector<Angle> bestA=DP::bestAnglesMatrix(matrix, discr, size, fixedAngles);
+#ifdef DEBUG
+  printV(bestA)
+#endif
+  
+  LEN_T Length=0.0;
+  for (unsigned int i=bestA.size()-1; i>0; i--){
+    points[i].th(bestA[i]);
+    points[i-1].th(bestA[i-1]);
+    CURVE c(points[i-1], points[i], params.data());
+    Length+=c.l();
+  }
+  cout << "\tLength: " << setprecision(20) << Length << endl;
+#ifdef DEBUG
+
+  cout << "Printing for Matlab" << endl;
+  cout << "X=[";
+  for (unsigned int i=0; i<points.size(); i++){ cout << points[i].x() << (i!=points.size()-1 ? ", " : "];\n"); }
+  cout << "Y=[";
+  for (unsigned int i=0; i<points.size(); i++){ cout << points[i].y() << (i!=points.size()-1 ? ", " : "];\n"); }
+  cout << "th=[";
+  for (unsigned int i=0; i<bestA.size(); i++){ cout << bestA[i] << (i!=bestA.size()-1 ? ", " : "];\n"); }
+  cout << "KMAX: " << params[0] << endl;
+#endif
+  cudaFreeHost(matrix);
+
+  cudaFree(dev_matrix);
+  cudaFree(dev_params);
+  cudaFree(dev_fixedAngles);
+  cudaFree(dev_points);
+  cudaFree(dev_results);
+
+  return bestA;
+}
+
 
 
 #endif
