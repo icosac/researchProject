@@ -450,7 +450,7 @@ __global__ void bestAnglesPerCell(DP::Cell* matrix, real_type* results, const bo
 }
 
 template<class CURVE>
-std::vector<Angle> solveDPAllIn1 (std::vector<Configuration2<real_type> > points, int discr, const std::vector<bool> fixedAngles, std::vector<real_type> params, bool guessInitialAnglesVal=false){
+std::vector<Angle> solveDPAllIn1 (std::vector<Configuration2<real_type> > points, int discr, const std::vector<bool> fixedAngles, std::vector<real_type> params, bool guessInitialAnglesVal=false, size_t _jump=0){
 
   int numberOfSMs; cudaDeviceGetAttribute(&numberOfSMs, cudaDevAttrMultiProcessorCount, cudaGetdeviceID());
   uint addAngles=0;
@@ -485,7 +485,8 @@ std::vector<Angle> solveDPAllIn1 (std::vector<Configuration2<real_type> > points
   cudaMemcpy(dev_matrix, matrix, sizeof(DP::Cell)*size*discr, cudaMemcpyHostToDevice);
   cudaCheckError(cudaGetLastError());
 
-  size_t jump=3, iter=0;
+  size_t jump=(_jump==0 ? 3 : _jump);
+  size_t iter=0;
   if ((size-1)%jump==0) { iter=(size-1)/jump; }
   else                  { iter=(size_t)(((size-1)+jump)/jump); }
 
@@ -493,15 +494,19 @@ std::vector<Angle> solveDPAllIn1 (std::vector<Configuration2<real_type> > points
   size_t threads=totThreads>THREADS ? THREADS : totThreads;
   size_t blocks=((int)(totThreads/threads)+1)*numberOfSMs; 
   
-  real_type *dev_results1, *dev_results2;
+  real_type *dev_results1, *dev_results2, *dev_resultsapp;
   cudaMalloc(&dev_results1, sizeof(real_type)*jump*discr*discr);
   cudaMalloc(&dev_results2, sizeof(real_type)*jump*discr*discr);
     
   for (int i=iter-1; i>=0; i--){  
     computeMore<CURVE><<<blocks, threads>>>(dev_matrix, dev_results1, dev_fixedAngles, dev_params, dev_points, jump, discr, size, i);
     cudaDeviceSynchronize();
-    cudaMemcpy(dev_results2, dev_results1, sizeof(real_type)*jump*discr*discr, cudaMemcpyDeviceToDevice);
+    //cudaMemcpy(dev_results2, dev_results1, sizeof(real_type)*jump*discr*discr, cudaMemcpyDeviceToDevice);
     cudaCheckError(cudaGetLastError());
+    
+    dev_resultsapp=dev_results1;
+    dev_results1=dev_results2;
+    dev_results2=dev_resultsapp;
 
     bestAnglesPerCell<<<blocks, threads>>>(dev_matrix, dev_results2, dev_fixedAngles, size, discr, i, jump);
 
