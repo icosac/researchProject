@@ -39,7 +39,7 @@ vector<vector<Configuration2<double> > > Tests = {
 vector<K_T> Ks = {3.0, 3.0, 5.0, 3.0, 3.0, 0.1};
 vector<uint> discrs = {4, 120, 360, 720, 1440};
 
-#define DISCR 2880
+#define DISCR 120
 
 std::string nameTest(std::string name, std::string add=""){
   if (add==""){
@@ -68,7 +68,8 @@ int main (int argc, char* argv[]){
 #if false
   int testI=0;
   // std::cout << "\t\t        \tMatrix\t\tCol\tCol-Matrix" << std::endl;
-  for (uint discr : discrs){
+  for (int jump=2; jump<18; jump+=15){
+    for (uint discr : discrs){
     cout << "Discr: " << discr << endl;
     for (uint j=0; j<Tests.size(); j++){
       //fstream json_out; json_out.open("testResults/tests.json", std::fstream::app);
@@ -97,7 +98,7 @@ int main (int argc, char* argv[]){
       TimePerf tp, tp1;
       
       tp.start();
-      DP::solveDPAllIn1<Dubins<double> >(v, discr, fixedAngles, curveParamV, false);
+      DP::solveDPAllIn1<Dubins<double> >(v, discr, fixedAngles, curveParamV, false, jump);
       auto time1=tp.getTime();
       //Run r1(nameTest(deviceProperties.name, variant).c_str(), discr, time1, testsNames[j], (nExec!="" ? powerFile : ""));
       //r1.write(json_out);
@@ -118,9 +119,10 @@ int main (int argc, char* argv[]){
   //fstream json_out; json_out.open("tests.json", std::fstream::app);
   //json_out << "]}\n";
   //json_out.close();
+  }
   
 #else
-  #define KAYA albert
+  #define KAYA omega
   std::vector<bool> fixedAngles;
   for (int i=0; i<KAYA.size(); i++){
     if (i==0 || i==KAYA.size()-1) {
@@ -135,7 +137,7 @@ int main (int argc, char* argv[]){
   
   TimePerf tp, tp1;
   tp.start();
-  DP::solveDPAllIn1<Dubins<double> >(KAYA, DISCR, fixedAngles, curveParamV, false);
+  //DP::solveDPAllIn1<Dubins<double> >(KAYA, DISCR, fixedAngles, curveParamV, false);
   auto time1=tp.getTime();
 
   tp1.start();

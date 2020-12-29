@@ -195,23 +195,17 @@ std::vector<Angle> solveDP (std::vector<Configuration2<real_type> > points, int 
 
 template<class CURVE> 
 __global__ void solveMatrixCell ( DP::Cell* matrix, uint discr, Configuration2<real_type> c0, Configuration2<real_type> c1,
-                                  real_type* params, int i, int j, real_type* results, uint* next_r){
-    int h=threadIdx.x+blockDim.x*blockIdx.x;
-    if (h<discr){
-      c0.th(matrix[i*discr+j].th());
-      c1.th(matrix[(i+1)*discr+h].th());
+                                  real_type* params, int i, int j, real_type* results){
+  int h=threadIdx.x+blockDim.x*blockIdx.x;
+  if (h<discr){
+    c0.th(matrix[i*discr+j].th());
+    c1.th(matrix[(i+1)*discr+h].th());
 
-      CURVE c=CURVE(c0, c1, params);
-      LEN_T currL=c.l()+matrix[(i+1)*discr+h].l();
+    CURVE c=CURVE(c0, c1, params);
+    LEN_T currL=c.l()+matrix[(i+1)*discr+h].l();
 
-      results[h]=currL;
-      next_r[h]=(i+1)*discr+h;
-
-      //if (currL<matrix[i*discr+j].l()){
-      //  matrix[i*discr+j].l(currL);
-      //  matrix[i*discr+j].next((i+1)*discr+h);
-      //}
-    }
+    results[h]=currL;
+  }
 }
 
 template<class CURVE> 
@@ -224,7 +218,6 @@ __global__ void solveMatrixCol1 (DP::Cell* matrix, uint discr, uint size, const 
   uint j=tidx;
   for (; j<discr; j+=stride){
     real_type* results=(real_type*)malloc(sizeof(real_type)*discr);
-    uint* next_r=(uint*)malloc(sizeof(uint)*discr);
     size_t threads=THREADS;
     size_t blocks=(int)(discr/threads)+1;
     if (fixedAngles[i+1]) {
@@ -232,23 +225,22 @@ __global__ void solveMatrixCol1 (DP::Cell* matrix, uint discr, uint size, const 
       blocks=1;
     }
 
-    solveMatrixCell<CURVE><<<blocks, threads>>>(matrix, discr, c0, c1, params, i, j, results, next_r);
+    solveMatrixCell<CURVE><<<blocks, threads>>>(matrix, discr, c0, c1, params, i, j, results);
+    cudaDeviceSynchronize();
     
     real_type bestL=MAX_LEN_T;
-    int next_id=0;
+    int nextID=0;
     for (uint h=0; h<discr; h++){
-      if (bestL>results[h]){
+      if (results[h]<bestL && results[h]>0){
         bestL=results[h];
-        next_id=next_r[h];
+        nextID=(i+1)*discr+h;
       }
     }
     if(bestL!=MAX_LEN_T){
       matrix[i*discr+j].l(bestL);
-      matrix[i*discr+j].next(next_id);
+      matrix[i*discr+j].next(nextID);
     }
-
     free(results);
-    free(next_r);
 
     if(fixedAngles[i]) j=discr;
   }
@@ -335,7 +327,7 @@ std::vector<Angle> solveDPMatrix (std::vector<Configuration2<real_type> > points
       threads=1;
       blocks=1;
     }
-    solveMatrixCol<CURVE><<<blocks, threads>>>(dev_matrix, discr, size, dev_fixedAngles, c0, c1, dev_params, i);
+    solveMatrixCol1<CURVE><<<blocks, threads>>>(dev_matrix, discr, size, dev_fixedAngles, c0, c1, dev_params, i);
     cudaDeviceSynchronize();
     cudaCheckError(cudaGetLastError());
   }
@@ -388,7 +380,7 @@ __global__ void computeMore(DP::Cell* matrix, real_type* results, const bool* fi
   uint stride=blockDim.x*gridDim.x;
 
   uint j=tidx;
-  if (j<discr*jump*discr){ //j must be less than the number of rows (jump) times the number of inner cells per cell, times the number of cells per row
+  if (j<discr*jump*discr){        //j must be less than the number of rows (jump) times the number of inner cells per cell, times the number of cells per row
     uint cell=(int)(tidx/discr);  //The big cell
     uint inCell=tidx%discr;       //The small cell insider the big cell
     uint cmpId=(int)(cell/discr); //The row in this call
@@ -450,7 +442,7 @@ __global__ void bestAnglesPerCell(DP::Cell* matrix, real_type* results, const bo
 }
 
 template<class CURVE>
-std::vector<Angle> solveDPAllIn1 (std::vector<Configuration2<real_type> > points, int discr, const std::vector<bool> fixedAngles, std::vector<real_type> params, bool guessInitialAnglesVal=false){
+std::vector<Angle> solveDPAllIn1 (std::vector<Configuration2<real_type> > points, int discr, const std::vector<bool> fixedAngles, std::vector<real_type> params, bool guessInitialAnglesVal=false, size_t _jump=0){
 
   int numberOfSMs; cudaDeviceGetAttribute(&numberOfSMs, cudaDevAttrMultiProcessorCount, cudaGetdeviceID());
   uint addAngles=0;
@@ -485,7 +477,8 @@ std::vector<Angle> solveDPAllIn1 (std::vector<Configuration2<real_type> > points
   cudaMemcpy(dev_matrix, matrix, sizeof(DP::Cell)*size*discr, cudaMemcpyHostToDevice);
   cudaCheckError(cudaGetLastError());
 
-  size_t jump=3, iter=0;
+  size_t jump=_jump==0 ? 3 : _jump;
+  size_t iter=0;
   if ((size-1)%jump==0) { iter=(size-1)/jump; }
   else                  { iter=(size_t)(((size-1)+jump)/jump); }
 
