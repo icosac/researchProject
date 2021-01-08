@@ -7,7 +7,9 @@ public:
   uint discr;
   std::string file_name;
 
-  Run (std::string _name, uint _discr, double _time, std::string _test_name, std::string _file_name="") : name(_name), discr(_discr), time(_time), test_name(_test_name), file_name(_file_name) {}
+  Run (std::string _name, uint _discr, double _time, std::string _test_name, std::string _file_name="") : name(_name), discr(_discr), time(_time), test_name(_test_name), file_name(_file_name) {
+    std::cout << "\tWritten time: " << this->time << std::endl;
+  }
 
   void write(std::fstream& out){
     out << "{\"name\" : \"" << name << "\", \"test_name\" : \"" << test_name << "\", \"discr\" : " << discr << ", \"time\" : " << time << (file_name=="" ? "" : ", \"power_file\" : \""+file_name+"\"") << "},\n";

@@ -7,7 +7,7 @@ typedef int int_type;     ///<Typedef to describe integers
 typedef unsigned int uint;///<Typedef to abbreviate unsigned int
 
 //configuration.hh
-typedef float Angle;
+typedef double Angle;
 
 //curve.hh
 typedef double LEN_T;///<Typedef to describe the length

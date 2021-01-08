@@ -1,13 +1,6 @@
 #define M_2PI (M_PI*2);
 
 BOTH static inline Angle
-mod2pi(Angle ang){
-	while (ang < 0) ang += M_2PI;
-	while (ang >=  2*M_PI) ang -= M_2PI;
-	return ang;
-}
-
-BOTH static inline Angle
 rangeSymm(Angle ang){
 	while (ang <= - M_PI) ang += M_2PI;
 	while (ang >  M_PI) ang -= M_2PI;

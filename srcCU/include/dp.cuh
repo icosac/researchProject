@@ -9,11 +9,11 @@
 #include <constants.cuh>
 
 #include <iostream>
+#include <set>
 #include <cmath>
 #include <vector>
 #include <sstream>
 #include <algorithm>
-//#include <cmath>
 
 __global__ void printResults(real_type* results, size_t discr, size_t size);
 
@@ -99,7 +99,7 @@ namespace DP {
     };
   } //Anonymous namespace to hide information
 
-  void guessInitialAngles(std::vector<Configuration2<double> >& points, const std::vector<bool> fixedAngles);
+  uint guessInitialAngles(std::vector<std::set<Angle> >& moreAngles, const std::vector<Configuration2<double> >& points, const std::vector<bool> fixedAngles,  const real_type K);
   
   /* Templated functions in dp.cut
    * std::vector<Angle> bestAngles(DP::Cell* matrix, int discr, int size);
@@ -108,6 +108,37 @@ namespace DP {
    */ 
 
   #include<dp.cut>
+
+  template<class CURVE>
+  void solveDP(std::vector<Configuration2<real_type> > points, int discr, const std::vector<bool> fixedAngles, std::vector<real_type> params, short type=2, bool guessInitialAnglesVal=false, uint nIter=1, Angle _fullAngle=m_2pi){
+    Angle fullAngle=_fullAngle;
+    std::vector<Angle> angles; 
+    //This doesn't work for reasons I don't know
+    //std::vector<Angle>(*func)(std::vector<Configuration2<real_type> > points, uint discr, const std::vector<bool> fixedAngles, std::vector<real_type> params, Angle fullAngle, bool halveDiscr, bool guessInitialAnglesVal)=NULL;
+    for(uint i=0; i<nIter+1; ++i){
+      switch(type){
+        case 0: {
+          angles=DP::solveDPFirstVersion<CURVE>(points, discr, fixedAngles, params, fullAngle, (i==0 ? false : true), guessInitialAnglesVal);
+          break;
+        }
+        case 1:{
+          angles=DP::solveDPMatrix<CURVE>(points, discr, fixedAngles, params, fullAngle, (i==0 ? false : true), guessInitialAnglesVal);
+          break;
+        }
+        case 2: default:{
+          angles=DP::solveDPAllIn1<CURVE>(points, discr, fixedAngles, params, fullAngle, (i==0 ? false : true), guessInitialAnglesVal);
+        }
+      }
+
+      for (uint j=0; j<angles.size(); j++){
+        if (!fixedAngles[j]){
+          points[j].th(angles[j]);
+        }
+      }
+
+      fullAngle=3.0*fullAngle/(2.0*discr);
+    }
+  }
 
 } //namespace DP
 

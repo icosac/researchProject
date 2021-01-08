@@ -84,6 +84,13 @@ inline bool eq(const T x, const T y, const T EPSI=std::numeric_limits<T>::epsilo
   return ((ABS(x, y)>(EPSI)) ? false : true);
 }
 
+BOTH inline Angle
+mod2pi(Angle ang){
+  while (ang < 0) {ang += M_PI*2;}
+  while (ang >=  2*M_PI) {ang -= M_PI*2;}
+  return ang;
+}
+
 template<class T>
 inline T maxV(T* v, size_t d){
   T ret=v[0];
