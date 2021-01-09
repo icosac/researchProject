@@ -1,9 +1,11 @@
-#define M_2PI (M_PI*2);
+//#define MYM_PI 3.14159265358979323846264338328
+#define M_2PI (MYM_PI*2.0);
+#define MYCOUT(x) printf("%s: %.18f\n", #x, x);
 
 BOTH static inline Angle
 rangeSymm(Angle ang){
-	while (ang <= - M_PI) ang += M_2PI;
-	while (ang >  M_PI) ang -= M_2PI;
+	while (ang <= - MYM_PI) ang += M_2PI;
+	while (ang >  MYM_PI) ang -= M_2PI;
 	return ang;
 }
 
@@ -28,6 +30,25 @@ void Dubins<T>::scaleToStandard(Angle& phi, real_type& lambda, Angle& sth0, Angl
   sKmax = this->kmax() * lambda;
   sth0 = mod2pi(this->ci()->th() - phi);
   sth1 = mod2pi(this->cf()->th() - phi);
+  //MYCOUT(this->ci()->x())
+  //MYCOUT(this->ci()->y())
+  //MYCOUT(this->ci()->th())
+  //MYCOUT(this->cf()->x())
+  //MYCOUT(this->cf()->y())
+  //MYCOUT(this->cf()->th())
+  //MYCOUT(dx)
+  //MYCOUT(dy)
+  //MYCOUT(phi)
+  //MYCOUT(lambda)
+  //MYCOUT(sKmax)
+  //MYCOUT(sth0)
+  //MYCOUT(sth1)
+  //MYCOUT((this->ci()->th()-phi))
+  //MYCOUT((this->cf()->th()-phi))
+  //MYCOUT(MYM_PI)
+  //MYCOUT(M_PI)
+  //MYCOUT(2*MYM_PI)
+  //MYCOUT(2*M_PI)
 }
 
 template<class T>
@@ -134,7 +155,7 @@ void Dubins<T>::computeBest(Angle th0, Angle th1, real_type lambda, K_T& sKmax){
   temp1 = atan2(C, S);
   temp2 = 0.125 * (6 - 4*Ksq  + 2*dcos + 4*sKmax*dsin);
   if (ABS<real_type>(temp2, 0.0) <= 1) {
-    t2 = invK * mod2pi(2*M_PI - acos(temp2));
+    t2 = invK * mod2pi(2*MYM_PI - acos(temp2));
     t1 = invK * mod2pi(th0 - temp1 + 0.5*t2*sKmax);
     t3 = invK * mod2pi(dth+(t2-t1)*sKmax);
     lc = t1+t2+t3;
@@ -151,7 +172,7 @@ void Dubins<T>::computeBest(Angle th0, Angle th1, real_type lambda, K_T& sKmax){
   temp1 = atan2(C, S);
   temp2 = 0.125*(6 - 4*Ksq + 2*dcos - 4*sKmax*dsin);
   if (ABS<real_type>(temp2, 0.0) <= 1) {
-    t2 = invK * mod2pi(2*M_PI - acos(temp2));
+    t2 = invK * mod2pi(2*MYM_PI - acos(temp2));
     t1 = invK * mod2pi(-th0 + temp1 + 0.5*t2*sKmax);
     t3 = invK * mod2pi(-dth + (t2-t1)*sKmax);
     lc = t1+t2+t3;

@@ -17,7 +17,9 @@ void circles(real_type x1, real_type y1, real_type x2, real_type y2, real_type r
   XC.clear();
   YC.clear();
 
-  if (delta < -TOL) return;
+  if (delta < -TOL) {
+    return;
+  }
   
   if (delta < TOL) 
   {
@@ -38,22 +40,34 @@ void circles(real_type x1, real_type y1, real_type x2, real_type y2, real_type r
 uint DP::guessInitialAngles(std::vector<std::set<Angle> >& moreAngles, const std::vector<Configuration2<real_type> >& points, const std::vector<bool> fixedAngles, const real_type K){
   uint max=0;
   for (uint i=1; i<points.size(); i++){
+    //std::cout << points[i-1] << "   " << points[i] << std::endl;
     moreAngles.push_back(std::set<Angle>());
     if (i==1) { moreAngles.push_back(std::set<Angle>()); }
     //First add the lines connecting two points:
     Angle th = std::atan2((points[i].y()-points[i-1].y()), (points[i].x()-points[i-1].x()));
     if (!fixedAngles[i-1]){ moreAngles[i-1].insert(th); }
     if (!fixedAngles[i])  { moreAngles[i].insert(th); }
+    
     //Then add the possible angles of the tangents to two possible circles:
     std::vector<real_type> XC, YC;
     circles(points[i-1].x(), points[i-1].y(), points[i].x(), points[i].y(), 1./K, XC, YC);
+    //std::cout << "aligned: " << th << std::endl;
+    
+    //std::cout << "XC: ";
+    //for (auto a : XC) { std::cout << a << ", "; }
+    //std::cout << std::endl << "YC: ";
+    //for (auto a : YC) { std::cout << a << ", "; }
     for (uint j=0; j<XC.size(); j++){
-      th = std::atan2(points[i-1].y()-YC[j], points[i-1].x()-XC[j]);
-      moreAngles[i-1].insert(th+M_PI/2.);
-      moreAngles[i-1].insert(th-M_PI/2.);
-      th = std::atan2(points[i].y()-YC[j], points[i].x()-XC[j]);
-      moreAngles[i].insert(th+M_PI/2.);
-      moreAngles[i].insert(th-M_PI/2.);
+      if (!fixedAngles[i-1]){
+        th = std::atan2(points[i-1].y()-YC[j], points[i-1].x()-XC[j]);
+        moreAngles[i-1].insert(th+M_PI/2.);
+        moreAngles[i-1].insert(th-M_PI/2.);
+      }
+      if (!fixedAngles[i]){
+        th = std::atan2(points[i].y()-YC[j], points[i].x()-XC[j]);
+        moreAngles[i].insert(th+M_PI/2.);
+        moreAngles[i].insert(th-M_PI/2.);
+      }
     }
     if (moreAngles[i-1].size()>max){
       max=moreAngles[i-1].size();
@@ -61,7 +75,16 @@ uint DP::guessInitialAngles(std::vector<std::set<Angle> >& moreAngles, const std
     if (i==points.size()-1 && moreAngles[i].size()>max){
       max=moreAngles[i].size();
     }
+    //std::cout << std::endl << std::endl << std::endl;
   }  
+  //for (auto v : moreAngles){
+  //  for (auto a : v){
+  //    std::cout << std::setw(11) << std::setprecision(5) << a*360/(2*M_PI) << " ";
+  //  }
+  //  std::cout << endl;
+  //}
+
+  //std::cout << "points: " << points.size() << " angles: " << moreAngles.size() << std::endl; 
   return max;
 }
 

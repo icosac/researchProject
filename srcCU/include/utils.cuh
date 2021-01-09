@@ -11,6 +11,7 @@
 #include <typedefs.hh>
 
 //#define DEBUG
+#define MYM_PI 3.14159265358979323846264338328
 
 #ifdef DEBUG
 #define COUT(x) cout << x;
@@ -86,8 +87,8 @@ inline bool eq(const T x, const T y, const T EPSI=std::numeric_limits<T>::epsilo
 
 BOTH inline Angle
 mod2pi(Angle ang){
-  while (ang < 0) {ang += M_PI*2;}
-  while (ang >=  2*M_PI) {ang -= M_PI*2;}
+  while (ang < 0) {ang += MYM_PI*2;}
+  while (ang >=  2*MYM_PI) {ang -= MYM_PI*2;}
   return ang;
 }
 

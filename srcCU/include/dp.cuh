@@ -24,27 +24,21 @@ namespace DP {
       Angle _th;
       LEN_T _l; //Length of the curve
       uint _nextID;
-      int _i, _j, _id;
 
     public:
       real_type* _results;
       Cell() : _th(ANGLE::INVALID), _l(std::numeric_limits<LEN_T>::max()), _nextID(0) {}
 
-      BOTH Cell(Angle th, LEN_T l, uint nextID, int i=0, int j=0, int id=0) 
+      BOTH Cell(Angle th, LEN_T l, uint nextID) 
         : 
           _th(th), 
           _l(l),  
-          _nextID(nextID), 
-          _i(i), _j(j), _id(id) 
+          _nextID(nextID)
         {}
 
       BOTH Angle th()                 const { return this->_th; }
       BOTH LEN_T l()                  const { return this->_l; }   
       BOTH uint next()                const { return this->_nextID; }
-
-      BOTH int i()                    const { return this->_i; }
-      BOTH int j()                    const { return this->_j; }
-      BOTH int id()                   const { return this->_id; }
 
       BOTH Angle th(Angle th) {
         this->_th = th;
@@ -65,9 +59,6 @@ namespace DP {
         this->th(d.th());
         this->l(d.l());
         this->next(d.next());
-        this->_i=d.i();
-        this->_j=d.j();
-        this->_id=d.id();
         
         return *this;
       }
@@ -81,7 +72,7 @@ namespace DP {
         if (pretty) {
           out << "th: " << this->th() << " l: " << this->l();
         } else {
-          out << "<" << (Angle) (this->th() * 1.0) << ", " << (LEN_T) (this->l()) << " (" << this->_i << ", " << this->_j << ", " << this->_id << ")" << ">";
+          out << "<" << (Angle)(this->th()*1.0) << ", " << (LEN_T)(this->l()) << ">";
         }
         return out;
       }
@@ -91,11 +82,6 @@ namespace DP {
         return out;
       }
       
-      BOTH operator real_type(){ //TODO remove this function when finished debugging
-        real_type val=this->l();
-        if (false) val=this->th();
-        return (val>1000000 ? 999999 : val);
-      }
     };
   } //Anonymous namespace to hide information
 
@@ -110,12 +96,14 @@ namespace DP {
   #include<dp.cut>
 
   template<class CURVE>
-  void solveDP(std::vector<Configuration2<real_type> > points, int discr, const std::vector<bool> fixedAngles, std::vector<real_type> params, short type=2, bool guessInitialAnglesVal=false, uint nIter=1, Angle _fullAngle=m_2pi){
+  void solveDP(std::vector<Configuration2<real_type> >& points, int discr, const std::vector<bool> fixedAngles, std::vector<real_type> params, short type=2, bool guessInitialAnglesVal=false, uint nIter=1, Angle _fullAngle=m_2pi){
     Angle fullAngle=_fullAngle;
     std::vector<Angle> angles; 
-    //This doesn't work for reasons I don't know
+    //Passing the functions as pointers doesn't work for reasons I don't know
     //std::vector<Angle>(*func)(std::vector<Configuration2<real_type> > points, uint discr, const std::vector<bool> fixedAngles, std::vector<real_type> params, Angle fullAngle, bool halveDiscr, bool guessInitialAnglesVal)=NULL;
     for(uint i=0; i<nIter+1; ++i){
+      //std::cout << "Refinement: " << i << std::endl;
+//      std::cout << std::endl;
       switch(type){
         case 0: {
           angles=DP::solveDPFirstVersion<CURVE>(points, discr, fixedAngles, params, fullAngle, (i==0 ? false : true), guessInitialAnglesVal);
@@ -135,8 +123,27 @@ namespace DP {
           points[j].th(angles[j]);
         }
       }
+//      std::cout << "< ";
+//      for (auto v : angles){
+//        std::cout << std::setw(20) << std::setprecision(17) << mod2pi(v) << " ";
+//      }
+//      std::cout << ">" << std::endl;
+//
+//      LEN_T Length=0.0;
+//      for (unsigned int idjijij=points.size()-1; idjijij>0; idjijij--){
+//        Dubins<real_type> c(points[idjijij-1], points[idjijij], params[0]);
+//        Length+=c.l();
+//      }
+//      std::cout << "Length: " << std::setw(20) << std::setprecision(17) << Length << " " << std::endl; // setprecision(20) << (ABS<real_type>(Length, dLen)) << endl;
 
-      fullAngle=3.0*fullAngle/(2.0*discr);
+
+      if (i==0){
+        fullAngle=fullAngle/(discr)*1.5;
+        discr++; //This is because, yes.
+      }
+      else{
+        fullAngle=fullAngle/(discr-1)*1.5;
+      }
     }
   }
 

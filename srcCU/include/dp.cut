@@ -36,6 +36,7 @@ std::vector<Angle> bestAnglesMatrix(DP::Cell* matrix, int discr, int size, const
         best=&matrix[i];
     }
   }
+  //std::cout << "In matrix length: " << std::setw(20) << std::setprecision(17) << best->l() << std::endl;
 
   vector<Angle> ret(1, best->th());
   uint nextID=best->next();
@@ -113,10 +114,10 @@ __global__ void solveCol( DP::Cell* matrix, uint discr, uint size, const bool* f
     
     if (bestL!=MAX_LEN_T){
       uint nextID=(i==size-1 ? 0 : bestK*size+(i+1));
-      matrix[j*size+i]=Cell(bestA, bestL, nextID, i, j, j*size+i);
+      matrix[j*size+i]=Cell(bestA, bestL, nextID);
     }
     if (i==1){
-      matrix[size*j]=Cell(c0.th(), bestL, (size*j+i), 0, j, size*j);
+      matrix[size*j]=Cell(c0.th(), bestL, (size*j+i));
     }
     if(fixedAngles[i-1]) j=discr;
   }
@@ -279,6 +280,7 @@ __global__ void solveMatrixCol (DP::Cell* matrix, uint discr, uint size, const b
       }
       if (fixedAngles[i+1]) {h=discr;}
     }
+    if (matrix[i*discr+j].next()==0){ printf("[%u] BIG NO\n", i*discr+j); }
     if(fixedAngles[i]) j=discr;
   }
 }
@@ -297,13 +299,12 @@ std::vector<Angle> solveDPMatrix (std::vector<Configuration2<real_type> > points
   if(guessInitialAnglesVal){
     addedAngles=DP::guessInitialAngles(moreAngles, points, fixedAngles, params[0]);
   }
-
+  
   size_t size=points.size();
-  discr=(discr%2==0 ? discr+1 : discr);
-  size_t halfDiscr=(size_t)((discr-1)/2.0);
+  uint halfDiscr=(uint)((discr-(discr%2==0 ? 0 : 1))/2);
+  real_type dtheta=fullAngle/((halveDiscr ? (int)(discr/2) : discr)*1.0);
   discr+=addedAngles;
   
-
   DP::Cell* matrix;
   cudaMallocHost(&matrix, (sizeof(DP::Cell)*size*discr));
   DP::Cell* dev_matrix;
@@ -311,35 +312,51 @@ std::vector<Angle> solveDPMatrix (std::vector<Configuration2<real_type> > points
   
   bool* dev_fixedAngles=cudaSTDVectorToArray<bool>(fixedAngles);
   real_type* dev_params=cudaSTDVectorToArray<real_type>(params);  
-
+  
+  //std::cout << "halveDiscr: " << (halveDiscr==true ? "true" : "false") << std::endl; 
+  //std::cout << "discr: " << discr << std::endl;
+  //std::cout << "size: " << size << std::endl;
+  //std::cout << "hrange: " << std::setw(20) << std::setprecision(17) << fullAngle << std::endl;
+  //std::cout << "dtheta: " << std::setw(20) << std::setprecision(17) << dtheta << std::endl;
+  //std::cout << "hn: " << halfDiscr << std::endl;
+  
   for (uint i=0; i<size; i++){ //TODO change back, remove l=-1 if fixedAngles
     LEN_T l = (i==size-1 ? 0 : std::numeric_limits<LEN_T>::max());
     for (uint j=0; j<=halfDiscr; j++){
       if (fixedAngles[i]){
-        matrix[i*discr+j]=DP::Cell(points[i].th(), (j==0 ? l : -1), 0, i, j, i*discr);
-        continue;
+        matrix[i*discr+j]=DP::Cell(points[i].th(), (j==0 ? l : -1), 0);
+        break;
       }
       else {
-        if(j==0) { matrix[i*discr+j]=DP::Cell(points[i].th(), l, 0, i, j, i*discr+j); }
+        if(j==0) { 
+          matrix[i*discr+j]=DP::Cell(points[i].th(), l, 0); 
+        }
         else{
-          real_type hn=(j*1.0)/((halveDiscr ? halfDiscr : (halfDiscr*2+1))*1.0);
-          matrix[i*discr+j]          =DP::Cell(points[i].th()-fullAngle*hn, l, 0, i, j, i*discr+j);
-          matrix[i*discr+j+halfDiscr]=DP::Cell(points[i].th()+fullAngle*hn, l, 0, i, j, i*discr+j); 
+          matrix[i*discr+j]          =DP::Cell(mod2pi(points[i].th()-(j*1.0)*dtheta), l, 0);
+          matrix[i*discr+j+halfDiscr]=DP::Cell(mod2pi(points[i].th()+(j*1.0)*dtheta), l, 0); 
         }
       }
     }
-    uint j=halfDiscr*2+1;
-    if (!fixedAngles[i]){
-      for (std::set<Angle>::iterator it=moreAngles[i].begin(); it!=moreAngles[i].end(); ++it){
-        matrix[i*discr+j]=DP::Cell(*it, l, 0, i, j, i*discr+j);
-        j++;
-      }
-      for (; j<discr; j++){
-        matrix[i*discr+j]=DP::Cell(0, l, 0, i, j, i*discr+j);
+    if (guessInitialAnglesVal){
+      uint j=discr-addedAngles;
+      if (!fixedAngles[i]){
+        for (std::set<Angle>::iterator it=moreAngles[i].begin(); it!=moreAngles[i].end(); ++it){
+          matrix[i*discr+j]=DP::Cell(*it, l, 0);
+          j++;
+        }
+        for (; j<discr; j++){
+          matrix[i*discr+j]=DP::Cell(0, l, 0);
+        }
       }
     }
   }
 
+  //for (uint i=0; i<size; i++){
+  //  for (uint j=0; j<discr; j++){
+  //    std::cout << std::setw(15) << std::setprecision(10) << mod2pi(matrix[i*discr+j].th()) << (j==(discr-addedAngles) ? " | " : " ");
+  //  }
+  //  std::cout << std::endl;
+  //}
   cudaMemcpy(dev_matrix, matrix, sizeof(DP::Cell)*size*discr, cudaMemcpyHostToDevice);
   cudaCheckError(cudaGetLastError());
 
@@ -458,7 +475,7 @@ __global__ void bestAnglesPerCell(DP::Cell* matrix, real_type* results, const bo
         }
         else if(((int)(pos/(discr*discr)))<(size-2)){ //Otherwise consider also the next length
           //printf("tidx: %u, pos: %u, j: %d h: %d, id: %u\n", tidx, pos, j, h, id);
-          LEN_T currL=results[posRes+h]+matrix[iter*jump*discr+(j+1)*discr+h];
+          LEN_T currL=results[posRes+h]+matrix[iter*jump*discr+(j+1)*discr+h].l();
           if (currL<bestL){
             bestL=currL;
             //nextID=((iter+1)*discr*jump)*discr+l;
@@ -472,14 +489,14 @@ __global__ void bestAnglesPerCell(DP::Cell* matrix, real_type* results, const bo
       }
       if (((int)(pos/(discr*discr)))<(size-1)){
         //printf("[%u] Writing %f in %d\n", pos, bestL, (int)(pos/discr));
-        matrix[(int)(pos/discr)]=DP::Cell(matrix[(int)(pos/discr)].th(), bestL, nextID, matrix[(int)(pos/discr)].i(), matrix[(int)(pos/discr)].j(), matrix[(int)(pos/discr)].id());
+        matrix[(int)(pos/discr)]=DP::Cell(matrix[(int)(pos/discr)].th(), bestL, nextID);
       }
     }
   }
 }
 
 template<class CURVE>
-std::vector<Angle> solveDPAllIn1 (std::vector<Configuration2<real_type> > points, uint discr, const std::vector<bool> fixedAngles, std::vector<real_type> params, Angle fullAngle=m_2pi, bool halveDiscr=false, bool guessInitialAnglesVal=false){
+std::vector<Angle> solveDPAllIn1 (std::vector<Configuration2<real_type> > points, uint discr, const std::vector<bool> fixedAngles, std::vector<real_type> params, Angle fullAngle, bool halveDiscr=false, bool guessInitialAnglesVal=false){
   if (points.size()!=fixedAngles.size()){
     cerr << "Number of points and number of fixed angles are not the same: " << points.size() << "!=" << fixedAngles.size() << endl;
     return std::vector<Angle>();
@@ -494,8 +511,9 @@ std::vector<Angle> solveDPAllIn1 (std::vector<Configuration2<real_type> > points
   }
   
   size_t size=points.size();
-  discr=(discr%2==0 ? discr+1 : discr); //So.... since we add always the angle in position 0, we'll always have an even number of discretizionations... 
-  uint halfDiscr=(uint)((discr-1)/2);
+  //discr=(discr%2==0 ? discr+1 : discr); //So.... since we add always the angle in position 0, we'll always have an odd number of discretizionations... 
+  uint halfDiscr=(uint)((discr-(discr%2==0 ? 0 : 1))/2);
+  real_type dtheta=fullAngle/((halveDiscr ? (int)(discr/2) : discr)*1.0);
   discr+=addedAngles;
 
   DP::Cell* matrix;
@@ -508,38 +526,53 @@ std::vector<Angle> solveDPAllIn1 (std::vector<Configuration2<real_type> > points
   bool* dev_fixedAngles=cudaSTDVectorToArray<bool>(fixedAngles);
   real_type* dev_params=cudaSTDVectorToArray<real_type>(params);  
   Configuration2<real_type>* dev_points=cudaSTDVectorToArray<Configuration2<real_type> >(points);
+  
+  //std::cout << "halveDiscr: " << (halveDiscr==true ? "true" : "false") << std::endl; 
+  //std::cout << "discr: " << discr << std::endl;
+  //std::cout << "hrange: " << std::setw(20) << std::setprecision(17) << fullAngle << std::endl;
+  //std::cout << "dtheta: " << std::setw(20) << std::setprecision(17) << dtheta << std::endl;
+  //std::cout << "hn: " << halfDiscr << std::endl;
 
   for (uint i=0; i<size; i++){
     LEN_T l = (i==size-1 ? 0 : std::numeric_limits<LEN_T>::max());
     for (uint j=0; j<=halfDiscr; j++){
       if (fixedAngles[i]){
-        matrix[i*discr+j]           =DP::Cell(points[i].th(), l, 0, i, j, i*discr);
-        matrix[i*discr+j+halfDiscr] =DP::Cell(points[i].th(), l, 0, i, j, i*discr);
-        //In this case I need to have the row full of the same values. Otherwise I should change the kernel function
+        matrix[i*discr+j]           =DP::Cell(points[i].th(), l, 0);
+        matrix[i*discr+j+halfDiscr] =DP::Cell(points[i].th(), l, 0);
+        //In this case I need to have the row full of the same values. Otherwise I should change the kernel function and add particular cases for fixed angles
       }
       else {
-        if(j==0) { matrix[i*discr+j]=DP::Cell(points[i].th(), l, 0, i, j, i*discr+j); }
+        if(j==0) { matrix[i*discr+j]=DP::Cell(points[i].th(), l, 0); }
         else{
-          real_type hn=(j*1.0)/((halveDiscr ? halfDiscr : (halfDiscr*2+1))*1.0);
-          matrix[i*discr+j]          =DP::Cell(points[i].th()-fullAngle*hn, l, 0, i, j, i*discr+j);
-          matrix[i*discr+j+halfDiscr]=DP::Cell(points[i].th()+fullAngle*hn, l, 0, i, j, i*discr+j); 
+          //real_type hn=(j*1.0)/((halveDiscr ? halfDiscr : (halfDiscr*2+1))*1.0);
+          matrix[i*discr+j]          =DP::Cell(mod2pi(points[i].th()-(j*1.0)*dtheta), l, 0);
+          matrix[i*discr+j+halfDiscr]=DP::Cell(mod2pi(points[i].th()+(j*1.0)*dtheta), l, 0); 
         }
       }
     }
-    uint j=halfDiscr*2+1;
-    if (!fixedAngles[i]){
-      for (std::set<Angle>::iterator it=moreAngles[i].begin(); it!=moreAngles[i].end(); ++it){
-        matrix[i*discr+j]=DP::Cell(*it, l, 0, i, j, i*discr+j);
-        j++;
+    if (guessInitialAnglesVal){
+      //uint j=halfDiscr*2+1;
+      uint j=discr-addedAngles;
+      if (!fixedAngles[i]){
+        for (std::set<Angle>::iterator it=moreAngles[i].begin(); it!=moreAngles[i].end(); ++it){
+          matrix[i*discr+j]=DP::Cell(*it, l, 0);
+          j++;
+        }
+      }
+      else{
+        for (; j<discr; j++){
+          matrix[i*discr+j]=DP::Cell(points[i].th(), l, 0);
+        }
       }
     }
-    else{
-      for (; j<discr; j++){
-        matrix[i*discr+j]=DP::Cell(points[i].th(), l, 0, i, j, i*discr+j);
-      }
-    }
-
   }
+
+  //for (uint i=0; i<size; i++){
+  //  for (uint j=0; j<discr; j++){
+  //    std::cout << std::setw(15) << std::setprecision(10) << mod2pi(matrix[i*discr+j].th()) << (j==halfDiscr*2 ? " | " : " ");
+  //  }
+  //  std::cout << std::endl;
+  //}
 
   cudaMemcpy(dev_matrix, matrix, sizeof(DP::Cell)*size*discr, cudaMemcpyHostToDevice);
   cudaCheckError(cudaGetLastError());
