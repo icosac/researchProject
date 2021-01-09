@@ -56,7 +56,7 @@ std::vector<Configuration2<double> > kaya3={
 };
 
 std::vector<Configuration2<double> > kaya4={
-       Configuration2<double>(0.5, 1.2, 5*M_PI/6.0),
+       Configuration2<double>(0.5, 1.2, 5.0*M_PI/6.0),
        Configuration2<double>(0.0, 0.5, ANGLE::INVALID),
        Configuration2<double>(0.5, 0.5, ANGLE::INVALID),
        Configuration2<double>(1.0, 0.5, ANGLE::INVALID),
@@ -71,7 +71,7 @@ std::vector<Configuration2<double> > kaya4={
 };
 
 std::vector<Configuration2<double> > omega ={
-      Configuration2<double>(2.9265642, -1.707808758, 9/10*M_PI),
+      Configuration2<double>(2.9265642, -1.707808758, 9.0/10.0*M_PI),
       Configuration2<double>(2.6734362, -1.707808758, ANGLE::INVALID),
       Configuration2<double>(2.5109322, -2.367185958, ANGLE::INVALID),
       Configuration2<double>(1.9078122, -2.582810358, ANGLE::INVALID),
@@ -97,7 +97,7 @@ std::vector<Configuration2<double> > omega ={
       Configuration2<double>(0.8968722, -2.989063158, ANGLE::INVALID),
       Configuration2<double>(1.1406282, -3.178123242, ANGLE::INVALID),
       Configuration2<double>(2.6187522, -3.178123242, ANGLE::INVALID),
-      Configuration2<double>(2.9265642, -1.707808758, 9/10*M_PI),
+      Configuration2<double>(2.9265642, -1.707808758, 9.0/10.0*M_PI),
 };
 
 std::vector<Configuration2<double> > spa ={

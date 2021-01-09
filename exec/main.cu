@@ -158,7 +158,7 @@ int main (int argc, char* argv[]){
   //}
 #else
   for (int testID=0; testID<6; testID++){
-    if (testID!=5){continue;}
+    if (testID!=3){continue;}
     real_type dLen=exampleLenghts[testID];
 
     std::vector<bool> fixedAngles;
@@ -176,7 +176,7 @@ int main (int argc, char* argv[]){
     for (auto DISCR :  discrs){
       //if (DISCR!=4){continue;}
       for (auto r : refins){
-        //if (r!=16){continue;}
+        //if (r!=1){continue;}
         //r=5;
         //std::cout << DISCR << " " << r << " ";
         TimePerf tp, tp1;
