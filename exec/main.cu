@@ -80,14 +80,14 @@ std::string nameTest(std::string name, std::string add="", std::string conc=" ")
 
 int main (int argc, char* argv[]){
 
-  std::cout << "CUDA" << std::endl;
+  //std::cout << "CUDA" << std::endl;
   cudaFree(0);
 
   int devicesCount;
   cudaGetDeviceCount(&devicesCount);
   cudaDeviceProp deviceProperties;
   cudaGetDeviceProperties(&deviceProperties, 0);
-  printf("[%d] %s\n", 0, deviceProperties.name);
+  //printf("[%d] %s\n", 0, deviceProperties.name);
 
   if (argc==1){
     for (int testID=0; testID<6; testID++){
@@ -139,7 +139,6 @@ int main (int argc, char* argv[]){
   }
 
   else if (argc==9 || argc==10) {
-    std::cout << argc << std::endl;
     std::string testName=std::string(argv[1]);
     std::string nExec=std::string(argv[2]);
     uint testID=atoi(argv[3]);
@@ -152,15 +151,15 @@ int main (int argc, char* argv[]){
     bool guessAnglesVal=(atoi(argv[7])==1 ? true : false);
     uint threads=atoi(argv[8]);
 
-    std::cout << "testName: " << testName << std::endl;
-    std::cout << "nExec: " << nExec << std::endl;
-    std::cout << "testID: " << testID << std::endl;
-    std::cout << "discr: " << discr << std::endl;
-    std::cout << "rip: " << rip << std::endl;
-    std::cout << "funcID: " << funcID << std::endl;
-    std::cout << "jump: " << jump << std::endl;
-    std::cout << "guessAnglesVal: " << guessAnglesVal << std::endl;
-    std::cout << "threads: " << threads << std::endl;
+    //std::cout << "testName: " << testName << std::endl;
+    //std::cout << "nExec: " << nExec << std::endl;
+    //std::cout << "testID: " << testID << std::endl;
+    //std::cout << "discr: " << discr << std::endl;
+    //std::cout << "rip: " << rip << std::endl;
+    //std::cout << "funcID: " << funcID << std::endl;
+    //std::cout << "jump: " << jump << std::endl;
+    //std::cout << "guessAnglesVal: " << guessAnglesVal << std::endl;
+    //std::cout << "threads: " << threads << std::endl;
 
     std::fstream json_out; json_out.open("testResults/tests.json", std::fstream::app);
     
@@ -179,7 +178,7 @@ int main (int argc, char* argv[]){
 
     std::string variant=testsNames[testID]; std::replace(variant.begin(), variant.end(), ' ', '_');
     std::string path=testName+"/"+nExec+"/";
-    std::cout << path << std::endl;
+    //std::cout << path << std::endl;
     std::string powerName=variant+"_"+std::to_string(discr)+"_"+std::to_string(rip)+"_"+std::to_string(funcID)+"_"+std::to_string(guessAnglesVal ? 1 : 0)+"_"+std::to_string(threads)+"_"+std::to_string(jump)+".log";
     std::string powerFile=path+powerName;
     
@@ -200,14 +199,14 @@ int main (int argc, char* argv[]){
       Length+=c.l();
     }
     
-    std::cout << "Length: " << std::setprecision(30) << Length << " " << std::setprecision(20) << (ABS<real_type>(Length*1000.0, exampleLenghts[testID]*1000.0)) << endl;
+    //std::cout << "Length: " << std::setprecision(30) << Length << " " << std::setprecision(20) << (ABS<real_type>(Length*1000.0, exampleLenghts[testID]*1000.0)) << endl;
     Run r1(testName, discr, time1, Length, ((Length-exampleLenghts[testID])*1000.0), testsNames[testID], rip, threads, funcID, jump, (guessAnglesVal ? "true" : "false"), (nExec!="" ? powerFile : ""));
     r1.write(json_out);
     json_out.close();
     
     sleep(2);
     //system((std::string("tegrastats --stop && mv ")+powerName+" "+powerFile).c_str());
-    std::cout << "\tExample " << std::setw(20) << std::setprecision(17) << time1 << "ms\t" << std::endl; //<< std::setw(20) << std::setprecision(5) <<  time2 << "ms\t" << std::setw(10) << (time2-time1) << "ms" << endl;
+    //std::cout << "\tExample " << std::setw(20) << std::setprecision(17) << time1 << "ms\t" << std::endl; //<< std::setw(20) << std::setprecision(5) <<  time2 << "ms\t" << std::setw(10) << (time2-time1) << "ms" << endl;
   }
   return 0;
 }
