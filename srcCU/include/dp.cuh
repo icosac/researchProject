@@ -96,7 +96,7 @@ namespace DP {
   #include<dp.cut>
 
   template<class CURVE>
-  void solveDP(std::vector<Configuration2<real_type> >& points, int discr, const std::vector<bool> fixedAngles, std::vector<real_type> params, short type=2, bool guessInitialAnglesVal=false, uint nIter=1, Angle _fullAngle=m_2pi){
+  void solveDP(std::vector<Configuration2<real_type> >& points, int discr, const std::vector<bool> fixedAngles, std::vector<real_type> params, short type=2, bool guessInitialAnglesVal=false, uint nIter=1, uint threads=128, Angle _fullAngle=m_2pi){
     Angle fullAngle=_fullAngle;
     std::vector<Angle> angles; 
     //Passing the functions as pointers doesn't work for reasons I don't know
@@ -106,15 +106,15 @@ namespace DP {
 //      std::cout << std::endl;
       switch(type){
         case 0: {
-          angles=DP::solveDPFirstVersion<CURVE>(points, discr, fixedAngles, params, fullAngle, (i==0 ? false : true), guessInitialAnglesVal);
+          angles=DP::solveDPFirstVersion<CURVE>(points, discr, fixedAngles, params, fullAngle, (i==0 ? false : true), guessInitialAnglesVal, threads);
           break;
         }
         case 1:{
-          angles=DP::solveDPMatrix<CURVE>(points, discr, fixedAngles, params, fullAngle, (i==0 ? false : true), guessInitialAnglesVal);
+          angles=DP::solveDPMatrix<CURVE>(points, discr, fixedAngles, params, fullAngle, (i==0 ? false : true), guessInitialAnglesVal, threads);
           break;
         }
         case 2: default:{
-          angles=DP::solveDPAllIn1<CURVE>(points, discr, fixedAngles, params, fullAngle, (i==0 ? false : true), guessInitialAnglesVal);
+          angles=DP::solveDPAllIn1<CURVE>(points, discr, fixedAngles, params, fullAngle, (i==0 ? false : true), guessInitialAnglesVal, threads);
         }
       }
 
