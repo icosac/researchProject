@@ -16,7 +16,7 @@ public:
   void write(std::fstream& out){
     out << 
       "{\"name\" : \"" << name << 
-      "\", \"test_name\" : \"" << test_name << 
+      "\", \"test_name\" : \"" << test_name <<  "\"" <<
       ", \"discr\" : " << discr << 
       ", \"time\" : " << time << 
       ", \"length\" : " << std::setprecision(20) << length << 
