@@ -182,8 +182,8 @@ int main (int argc, char* argv[]){
     std::string powerName=variant+"_"+std::to_string(discr)+"_"+std::to_string(rip)+"_"+std::to_string(funcID)+"_"+std::to_string(guessAnglesVal ? 1 : 0)+"_"+std::to_string(threads)+"_"+std::to_string(jump)+".log";
     std::string powerFile=path+powerName;
     
-    system((std::string("mkdir -p ")+path).c_str());
-    system((std::string("tegrastats --interval 50 --start --logfile ")+powerName).c_str());
+    //system((std::string("mkdir -p ")+path).c_str());
+    //system((std::string("tegrastats --interval 50 --start --logfile ")+powerName).c_str());
     //std::cout << (std::string("tegrastats --interval 50 --start --logfile ")+powerName).c_str() << std::endl;
     sleep(2);
     
@@ -206,7 +206,7 @@ int main (int argc, char* argv[]){
     json_out.close();
     
     sleep(2);
-    system((std::string("tegrastats --stop && mv ")+powerName+" "+powerFile).c_str());
+    //system((std::string("tegrastats --stop && mv ")+powerName+" "+powerFile).c_str());
     //std::cout << ((std::string("tegrastats --stop && mv ")+powerName+" "+powerFile).c_str()) << std::endl;
     //std::cout << "\tExample " << std::setw(20) << std::setprecision(17) << time1 << "ms\t" << std::endl; //<< std::setw(20) << std::setprecision(5) <<  time2 << "ms\t" << std::setw(10) << (time2-time1) << "ms" << endl;
   }

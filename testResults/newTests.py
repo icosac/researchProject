@@ -1,3 +1,6 @@
+import matplotlib
+matplotlib.use("Agg")
+
 import json
 import pandas as pd
 import numpy as np
@@ -175,7 +178,7 @@ def main():
     with open(input_file) as json_file:
         data=json.load(json_file)
         for p in data['run']:
-            #print("Reading file... {:.2f}%".format(n_lines/lines*100.0), end="\r")
+            print("Reading file... {:.2f}%".format(n_lines/lines*100.0), end="\r")
             n_lines+=1
             r=None
             try:
@@ -208,21 +211,28 @@ def main():
     print("                                                 \rReading file... 100%")
 
     #Run through all runs and check which had multiple times.
+    i=0
     for r in runs:
         if r.n>1:
             r.time=(r.time/r.n)
-            max=0
+            maxL=0
             for i in range(len(r.power_cons)): #Find the longest log
-                if len(r.power_cons[i])>max:
-                    max=len(r.power_cons[i])
+                if len(r.power_cons[i])>maxL:
+                    maxL=len(r.power_cons[i])
             mean_ps=[]
-            for i in range(max):
+            for i in range(maxL):
                 mean_p=0
+                nArrOk=0 #Divide just by the number of arrays large at least i
                 for arr in range(len(r.power_cons)):
                     if i<len(r.power_cons[arr]):
                         mean_p+=r.power_cons[arr][i]["W"]
-                mean_p/=len(r.power_cons)
+                        nArrOk+=1
+                if i==0 and len(r.power_cons)!=nArrOk:
+                    print(i, len(r.power_cons), nArrOk)
+                mean_p/=nArrOk
                 mean_ps.append({'W' : mean_p, 'time' : i*50})
+            r.power_cons=mean_ps
+        i+=1
 
     discrs=[]
     threads=[]
@@ -238,24 +248,45 @@ def main():
     import matplotlib.colors as mcolors
     colors=['blue', 'orange', 'red', mcolors.CSS4_COLORS['limegreen'], mcolors.CSS4_COLORS['darkgreen'], 'purple', 'red', 'gray']
 
-    for tn in range(len(testNames)):
-        width=0.1
-        for th in threads:
-            samples=times(names, str(f) for f in )
-            for n in range(len(names)):
-                labels=times(discrs, defRefinements)
-                x=np.arange(len(labels))
-                fig, ax=plt.subplots()
-                for (d, r) in labels:
-                    values=[]
-                    for r in runs:
-                        if r.name=n and r.test_name==tn and \
-                            r.discr==d and r.refinements==r and \
-                            r.threads==th and 
+#    for tn in range(len(testNames)):
+#        width=0.1
+#        for th in threads:
+#            samples=times(names, str(f) for f in )
+#            for n in range(len(names)):
+#                labels=times(discrs, defRefinements)
+#                x=np.arange(len(labels))
+#                fig, ax=plt.subplots()
+#                for (d, r) in labels:
+#                    values=[]
+#                    for r in runs:
+#                        if r.name=n and r.test_name==tn and \
+#                            r.discr==d and r.refinements==r and \
+#                            r.threads==th and 
+#
+#                    ax.barh(x, values, width, label=labels[l]) #colors=colors[n]
+    i=0
+    for r in runs:
+        #for a in r.power_cons:
+        #    print(a)
+        fig=plt.figure(figsize=(6.4*3, 4.8*3))
+        x=[pt['time'] for pt in r.power_cons]
+        y=[pt['W'] for pt in r.power_cons]
+        ax=plt.step(x, y, label=r.name)
+        plt.savefig(("images/prova"+r.name+".png"), transparent=True)
+        if i==10:
+            break
+        i+=1
+        
 
-                    ax.barh(x, values, width, label=labels[l]) #colors=colors[n]
-    
-
+#for l in range(len(logs)):
+#                p, f, t, m=scan(logs[l])
+#                ax[d].step(t, p, label=dev_names[l], color=colors[devices.index(dev_names[l])])
+#                ax[d].step(t, [m for time in t], label="mean W "+dev_names[l], color=colors[devices.index(dev_names[l])])
+#                if t[-1]>longest_x:
+#                    longest_x=t[-1]
+#                if max(p)>longest_y:
+#                    longest_y=max(p)
+#        
 
 #    for i in range(len(tests)):
 #        labels = 
