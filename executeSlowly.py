@@ -21,14 +21,13 @@ functions=[2]
 tests=range(4,6)
 guessAngles=False
 nExecs=range(1)
-lastExec=-1
 name=input("Insert the name of the test (device): ")
 
 system("mkdir -p "+name)
-system("tegrastats --stop && tegrastats --start --logfile tegrastats"+name+str(nExecs[0])+"to"+str(nExecs[-1])+".log")
 start=datetime.now()
 
 for nExec in nExecs:
+	system("tegrastats --stop && tegrastats --start --logfile tegrastats"+name+"_"+str(nExec)+".log")
 	for thread in threads:
 		for func in functions:
 			if func!=0:
@@ -40,17 +39,17 @@ for nExec in nExecs:
 					for discr in discrs:
 						for ref in refinements:
 							for test in tests:
-								testName=name+"_"+str(thread)+"_"+str(func)+"_"+str(jump)+"_"+str(discr)+"_"+str(ref)+"_"+str(test)+"_"+str(guessAngles)
+								testName=name+"_"+str(thread)+"_"+str(func)+"_"+str(jump)+"_"+str(discr)+"_"+str(ref)+"_"+str(test)+"_"+str(guessAngles)+"_"+str(nExec)
+								print(testName)
 								_start=datetime.now()
 								elapsedStart=(int(((datetime.now()-start).total_seconds()*1000)/interval)+1)*interval
-								system("./bin/cu/main.out "+testName+" "+str(nExec)+" "+str(test)+" "+str(discr)+" "+str(ref)+" "+str(func)+" "+str(int(guessAngles))+" "+str(thread)+" "+str(jump))
+								system("./bin/cu/main.out "+testName+" "+str(nExec)+" "+str(test)+" "+str(discr)+" "+str(ref)+" "+str(func)+" "+str(int(guessAngles))+" "+str(thread)+" "+str(jump)+" "+str(elapsedStart))
 								elapsedStop=int(((datetime.now()-start).total_seconds()*1000)/interval)*interval
 								with open("times.json", "a+") as f:
-									f.write('{"name" : "'+testName+'_'+str(nExec)+'", "start": '+str(elapsedStart)+', "stop": '+str(elapsedStop)+'}\n')
+									f.write('{"name" : "'+testName+'", "start": '+str(elapsedStart)+', "stop": '+str(elapsedStop)+'}\n') #This is just for backup, the same data is stored also in each run in tests.json
 								#sleep(30)
-	lastExec=nExec
+	system("tegrastats --stop")
+	system("mv tegrastats"+name+"_"+str(nExec)+".log "+name+"/tegrastats"+name+"_"+str(nExec)+".log")
 
-system("tegrastats --stop")
-system("mv tegrastats"+name+str(nExecs[0])+"to"+str(nExecs[-1])+".log "+name+"/tegrastats"+name+str(nExecs[0])+"to"+str(lastExec)+".log")
 
 #            sleep(30)

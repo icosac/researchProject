@@ -138,7 +138,7 @@ int main (int argc, char* argv[]){
     }
   }
 
-  else if (argc==9 || argc==10) {
+  else if (argc>=9) {
     std::string testName=std::string(argv[1]);
     std::string nExec=std::string(argv[2]);
     uint testID=atoi(argv[3]);
@@ -146,10 +146,17 @@ int main (int argc, char* argv[]){
     uint rip=atoi(argv[5]);
     uint funcID=atoi(argv[6]);
     uint jump=0;
-    if (funcID==2 && argc==10){ jump=atoi(argv[9]);}
+    if (funcID==2 && argc>9){ jump=atoi(argv[9]);}
     else if (funcID==2 && argc<10) {std::cerr << "Error, no number of jump passed to function" << std::endl; return 1; }
     bool guessAnglesVal=(atoi(argv[7])==1 ? true : false);
     uint threads=atoi(argv[8]);
+
+    double initTime=-1.0;
+    double endTime=0.0;
+
+    if (argc==11){
+      initTime=atof(argv[10]);
+    }
 
     //std::cout << "testName: " << testName << std::endl;
     //std::cout << "nExec: " << nExec << std::endl;
@@ -194,6 +201,10 @@ int main (int argc, char* argv[]){
     DP::solveDP<Dubins<real_type> >(points, discr, fixedAngles, curveParamV, funcID, guessAnglesVal, rip, threads); 
     auto time1=tp.getTime();
 
+    if (initTime!=-1.0){
+      endTime=initTime+time1;
+    }
+
     LEN_T Length=0.0;
     for (unsigned int j=points.size()-1; j>0; j--){
       Dubins<real_type> c(points[j-1], points[j], Ks[testID]);
@@ -201,7 +212,7 @@ int main (int argc, char* argv[]){
     }
     
     //std::cout << "Length: " << std::setprecision(30) << Length << " " << std::setprecision(20) << (ABS<real_type>(Length*1000.0, exampleLenghts[testID]*1000.0)) << endl;
-    Run r1(testName, discr, time1, Length, ((Length-exampleLenghts[testID])*1000.0), testsNames[testID], rip, threads, funcID, jump, (guessAnglesVal ? "true" : "false"), (nExec!="" ? powerFile : ""));
+    Run r1(testName, discr, time1, Length, ((Length-exampleLenghts[testID])*1000.0), testsNames[testID], rip, threads, funcID, jump, (guessAnglesVal ? "true" : "false"), (nExec!="" ? powerFile : ""), initTime, endTime);
     r1.write(json_out);
     json_out.close();
     

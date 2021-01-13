@@ -10,7 +10,7 @@ from math import log
 import argparse, sys
 
 class Run:
-    def __init__(self,name, test_name, discr, time, length, err, refinements, threads, functionType, jump, guessInitialAngles, power_file=""):
+    def __init__(self,name, test_name, discr, time, length, err, refinements, threads, functionType, jump, guessInitialAngles, power_file="", initTime, endTime):
         self.name=name
         self.test_name=test_name
         self.discr=discr
@@ -28,6 +28,8 @@ class Run:
             self.guessInitialAngles=True
         else:
             self.guessInitialAngles=False
+        self.initTime=initTime
+        self.endTime=endTime
 
     def __eq__(self, other):
         return (self.test_name==other.test_name and 
@@ -248,34 +250,22 @@ def main():
     import matplotlib.colors as mcolors
     colors=['blue', 'orange', 'red', mcolors.CSS4_COLORS['limegreen'], mcolors.CSS4_COLORS['darkgreen'], 'purple', 'red', 'gray']
 
-#    for tn in range(len(testNames)):
-#        width=0.1
-#        for th in threads:
-#            samples=times(names, str(f) for f in )
-#            for n in range(len(names)):
-#                labels=times(discrs, defRefinements)
-#                x=np.arange(len(labels))
-#                fig, ax=plt.subplots()
-#                for (d, r) in labels:
-#                    values=[]
-#                    for r in runs:
-#                        if r.name=n and r.test_name==tn and \
-#                            r.discr==d and r.refinements==r and \
-#                            r.threads==th and 
-#
-#                    ax.barh(x, values, width, label=labels[l]) #colors=colors[n]
-    i=0
-    for r in runs:
-        #for a in r.power_cons:
-        #    print(a)
-        fig=plt.figure(figsize=(6.4*3, 4.8*3))
-        x=[pt['time'] for pt in r.power_cons]
-        y=[pt['W'] for pt in r.power_cons]
-        ax=plt.step(x, y, label=r.name)
-        plt.savefig(("images/prova"+r.name+".png"), transparent=True)
-        if i==10:
-            break
-        i+=1
+    for tn in range(len(testNames)):
+        width=0.1
+        for th in threads:
+            samples=times(names, str(f) for f in )
+            for n in range(len(names)):
+                labels=times(discrs, defRefinements)
+                x=np.arange(len(labels))
+                fig, ax=plt.subplots()
+                for (d, r) in labels:
+                    values=[]
+                    for r in runs:
+                        if r.name=n and r.test_name==tn and \
+                            r.discr==d and r.refinements==r and \
+                            r.threads==th and 
+
+                    ax.barh(x, values, width, label=labels[l]) #colors=colors[n]
         
 
 #for l in range(len(logs)):

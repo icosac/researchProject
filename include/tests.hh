@@ -3,14 +3,16 @@
 class Run{
 public:
   std::string name, test_name, file_name, guessInitialAngles;
-  double time, length, err;
+  double time, length, err, initTime, endTime;
   uint discr, threads, functionType, jump, rip;
 
   Run ( std::string _name, uint _discr, double _time, double _length, double _err,
         std::string _test_name, uint _rip, uint _threads, uint _functionType, 
-        uint _jump, std::string  _guessInitialAngles, std::string _file_name="") 
+        uint _jump, std::string  _guessInitialAngles, std::string _file_name="", 
+        double _initTime=0, double _endTime=0) 
       : name(_name), discr(_discr), time(_time), length(_length), err(_err), test_name(_test_name), rip(_rip), 
-        threads(_threads), functionType(_functionType), jump(_jump), guessInitialAngles(_guessInitialAngles), file_name(_file_name) 
+        threads(_threads), functionType(_functionType), jump(_jump), guessInitialAngles(_guessInitialAngles), 
+        file_name(_file_name), initTime(_initTime), endTime(_endTime)
   {}
 
   void write(std::fstream& out){
@@ -27,6 +29,8 @@ public:
       ", \"jump\" : " << jump <<
       ", \"guessInitialAngles\" : \"" << guessInitialAngles <<  "\"" << 
       (file_name=="" ? "" : ", \"power_file\" : \""+file_name+"\"") << 
+      ", \"initTime\" : " << initTime << 
+      ", \"endTime\" : " << endTime << 
       "},\n";
   }
 };
