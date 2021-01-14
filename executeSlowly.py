@@ -13,12 +13,12 @@ from datetime import datetime, timedelta
 #name="XavierOverClock"
 interval=50 #Sampling interval in ms
 
-threads=[256]
-jumps=[2, 17]
-discrs=[360]
-refinements=[8, 16]
+threads=[128]
+jumps=[3]
+discrs=[4, 16, 90, 360]
+refinements=[0, 1, 2, 4, 8, 16]
 functions=[2]
-tests=range(4,6)
+tests=range(6)
 guessAngles=False
 nExecs=range(1)
 name=input("Insert the name of the test (device): ")
