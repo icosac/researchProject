@@ -1,5 +1,5 @@
-import matplotlib
-matplotlib.use("Agg")
+#import matplotlib
+#matplotlib.use("Agg")
 
 import json
 import pandas as pd
@@ -8,10 +8,12 @@ import matplotlib.pyplot as plt
 import matplotlib.cm as cm
 from math import log
 import argparse, sys
+import re
 
 class Run:
-    def __init__(self,name, test_name, discr, time, length, err, refinements, threads, functionType, jump, guessInitialAngles, power_file="", initTime, endTime):
+    def __init__(self,name, test_name, discr, time, length, err, refinements, threads, functionType, jump, guessInitialAngles, power_file="", initTime=-1.0, endTime=-1.0):
         self.name=name
+        self.devName=""
         self.test_name=test_name
         self.discr=discr
         self.time=time
@@ -19,8 +21,8 @@ class Run:
         self.err=err
         self.refinements=refinements
         self.threads=threads
-        self.functionType=functionType
-        self.jump=jump
+        self.functionType=int(functionType)
+        self.jump=int(jump)
         self.power_file=power_file
         self.power_cons=[]
         self.n=1
@@ -32,7 +34,8 @@ class Run:
         self.endTime=endTime
 
     def __eq__(self, other):
-        return (self.test_name==other.test_name and 
+        return (self.devName==other.devName and
+                self.test_name==other.test_name and 
                 self.discr==other.discr and 
                 self.refinements==other.refinements and 
                 self.threads==other.threads and 
@@ -41,7 +44,15 @@ class Run:
                 self.jump==other.jump)
 
     def __str__(self):
-        return (self.name+" "+self.test_name+" "+str(self.discr)+" "+str(self.time)+" "+self.power_file)
+        return ("dev_name: "+str(self.devName)+
+                " test_name: "+str(self.test_name)+
+                " discr: "+str(self.discr)+
+                " refinements: "+str(self.refinements)+
+                " threads: "+str(self.threads)+
+                " guessInitialAngles: "+str(self.guessInitialAngles)+
+                " functionType: "+str(self.functionType)+
+                " jump: "+str(self.jump))
+        #return (self.name+" "+self.test_name+" "+str(self.discr)+" "+str(self.time)+" "+self.power_file)
 
 import re
 def scan(r): #Consider the value taken each 50ms
@@ -92,8 +103,8 @@ def getOptions(args=sys.argv[1:]):
     parser.add_argument("-n", "--names", type=str, default="", help="List of devices to print separated by comas without spaces.")
     parser.add_argument("-N", "--test_names", type=str, default="", help="List of the names of the tests to print separated by comas without spaces.")
     parser.add_argument("-r", "--ref", type=str, default="", help="List of refinements to consider. The list is coma-separated without spaces.")
-    parser.add_argument("-f", "--func", type=int, default=2, help="The function to consider, default is 2.")
-    parser.add_argument("-j", "--jump", type=int, default=2, help="Considered only if --func is 2. It represents the value for the parameter jump. Default is 2.")
+    parser.add_argument("-f", "--func", type=str, default="2", help="List of functions to consider. The list is coma-separated without spaces. The default is 2.")
+    parser.add_argument("-j", "--jump", type=str, default="2", help="List of jumps to consider. Taken into account only if 2 is present in the list of functions. The list is coma-separated without spaces. The default is 2.")
     parser.add_argument("-g", "--guess", type=int, default=1, help="Considered only if --func is not 0. It says whether to look for specific angles (1) or not (0). Default is 1.")
     parser.add_argument("-l", "--log", action="store_true", default=False, help="Whether to apply logarithm to data or not.")
     parser.add_argument("-M", "--max", type=int, default=sys.maxsize, help="Only times below this value are kept into consideration. Default is sys.maxsize.")
@@ -106,6 +117,7 @@ def getOptions(args=sys.argv[1:]):
 
 def main():
     arguments=getOptions(sys.argv[1:])
+    print(arguments)
     input_file="tests.json"
     acceptAllDevices=False
     acceptAllTests=False
@@ -117,9 +129,9 @@ def main():
     timeLimit=sys.maxsize
     defDiscr=[0, sys.maxsize]
     defThreads=[128, 1024]
-    defFunc=2
-    defJump=0
-    defGuessed=False
+    defFuncs=[]
+    defJumps=[]
+    defGuessed=True
 
     if arguments.input!="" and arguments.input.endswith(".json"):
         input_file=arguments.input
@@ -129,18 +141,21 @@ def main():
         pass
     if names==[] or names[0]=="":
         acceptAllDevices=True
+        names=[]
     try:
         testNames=arguments.test_names.split(',')
     except:
         pass
     if testNames==[] or testNames[0]=="":
         acceptAllTests=True
+        testNames=[]
     try:
-        defRefinements.append(int(ref) in arguments.refinements.split(','))
+        defRefinements.append(int(ref) for ref in arguments.refinements.split(','))
     except:
         pass
     if defRefinements==[] or defRefinements[0]=="":
         acceptAllRef=True
+        defRefinements=[]
     try:
         timeLimit=int(arguments.max)
     except:
@@ -155,13 +170,24 @@ def main():
         defThreads[1]=int(arguments.max_thread)
     except:
         pass
+    
     try:
-        defFunc=int(arguments.func)
+        print("arguments.func: "+str(arguments.func))
+        for func in arguments.func.split(','):
+            defFuncs.append(int(func))
     except:
         pass
+    if defFuncs==[] or defFuncs[0]=="":
+        defFuncs=[2]
     try:
-        if defFunc==2:
-            defJump=int(arguments.jump)
+        if 2 in defFuncs:
+            try:
+                for jump in arguments.jump.split(','):
+                    defJumps.append(int(jump))
+            except:
+                pass
+            if defJumps==[] or defJumps[0]=="":
+                defJumps=[2]
     except:
         pass
     try:
@@ -169,6 +195,21 @@ def main():
             defGuessed=bool(arguments.guess)
     except:
         pass
+
+    print(input_file)
+    print(acceptAllDevices)
+    print(acceptAllTests)
+    print(acceptAllRef)
+    print(names)
+    print(testNames)
+    print(defRefinements)
+    print(log_b)
+    print(timeLimit)
+    print(defDiscr)
+    print(defThreads)
+    print(defFuncs)
+    print(defJumps)
+    print(defGuessed)
 
     #Read data from json file and add every possible thing
     runs=[]
@@ -187,31 +228,44 @@ def main():
                 r=Run(p['name'], p['test_name'], p['discr'], p['time'], p['length'], p['err'], p['refinements'], p['threads'], p['functionType'], p['jump'], p['guessInitialAngles'], p['power_file'])
             except:
                 r=Run(p['name'], p['test_name'], p['discr'], p['time'], p['length'], p['err'], p['refinements'], p['threads'], p['functionType'], p['jump'], p['guessInitialAngles'])
-            if (acceptAllDevices or (not acceptAllDevices and r.name in names)) and \
-                (acceptAllTests or (not acceptAllTests and r.test_name in testNames)) and \
-                (acceptAllRef or (not acceptAllRef and r.refinements in defRefinements)) and \
-                r.time<timeLimit and \
-                r.discr>=defDiscr[0] and r.discr<=defDiscr[1] and \
-                r.threads>=defThreads[0] and r.threads<=defThreads[1] and \
-                r.functionType==defFunc and (r.functionType!=2 or (r.functionType==2 and r.jump==defJump)) and \
-                r.guessInitialAngles==defGuessed:
             
-                if r.power_file!="":
-                    (p, f)=scan(r)
-                    r.power_cons.append(p)
-                #Run through all runs and check if there is an equal one
-                found=False
-                for i in range(len(runs)):
-                    if runs[i]==r:
-                        runs[i].time+=r.time 
-                        runs[i].n+=1
-                        runs[i].power_cons.append(r.power_cons[0])
-                        found=True
-    
-                if not found:
-                    runs.append(r)
-    print("                                                 \rReading file... 100%")
+            realName=r.name.split('_')[0]
 
+            if (acceptAllDevices or (not acceptAllDevices and (realName!="" or realName!=" "))):
+                #print("acceptAllDevices")
+                if (acceptAllTests or (not acceptAllTests and r.test_name in testNames)):
+                    #print("acceptAllTests")
+                    if (acceptAllRef or (not acceptAllRef and r.refinements in defRefinements)):
+                        #print("acceptAllRef")
+                        if r.time<timeLimit:
+                            #print("time")
+                            if  r.discr>=defDiscr[0] and r.discr<=defDiscr[1]:
+                                #print("discr")
+                                if  r.threads>=defThreads[0] and r.threads<=defThreads[1]:
+                                    #print("threads")
+                                    #print("functionType: "+str(r.functionType)+" "+str(type(r.functionType))+" "+str(defFuncs))
+                                    if  r.functionType in defFuncs:
+                                        #print("jump "+str(r.jump)+" "+str(type(r.jump))+" "+str(defJumps))
+                                        if (r.functionType!=2 or (r.functionType==2 and r.jump in defJumps)):
+                                            if  r.guessInitialAngles==defGuessed:
+                                                #print("guessInitialAngles")
+                                                #if r.power_file!="":
+                                                    #(p, f)=scan(r)
+                                                    #r.power_cons.append(p)
+                                                #Run through all runs and check if there is an equal one
+                                                found=False
+                                                r.devName=realName
+                                                for i in range(len(runs)):
+                                                    if runs[i]==r:
+                                                        runs[i].time+=r.time 
+                                                        runs[i].n+=1
+                                                        #runs[i].power_cons.append(r.power_cons[0])
+                                                        found=True
+                                    
+                                                if not found:
+                                                    runs.append(r)
+                                                
+    print("                                                 \rReading file... 100%")
     #Run through all runs and check which had multiple times.
     i=0
     for r in runs:
@@ -238,6 +292,8 @@ def main():
 
     discrs=[]
     threads=[]
+    funcs=[]
+    jumps=[]
     for r in runs:
         if acceptAllRef:
             if r.refinements not in defRefinements:
@@ -246,27 +302,133 @@ def main():
             discrs.append(r.discr)
         if r.threads not in threads:
             threads.append(r.threads)
+        if r.functionType not in funcs:
+            funcs.append(r.functionType)
+        if r.functionType==2 and r.jump not in jumps:
+            jumps.append(r.jump)
+        if r.devName not in names and acceptAllDevices:
+            names.append(r.devName)
+        if r.test_name not in testNames and acceptAllTests:
+            testNames.append(r.test_name)
+
     
+    print(discrs)
+    print(threads)
+    print(funcs)
+    print(jumps)
+    print(names)
+    print(testNames)
+
     import matplotlib.colors as mcolors
     colors=['blue', 'orange', 'red', mcolors.CSS4_COLORS['limegreen'], mcolors.CSS4_COLORS['darkgreen'], 'purple', 'red', 'gray']
 
-    for tn in range(len(testNames)):
-        width=0.1
+    for tn in range(len(testNames)): 
+        break
+        width=0.4
         for th in threads:
-            samples=times(names, str(f) for f in )
-            for n in range(len(names)):
-                labels=times(discrs, defRefinements)
-                x=np.arange(len(labels))
-                fig, ax=plt.subplots()
-                for (d, r) in labels:
-                    values=[]
-                    for r in runs:
-                        if r.name=n and r.test_name==tn and \
-                            r.discr==d and r.refinements==r and \
-                            r.threads==th and 
+            nGraphs=0
+            fig=plt.figure(figsize=(6.4*3, 4.8*3), constrained_layout=True)
+            spec=fig.add_gridspec(int(((len(funcs)+len(jumps)))/2), 2)
+#           fig, ax=plt.subplots()
+            ax=[]
+            valuess=[]
+            for j in jumps:
+                print("j: "+str(j))
+                for fn in funcs: #Create a graph for each function
+                    if fn!=2 and j!=jumps[-1]:
+                        continue
+                    print("fn: "+str(fn))
+                    ax.append(fig.add_subplot(spec[int(nGraphs/2), nGraphs%2]))
+                    for n in range(len(names)):
+                        values=[]
+                        labels=times(discrs, defRefinements)
+                        x=np.arange(len(labels))
+                        for l in range(len(labels)):
+                            (dis,ref)=labels[l]
+                            #print("looking for: "+names[n]+" with discr: "+str(dis)+", ref: "+str(ref))
+                            before=len(values)
+                            for r in runs:
+                                #print(r)
+                                if r.devName==names[n]:
+                                    #print("r.devName")
+                                    #print("r.test_name <"+r.test_name+"> <"+testNames[tn]+"> "+str(len(testNames)))
+                                    if  r.test_name==testNames[tn]: 
+                                        if r.discr==dis: 
+                                            #print("r.discr")
+                                            if  r.refinements==ref: 
+                                                #print(" r.refinements")
+                                                if r.threads==th: 
+                                                    #print("r.threads")
+                                                    if  r.functionType==fn: 
+                                                        #print(" r.functionType")
+                                                        if fn!=2 or (fn==2 and r.jump==j):
+                                                            #print("r.jump")
+                                                            values.append(r)
+                            #if len(values)==before:
+                            #    print("not found")
+                            #else:
+                            #    print("found: "+str(values[-1]))
+                        if values!=[]:
+                            valuess.append(values)
+                            #print(values)
+                            ax[nGraphs].barh(x+n*width-width/len(names), [v.time for v in values], width, color=colors[n], label=names[n]) #color=colors[n]
+                            ax[nGraphs].set_xlabel('Times in ms')
+                            ax[nGraphs].set_yticks(x)
+                            ax[nGraphs].set_yticklabels(labels)
+                            if func!=2:
+                                ax[nGraphs].set_title(testNames[tn]+", threads: "+str(th)+" func: "+str(fn)+", jump: 0")
+                            else:
+                                ax[nGraphs].set_title(testNames[tn]+", threads: "+str(th)+" func: "+str(fn)+", jump: "+str(j))
+                            ax[nGraphs].legend()
+                    nGraphs+=1
+            for vv in valuess[0:2]:
+                print("<", end="")
+                for v in vv:
+                    print(v, end=", ")
+                print(">")
+            #ax.legend()
+            plt.show()
 
-                    ax.barh(x, values, width, label=labels[l]) #colors=colors[n]
-        
+    lthread=128
+    lfunc=2
+    ljump=3
+    lguess=True
+    for dv in names:
+        print("\\section{"+dv+"}")
+        for tn in testNames:
+            print("\\subsection{"+tn+"}")
+            print("\\begin{center}")
+            print("\\begin{tabular}{c|c|c|c}")
+            print("\tDisc&Ref&Time(s)&Err\\\\\n\\hline")
+            for discr in discrs:
+                for ref in defRefinements:
+                    for r in runs:
+                        if r.devName==dv and r.test_name==tn and r.discr==discr and \
+                            r.threads==lthread and r.functionType==lfunc and \
+                            r.refinements==ref and r.jump==ljump and r.guessInitialAngles==lguess:
+                            print("{:d}&{:d}&{:.1e}&{:.1e}\\\\".format(discr, ref, r.time, r.err))
+                print("\\hline")
+            print("\\end{tabular}")
+            print("\\end{center}\n\n\n\n\n\n\n")
+    
+
+
+#    import pandas
+#    df = pandas.DataFrame(dict(graph=['Item one', 'Item two', 'Item three'],
+#                               n=[3, 5, 2], m=[6, 1, 3])) 
+#
+#    ind = np.arange(len(df))
+#    width = 0.4
+#
+#    fig, ax = plt.subplots()
+#    ax.barh(ind, df.n, width, color='red', label='N')
+#    ax.barh(ind + width, df.m, width, color='green', label='M')
+#
+#    ax.set(yticks=ind + width, yticklabels=df.graph, ylim=[2*width - 1, len(df)])
+#    ax.legend()
+#
+#    plt.show()
+#        
 
 #for l in range(len(logs)):
 #                p, f, t, m=scan(logs[l])
@@ -321,9 +483,9 @@ def main():
 #            logs=[]
 #            dev_names=[]
 #            for r in runs:
-#                if r.power_file!="" and (r.discr==discrs[d-1] and r.test_name==tests[i] and r.name in names):
+#                if r.power_file!="" and (r.discr==discrs[d-1] and r.test_name==tests[i] and r.devName in names):
 #                    logs.append(r.power_file)
-#                    dev_names.append(r.name)
+#                    dev_names.append(r.devName)
 #            names_index=[sorted(names).index(dev_n) for dev_n in dev_names]
 #            for l in range(len(logs)):
 #                p, f, t, m=scan(logs[l])
