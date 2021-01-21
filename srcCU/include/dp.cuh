@@ -15,30 +15,28 @@
 #include <sstream>
 #include <algorithm>
 
-__global__ void printResults(real_type* results, size_t discr, size_t size);
-
 namespace DP {
   namespace {
     class Cell { //TODO please change name
     private:
       Angle _th;
       LEN_T _l; //Length of the curve
-      uint _nextID;
+      int _nextID;
 
     public:
       real_type* _results;
       Cell() : _th(ANGLE::INVALID), _l(std::numeric_limits<LEN_T>::max()), _nextID(0) {}
 
-      BOTH Cell(Angle th, LEN_T l, uint nextID) 
+      BOTH Cell(Angle th, LEN_T l, int nextID) 
         : 
           _th(th), 
           _l(l),  
           _nextID(nextID)
-        {}
+        {/*printf("nextID: %d %u\n" nextID);*/}
 
       BOTH Angle th()                 const { return this->_th; }
       BOTH LEN_T l()                  const { return this->_l; }   
-      BOTH uint next()                const { return this->_nextID; }
+      BOTH int next()                 const { return this->_nextID; }
 
       BOTH Angle th(Angle th) {
         this->_th = th;
@@ -50,7 +48,8 @@ namespace DP {
         return this->l();
       }
 
-      BOTH uint next(uint nextID){
+      BOTH int next(int nextID){
+        //printf("nextID in class %d %u\n", nextID, nextID);
         this->_nextID = nextID;
         return this->next();
       }
@@ -69,6 +68,7 @@ namespace DP {
 
       std::stringstream to_string(bool pretty = false) const {
         std::stringstream out;
+        out << std::setw(20) << std::setprecision(17);
         if (pretty) {
           out << "th: " << this->th() << " l: " << this->l();
         } else {
@@ -95,6 +95,13 @@ namespace DP {
 
   #include<dp.cut>
 
+  template<class CURVE=Dubins<double> >
+  __global__ void dubinsWrapper(Configuration2<real_type>c0, Configuration2<real_type> c1, double Kmax, double* L){
+    CURVE c(c0, c1, Kmax);
+    //printf("%.17f\n", c.l());
+    L[0]+=c.l();
+  }
+
   template<class CURVE>
   void solveDP(std::vector<Configuration2<real_type> >& points, int discr, const std::vector<bool> fixedAngles, std::vector<real_type> params, short type=2, bool guessInitialAnglesVal=false, uint nIter=1, uint threads=128, Angle _fullAngle=m_2pi){
     Angle fullAngle=_fullAngle;
@@ -102,19 +109,19 @@ namespace DP {
     //Passing the functions as pointers doesn't work for reasons I don't know
     //std::vector<Angle>(*func)(std::vector<Configuration2<real_type> > points, uint discr, const std::vector<bool> fixedAngles, std::vector<real_type> params, Angle fullAngle, bool halveDiscr, bool guessInitialAnglesVal)=NULL;
     for(uint i=0; i<nIter+1; ++i){
-      //std::cout << "Refinement: " << i << std::endl;
-//      std::cout << std::endl;
+      std::cout << "Refinement: " << i << std::endl;
+      //std::cout << std::endl;
       switch(type){
         case 0: {
           angles=DP::solveDPFirstVersion<CURVE>(points, discr, fixedAngles, params, fullAngle, (i==0 ? false : true), guessInitialAnglesVal, threads);
           break;
         }
         case 1:{
-          angles=DP::solveDPMatrix<CURVE>(points, discr, fixedAngles, params, fullAngle, (i==0 ? false : true), guessInitialAnglesVal, threads);
+          angles=DP::solveDPMatrixAllocator<CURVE>(points, discr, fixedAngles, params, fullAngle, (i==0 ? false : true), guessInitialAnglesVal, threads, i);
           break;
         }
         case 2: default:{
-          angles=DP::solveDPAllIn1<CURVE>(points, discr, fixedAngles, params, fullAngle, (i==0 ? false : true), guessInitialAnglesVal, threads);
+          angles=DP::solveDPAllIn1<CURVE>(points, discr, fixedAngles, params, fullAngle, (i==0 ? false : true), guessInitialAnglesVal, threads, i);
         }
       }
 
@@ -123,19 +130,23 @@ namespace DP {
           points[j].th(angles[j]);
         }
       }
-//      std::cout << "< ";
-//      for (auto v : angles){
-//        std::cout << std::setw(20) << std::setprecision(17) << mod2pi(v) << " ";
-//      }
-//      std::cout << ">" << std::endl;
-//
-//      LEN_T Length=0.0;
-//      for (unsigned int idjijij=points.size()-1; idjijij>0; idjijij--){
-//        Dubins<real_type> c(points[idjijij-1], points[idjijij], params[0]);
-//        Length+=c.l();
-//      }
-//      std::cout << "Length: " << std::setw(20) << std::setprecision(17) << Length << " " << std::endl; // setprecision(20) << (ABS<real_type>(Length, dLen)) << endl;
-
+      //std::cout << "< ";
+      //for (auto v : angles){
+      //std::cout << std::setw(20) << std::setprecision(17) << mod2pi(v) << " ";
+      //}
+      //std::cout << ">" << std::endl;
+      //
+      //LEN_T* Length;
+      //cudaMallocManaged(&Length, sizeof(LEN_T));
+      //for (unsigned int h=points.size()-1; h>0; ){
+      //  dubinsWrapper<<<1,1>>>(points[h-1], points[h], params[0], Length);
+      //  cudaDeviceSynchronize();
+      //  //std::cout << std::setw(20) << std::setprecision(17) << c.l() << std::endl;
+      //  //Length+=c.l();
+      //  h--;
+      //}
+      //std::cout << "Length: " << std::setw(20) << std::setprecision(17) << Length[0] << " " << std::endl; // setprecision(20) << (ABS<real_type>(Length, dLen)) << endl;
+      //cudaFree(Length);
 
       if (i==0){
         fullAngle=fullAngle/(discr)*1.5;

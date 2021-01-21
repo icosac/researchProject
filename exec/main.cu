@@ -64,9 +64,9 @@ std::vector<std::vector<Configuration2<double> > > Tests = {
 };
 
 std::vector<K_T> Ks = {3.0, 3.0, 5.0, 3.0, 3.0, 3.0};
-std::vector<uint> discrs = {4, 16, 90, 360, 720};
+std::vector<uint> discrs = {4, 16, 90, 360};
 //std::vector<uint> discrs = {4, 16, 90, 120, 360, 720, 1440};
-std::vector<uint> refins = {0, 1, 2, 4, 8, 16};
+std::vector<uint> refins = {1, 2, 4, 8, 16};
 std::vector<LEN_T> exampleLenghts={3.41557885807514871601142658619, 6.27803455030931356617429628386, 11.9162126542854860389297755319, 7.46756219733842652175326293218, 41.0725016438839318766440555919, 6988.66098639942993031581863761}; //the last length is SPA
 
 std::string nameTest(std::string name, std::string add="", std::string conc=" "){
@@ -76,6 +76,12 @@ std::string nameTest(std::string name, std::string add="", std::string conc=" ")
   else{
     return name+conc+add;
   }
+}
+
+__global__ void dubinsL(Configuration2<double> c0, Configuration2<double> c1, double k, double* L){
+  Dubins<double> dubins(c0, c1, k);
+  L[0]+=dubins.l();
+  //printf("GPU Length: %.16f\n", dubins.l());
 }
 
 int main (int argc, char* argv[]){
@@ -88,10 +94,61 @@ int main (int argc, char* argv[]){
   cudaDeviceProp deviceProperties;
   cudaGetDeviceProperties(&deviceProperties, 0);
   //printf("[%d] %s\n", 0, deviceProperties.name);
+ 
+/*
+  double CPU_C=-0.000000018581287397623214019404;
+  double CPU_S=0.000000037114354256573278689757;
+  double GPU_C=-0.000000018581287397623214019404;
+  double GPU_S=0.000000037114354478617883614788;
+  printf("err C: %.16f\n", (CPU_C-GPU_C));
+  printf("err S: %.16f\n", (CPU_S-GPU_S));
 
+  tryAtan2<<<1,1>>>(GPU_C, GPU_S);
+  cudaDeviceSynchronize();
+  printf("CPU 2: %.16f\n", atan2(CPU_C, CPU_S));
+  printf("CPU 1: %.16f\n", atan(CPU_C/CPU_S));
+  //printf("CPU v: %.16f\n", M_PI-atan(0.000000037114354256573278689757/-0.000000018581287397623214019404));
+
+  std::cout << "==================" << std::endl;
+
+  tryAtan2<<<1,1>>>(CPU_C, CPU_S);
+  cudaDeviceSynchronize();
+  printf("CPU 2 using GPU: %.16f\n", atan2(GPU_C, GPU_S));
+  printf("CPU 1 using GPU: %.16f\n", atan(GPU_C/GPU_S));
+
+
+  std::cout << "==================" << std::endl;
+
+  Configuration2<double> c0(2.0, 0.5, -0.72273426348170455);
+  Configuration2<double> c1(2.0, 0.0, -2.4188583653330378);
+  std::cout << std::setw(20) << std::setprecision(17);
+  Dubins<double> dubins(c0, c1, 3.0);
+  std::cout << "CPU length: " << std::setw(20) << std::setprecision(17) << dubins.l() << std::endl;
+  dubinsL<<<1,1>>>(c0.x(), c0.y(), c0.th(), c1.x(), c1.y(), c1.th(), 3.0);
+  cudaDeviceSynchronize();
+  //return 0;
+
+  std::vector<double> x={ 0.5, 0.0, 0.5, 1.0, 1.5, 2.0, 2, 1.5, 1, 0.5, 0., 0. };
+  std::vector<double> y={ 1.2, 0.5, 0.5, 0.5, 0.5, 0.5, 0, 0.0, 0, 0.0, 0., -0.5 };
+  std::vector<double> th={2.6179938779914944, 5.5181700068343345, 0.27550703827297418, 6.2600960773072822, 0.19802151651795322, 5.5604509844293766, 3.8643269723697231, 2.9435898904162778, 3.1477811860951026, 3.2289796515706222, 2.580176702570077, 0};
+  double totL=0.0;
+  for (int i=x.size()-2; i>=0; i--){
+    std::cout << "i: " << i << std::endl;
+    Configuration2<double> c0(x[i], y[i], th[i]);
+    Configuration2<double> c1(x[i+1], y[i+1], th[i+1]);
+    double *L; cudaMallocManaged(&L, sizeof(double));
+    DP::dubinsWrapper<<<1,1>>>(c0, c1, 3.0, L);
+    cudaDeviceSynchronize();
+    totL+=L[0];
+    std::cout << "L: " << std::setw(20) << std::setprecision(17) << L[0] << std::endl;
+    cudaFree(L);
+  }
+  std::cout << "totL: " << std::setw(20) << std::setprecision(17) << totL << std::endl;
+  return 0;
+  */
   if (argc==1){
     for (int testID=0; testID<6; testID++){
-      if (testID!=2){continue;}
+      if (testID!=3){continue;}
       real_type dLen=exampleLenghts[testID];
 
       std::vector<bool> fixedAngles;
@@ -107,9 +164,9 @@ int main (int argc, char* argv[]){
       real_type* curveParam=curveParamV.data();
       
       for (auto DISCR :  discrs){
-        if (DISCR>360){continue;}
+        if (DISCR!=360){continue;}
         for (auto r : refins){
-          //if (r!=1){continue;}
+          if (r!=16){continue;}
           //r=5;
           //std::cout << DISCR << " " << r << " ";
           TimePerf tp, tp1;
@@ -118,18 +175,28 @@ int main (int argc, char* argv[]){
           std::vector<Configuration2<double> >points=Tests[testID];
           DP::solveDP<Dubins<real_type> >(points, DISCR, fixedAngles, curveParamV, 1, true, r); 
           auto time1=tp.getTime();
-
           LEN_T Length=0.0;
+          LEN_T *Length1; cudaMallocManaged(&Length1, sizeof(LEN_T));
           for (unsigned int idjijij=points.size()-1; idjijij>0; idjijij--){
+            dubinsL<<<1,1>>>(points[idjijij-1], points[idjijij], Ks[testID], Length1);
+            cudaDeviceSynchronize();
+
             Dubins<real_type> c(points[idjijij-1], points[idjijij], Ks[testID]);
             Length+=c.l();
           }
 
           printf("%3d & %2d & ", DISCR, r);
-          PrintScientific2D((Length-exampleLenghts[testID])*1000);
+          PrintScientific2D((Length-exampleLenghts[testID])*1000.0);
+          printf(" & ");
+          PrintScientific2D((Length1[0]-Length)*1000.0);
+          printf(" & ");
+          PrintScientific2D((Length1[0]-exampleLenghts[testID])*1000.0);
           printf(" & ");
           PrintScientific1D(time1);
-          printf("&%.16f\\\\\n", Length);
+          printf("&%.16f", Length);
+          printf("&%.16f\\\\\n", Length1[0]);
+
+          cudaFree(Length1);
           //std::cout << "Length: " << std::setprecision(30) << Length << " " << std::setprecision(20) << (ABS<real_type>(Length*1000.0, dLen*1000.0)) << endl;
           //std::cout << "Elapsed: " << std::setw(10) << time1 << "ms\t" << std::endl; // std::setw(10) << time2 << "ms\t" << std::setw(10) << (time2-time1) << "ms" << endl;
         }
