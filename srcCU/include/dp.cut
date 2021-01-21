@@ -59,7 +59,7 @@ bestAnglesMatrix(DP::Cell* matrix, int discr, int size, const std::vector<bool>&
     }
   }
 
-  std::cout << "In function Length: " << std::setw(20) << std::setprecision(17) << best->l() << std::endl;
+  //std::cout << "In function Length: " << std::setw(20) << std::setprecision(17) << best->l() << std::endl;
 
   std::vector<Angle> ret(1, best->th());
   int nextID=best->next()+discr;
@@ -449,8 +449,8 @@ std::vector<Angle> solveDPMatrixAllocator (std::vector<Configuration2<real_type>
 #endif
   std::vector<Angle> bestA=DP::bestAnglesMatrix(matrix, discr, size, fixedAngles);
 #ifdef DEBUG
-#endif
   printV(bestA)
+#endif
   
 #ifdef DEBUG
   LEN_T Length=0.0;

@@ -109,7 +109,7 @@ namespace DP {
     //Passing the functions as pointers doesn't work for reasons I don't know
     //std::vector<Angle>(*func)(std::vector<Configuration2<real_type> > points, uint discr, const std::vector<bool> fixedAngles, std::vector<real_type> params, Angle fullAngle, bool halveDiscr, bool guessInitialAnglesVal)=NULL;
     for(uint i=0; i<nIter+1; ++i){
-      std::cout << "Refinement: " << i << std::endl;
+      //std::cout << "Refinement: " << i << std::endl;
       //std::cout << std::endl;
       switch(type){
         case 0: {

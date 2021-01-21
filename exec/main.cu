@@ -148,7 +148,7 @@ int main (int argc, char* argv[]){
   */
   if (argc==1){
     for (int testID=0; testID<6; testID++){
-      if (testID!=3){continue;}
+      //if (testID!=3){continue;}
       real_type dLen=exampleLenghts[testID];
 
       std::vector<bool> fixedAngles;
@@ -164,9 +164,9 @@ int main (int argc, char* argv[]){
       real_type* curveParam=curveParamV.data();
       
       for (auto DISCR :  discrs){
-        if (DISCR!=360){continue;}
+        //if (DISCR!=360){continue;}
         for (auto r : refins){
-          if (r!=16){continue;}
+          //if (r!=16){continue;}
           //r=5;
           //std::cout << DISCR << " " << r << " ";
           TimePerf tp, tp1;
@@ -189,8 +189,8 @@ int main (int argc, char* argv[]){
           PrintScientific2D((Length-exampleLenghts[testID])*1000.0);
           printf(" & ");
           PrintScientific2D((Length1[0]-Length)*1000.0);
-          printf(" & ");
-          PrintScientific2D((Length1[0]-exampleLenghts[testID])*1000.0);
+          //printf(" & ");
+          //PrintScientific2D((Length1[0]-exampleLenghts[testID])*1000.0);
           printf(" & ");
           PrintScientific1D(time1);
           printf("&%.16f", Length);

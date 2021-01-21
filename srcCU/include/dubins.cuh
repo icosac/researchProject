@@ -5,6 +5,7 @@
 #include <utils.cuh>
 #include <settings.hh>
 #include <constants.cuh>
+#include <trig.cuh>
 
 
 #define DUBINS_DEFAULT_KMAX 0.01
