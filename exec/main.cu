@@ -173,7 +173,7 @@ int main (int argc, char* argv[]){
           tp.start();
 
           std::vector<Configuration2<double> >points=Tests[testID];
-          DP::solveDP<Dubins<real_type> >(points, DISCR, fixedAngles, curveParamV, 1, true, r); 
+          DP::solveDP<Dubins<real_type> >(points, DISCR, fixedAngles, curveParamV, 2, true, r); 
           auto time1=tp.getTime();
           LEN_T Length=0.0;
           LEN_T *Length1; cudaMallocManaged(&Length1, sizeof(LEN_T));
