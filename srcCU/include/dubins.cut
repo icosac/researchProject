@@ -2,223 +2,28 @@
 #define M_2PI (M_PI*2.0);
 #define MYCOUT(x) //printf("%s: %.30f\n", #x, x);
 
+#ifdef TRIG
+  #warning "TRIG defined"
+  #import <trig.cuh>
+  #define COS(x)      my_cos(x)
+  #define SIN(x)      my_sin(x)
+  #define ATAN(x)     my_atan(x)
+  #define ATAN2(y, x) my_atan2(y, x)
+  #define ACOS(x)     my_acos(x)
+#else
+  #define COS(x)      cos(x)
+  #define SIN(x)      sin(x)
+  #define ATAN(x)     atan(x)
+  #define ATAN2(y, x) atan2(y, x)
+  #define ACOS(x)     acos(x)
+#endif
+
 BOTH static inline Angle
 rangeSymm(Angle ang){
 	while (ang <= - M_PI) ang += M_2PI;
 	while (ang >  M_PI) ang -= M_2PI;
 	return ang;
 }
-
-
-//static double factorial2[19]={
-//1000000.000000000000000000000000000000,
-//-500000.000000000000000000000000000000,
-//41666.666666666664241347461938858032,
-//-1388.888888888888914152630604803562,
-//24.801587301587300515848255599849,
-//-0.275573192239858932861551465976,
-//0.002087675698786809874024639200,
-//-0.000011470745597729724228846897,
-//0.000000047794773323873856247485,
-//-0.000000000156192069685862263492,
-//0.000000000000411031762331216506,
-//-0.000000000000000889679139245057,
-//0.000000000000000001611737571096,
-//-0.000000000000000000002479596263,
-//0.000000000000000000000003279889,
-//-0.000000000000000000000000003770,
-//0.000000000000000000000000000004
-//};
-//
-//__device__ static double factorial2Dev[19]={
-//1000000.000000000000000000000000000000,
-//-500000.000000000000000000000000000000,
-//41666.666666666664241347461938858032,
-//-1388.888888888888914152630604803562,
-//24.801587301587300515848255599849,
-//-0.275573192239858932861551465976,
-//0.002087675698786809874024639200,
-//-0.000011470745597729724228846897,
-//0.000000047794773323873856247485,
-//-0.000000000156192069685862263492,
-//0.000000000000411031762331216506,
-//-0.000000000000000889679139245057,
-//0.000000000000000001611737571096,
-//-0.000000000000000000002479596263,
-//0.000000000000000000000003279889,
-//-0.000000000000000000000000003770,
-//0.000000000000000000000000000004,
-//};
-//
-//BOTH static double my_atan (double x){
-//  double a, z, p, r, s, q, o;
-//  /* argument reduction: 
-//     arctan (-x) = -arctan(x); 
-//     arctan (1/x) = 1/2 * pi - arctan (x), when x > 0
-//  */
-//  z = fabs(x);
-//  a = (z > 1.0) ? 1.0 / z : z;
-//  /* evaluate minimax polynomial approximation */
-//  s = a * a; // a**2
-//  q = s * s; // a**4
-//  o = q * q; // a**8
-//  /* use Estrin's scheme for low-order terms */
-//  p = fma (fma (fma (-0x1.53e1d2a25ff34p-16, s, 0x1.d3b63dbb65af4p-13), q,
-//                fma (-0x1.312788dde0801p-10, s, 0x1.f9690c82492dbp-9)), o,
-//           fma (fma (-0x1.2cf5aabc7cef3p-7, s, 0x1.162b0b2a3bfcep-6), q, 
-//                fma (-0x1.a7256feb6fc5cp-6, s, 0x1.171560ce4a483p-5)));
-//  /* use Horner's scheme for high-order terms */
-//  p = fma (fma (fma (fma (fma (fma (fma (fma (fma (fma (fma (fma (p, s,
-//      -0x1.4f44d841450e1p-5), s,
-//       0x1.7ee3d3f36bb94p-5), s, 
-//      -0x1.ad32ae04a9fd1p-5), s,  
-//       0x1.e17813d66954fp-5), s, 
-//      -0x1.11089ca9a5bcdp-4), s,  
-//       0x1.3b12b2db51738p-4), s,
-//      -0x1.745d022f8dc5cp-4), s,
-//       0x1.c71c709dfe927p-4), s,
-//      -0x1.2492491fa1744p-3), s,
-//       0x1.99999999840d2p-3), s,
-//      -0x1.555555555544cp-2) * s, a, a);
-//  /* back substitution based on argument reduction */
-//  r = (z > 1.0) ? (0x1.921fb54442d18p+0 - p) : p;
-//  return copysign (r, x);
-//}
-//
-//#define __HI(x) *(1+(int*)&x)
-//#define __LO(x) *(int*)&x
-//
-//BOTH static double my_atan2(double y, double x){
-//  double z;
-//  int k,m,hx,hy,ix,iy;
-//  unsigned lx,ly;
-//
-//  hx = __HI(x); ix = hx&0x7fffffff;
-//  lx = __LO(x);
-//  hy = __HI(y); iy = hy&0x7fffffff;
-//  ly = __LO(y);
-//  if(((ix|((lx|-lx)>>31))>0x7ff00000)||
-//     ((iy|((ly|-ly)>>31))>0x7ff00000))  /* x or y is NaN */
-//     return x+y;
-//  if((hx-0x3ff00000|lx)==0) return my_atan(y);   /* x=1.0 */
-//  m = ((hy>>31)&1)|((hx>>30)&2);  /* 2*sign(x)+sign(y) */
-//
-//    /* when y = 0 */
-//  if((iy|ly)==0) {
-//      switch(m) {
-//    case 0: 
-//    case 1: return y;   /* atan(+-0,+anything)=+-0 */
-//    case 2: return  M_PI+1.0e-300;/* atan(+0,-anything) = M_PI */
-//    case 3: return -M_PI-1.0e-300;/* atan(-0,-anything) =-M_PI */
-//      }
-//  }
-//    /* when x = 0 */
-//  if((ix|lx)==0) return (hy<0)?  -M_PI/2.0-1.0e-300: M_PI/2.0+1.0e-300;
-//      
-//    /* when x is INF */
-//  if(ix==0x7ff00000) {
-//      if(iy==0x7ff00000) {
-//    switch(m) {
-//        case 0: return  M_PI/4.0+1.0e-300;/* atan(+INF,+INF) */
-//        case 1: return -M_PI/4.0-1.0e-300;/* atan(-INF,+INF) */
-//        case 2: return  3.0*M_PI/4.0+1.0e-300;/*atan(+INF,-INF)*/
-//        case 3: return -3.0*M_PI/4.0-1.0e-300;/*atan(-INF,-INF)*/
-//    }
-//      } else {
-//    switch(m) {
-//        case 0: return  0.0  ; /* atan(+...,+INF) */
-//        case 1: return -0.0  ; /* atan(-...,+INF) */
-//        case 2: return  M_PI+1.0e-300  ;  /* atan(+...,-INF) */
-//        case 3: return -M_PI-1.0e-300  ;  /* atan(-...,-INF) */
-//    }
-//      }
-//  }
-//    /* when y is INF */
-//  if(iy==0x7ff00000) return (hy<0)? -M_PI/2.0-1.0e-300: M_PI/2.0+1.0e-300;
-//
-//    /* compute y/x */
-//  k = (iy-ix)>>20;
-//  if(k > 60) z=M_PI/2.0+0.5*1.2246467991473531772E-16;  /* |y/x| >  2**60 */
-//  else if(hx<0&&k<-60) z=0.0;   /* |y|/x < -2**60 */
-//  else z=my_atan(fabs(y/x));    /* safe to do y/x */
-//  switch (m) {
-//      case 0: return       z  ; /* atan(+,+) */
-//      case 1: __HI(z) ^= 0x80000000;
-//        return       z  ; /* atan(-,+) */
-//      case 2: return  M_PI-(z-1.2246467991473531772E-16);/* atan(+,-) */
-//      default: /* case 3 */
-//            return  (z-1.2246467991473531772E-16)-M_PI;/* atan(-,-) */
-//  }
-//}
-//
-//
-//BOTH static inline double
-//my_cos(double x){
-//  int s=1, ss=1;
-//  if (x<0){ 
-//    x=-x; 
-//  }
-//  /*----- Now x>=0 && x<inf -----*/
-//  if (x>=2.0*M_PI){
-//    x=x-(int)(((x/2.0)/M_PI)*2.0*M_PI); //x-floor(f(x))
-//  }
-//  /*----- Now x>=0 && x<2M_PI -----*/
-//  if (x>=M_PI){
-//    x=x-M_PI;
-//    s=-1;
-//  }
-//  /*----- Now x>=0 && x<M_PI -----*/
-//  if (x>=M_PI/2.0){
-//    x=M_PI-x;
-//    ss=-1;
-//  }
-//  //Comput Taylor coefficients
-//  const int n=14;
-//  double ct[n]={0.0};
-//  double res=0.0;
-//  for(unsigned int i=0; i<n; i++){
-//#ifdef __CUDA_ARCH__
-//    double app=factorial2Dev[i]*pow(x, 2*i);
-//    res+=(app/1e6);
-//#else
-//    double app=factorial2[i]*pow(x, 2*i);
-//    res+=(app/1e6);
-//#endif
-//  }
-//  return res*s*ss;
-//}
-//
-//BOTH static inline double
-//my_sin(double x){
-//  return my_cos(M_PI/2.0-x);
-//}
-
-//BOTH static inline real_type
-//my_acos(real_type x){
-//  if (eq<real_type>(x, 1, 1e-16)){
-//    return 0.0;
-//  }
-//  else if (eq<real_type>(x, -1, 1e-16)) {
-//    return M_PI;
-//  }
-//  else {
-//    return M_PI/2.0-2*my_atan(x/(1+sqrt(1-(x*x))));
-//  }
-//}
-//
-//BOTH static inline real_type
-//myasin(real_type x){
-//  if (eq<real_type>(x, 1, 1e-16)){
-//    return M_PI/2.0;
-//  }
-//  else if (eq<real_type>(x, -1, 1e-16)) {
-//    return -M_PI/2.0;
-//  }
-//  else {
-//    return 2*my_atan(x/(1+sqrt(1-(x*x))));
-//  }
-//}
-
 
 BOTH static inline real_type
 sinc(real_type x){
@@ -228,7 +33,7 @@ sinc(real_type x){
   }
   else
   {
-    return my_sin(x) / x;
+    return SIN(x) / x;
   }
 }
 
@@ -237,7 +42,7 @@ template<class T>
 BOTH void Dubins<T>::scaleToStandard(Angle& phi, real_type& lambda, Angle& sth0, Angle& sth1, K_T& sKmax){
   real_type dx = this->cf()->x() - this->ci()->x();
   real_type dy = this->cf()->y() - this->ci()->y();
-  phi = my_atan2(dy, dx);
+  phi = ATAN2(dy, dx);
   lambda = hypot(dx, dy)*0.5;
   sKmax = this->kmax() * lambda;
   sth0 = mod2pi(this->ci()->th() - phi);
@@ -250,13 +55,13 @@ BOTH void Dubins<T>::computeBest(Angle th0, Angle th1, real_type lambda, K_T& sK
   LEN_T ss1=0.0, ss2=0.0, ss3=0.0;
 
   real_type invK  = real_type(1)/sKmax;
-  real_type sin_0 = my_sin(th0);
-  real_type cos_0 = my_cos(th0);
-  real_type sin_1 = my_sin(th1);
-  real_type cos_1 = my_cos(th1);
+  real_type sin_0 = SIN(th0);
+  real_type cos_0 = COS(th0);
+  real_type sin_1 = SIN(th1);
+  real_type cos_1 = COS(th1);
 
   real_type Ksq   = sKmax*sKmax;
-  real_type dcos  = my_cos(th0 - th1);
+  real_type dcos  = COS(th0 - th1);
   real_type dcos2 = cos_0 - cos_1;
   real_type dsin  = sin_0 - sin_1;
   real_type scos  = cos_0 + cos_1;
@@ -274,7 +79,7 @@ BOTH void Dubins<T>::computeBest(Angle th0, Angle th1, real_type lambda, K_T& sK
   // LSL
   real_type C = cos_1 - cos_0;
   real_type S = 2.0*sKmax + dsin;
-  temp1 = my_atan2(C, S);
+  temp1 = ATAN2(C, S);
   temp2 = 2 + 4*Ksq - 2*dcos + 4*sKmax*dsin;
   if (temp2 >= 0) {
     temp3 = invK * sqrt(temp2);
@@ -292,7 +97,7 @@ BOTH void Dubins<T>::computeBest(Angle th0, Angle th1, real_type lambda, K_T& sK
   // RSR
   C = -C;
   S = 2*sKmax - dsin;
-  temp1 = my_atan2(C, S);
+  temp1 = ATAN2(C, S);
   temp2 = 2 + 4*Ksq - 2*dcos - 4*sKmax*dsin;
   if (temp2 >= 0) {
     temp3 = sqrt(invK*invK*(2 + 4*Ksq - 2*dcos - 4*sKmax*dsin));
@@ -310,11 +115,11 @@ BOTH void Dubins<T>::computeBest(Angle th0, Angle th1, real_type lambda, K_T& sK
   // LSR
   C = scos;
   S = 2*sKmax + ssin;
-  temp1 = my_atan2(-C, S);
+  temp1 = ATAN2(-C, S);
   temp2 = -2 + 4*Ksq + 2*dcos + 4*sKmax*ssin;
   if (temp2 >= 0) {
     t2    = invK * sqrt(temp2);
-    temp3 = -my_atan2(-2.0, (t2*sKmax));
+    temp3 = -ATAN2(-2.0, (t2*sKmax));
     t1    = invK * mod2pi(-th0 + temp1 + temp3);
     t3    = invK * mod2pi(-th1 + temp1 + temp3);
     lc    = t1+t2+t3;
@@ -328,11 +133,11 @@ BOTH void Dubins<T>::computeBest(Angle th0, Angle th1, real_type lambda, K_T& sK
   // RSL
   // C = C
   S = 2*sKmax - ssin;
-  temp1 = my_atan2(C, S);
+  temp1 = ATAN2(C, S);
   temp2 = -2 + 4*Ksq + 2*dcos - 4*sKmax*ssin;
   if (temp2 >= 0) {
     t2    = invK * sqrt(temp2);
-    temp3 = my_atan2(2.0, (t2*sKmax));
+    temp3 = ATAN2(2.0, (t2*sKmax));
     t1    = invK * mod2pi(th0 - temp1 + temp3);
     t3    = invK * mod2pi(th1 - temp1 + temp3);
     lc    = t1+t2+t3;
@@ -346,10 +151,10 @@ BOTH void Dubins<T>::computeBest(Angle th0, Angle th1, real_type lambda, K_T& sK
   // RLR
   C = dcos2;
   S = 2*sKmax - dsin;
-  temp1 = my_atan2(C, S);
+  temp1 = ATAN2(C, S);
   temp2 = 0.125 * (6 - 4*Ksq  + 2*dcos + 4*sKmax*dsin);
   if (ABS<real_type>(temp2, 0.0) <= 1) {
-    t2 = invK * mod2pi(2.0*M_PI - my_acos(temp2));
+    t2 = invK * mod2pi(2.0*M_PI - ACOS(temp2));
     t1 = invK * mod2pi(th0 - temp1 + 0.5*t2*sKmax);
     t3 = invK * mod2pi(dth+(t2-t1)*sKmax);
     lc = t1+t2+t3;
@@ -363,10 +168,10 @@ BOTH void Dubins<T>::computeBest(Angle th0, Angle th1, real_type lambda, K_T& sK
   // LRL
   C = -C;
   S = 2*sKmax + dsin;
-  temp1 = my_atan2(C, S);
+  temp1 = ATAN2(C, S);
   temp2 = 0.125*(6 - 4*Ksq + 2*dcos - 4*sKmax*dsin);
   if (ABS<real_type>(temp2, 0.0) <= 1) {
-    t2 = invK * mod2pi(2*M_PI - my_acos(temp2));
+    t2 = invK * mod2pi(2*M_PI - ACOS(temp2));
     t1 = invK * mod2pi(-th0 + temp1 + 0.5*t2*sKmax);
     t3 = invK * mod2pi(-dth + (t2-t1)*sKmax);
     lc = t1+t2+t3;
