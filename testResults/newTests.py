@@ -11,7 +11,7 @@ import argparse, sys
 import re
 
 class Run:
-    def __init__(self,name, test_name, discr, time, length, err, refinements, threads, functionType, jump, guessInitialAngles, power_file="", initTime=-1.0, endTime=-1.0):
+    def __init__(self,name, test_name, discr, time, length, err, refinements, threads, functionType, jump, guessInitialAngles, initTime=-1.0, endTime=-1.0, power_file=""):
         self.name=name
         self.devName=""
         self.test_name=test_name
@@ -31,7 +31,7 @@ class Run:
         else:
             self.guessInitialAngles=False
         self.initTime=initTime
-        self.endTime=endTime
+        self.endTime=self.initTime+self.time+2000
 
     def __eq__(self, other):
         return (self.devName==other.devName and
@@ -224,10 +224,21 @@ def main():
             print("Reading file... {:.2f}%".format(n_lines/lines*100.0), end="\r")
             n_lines+=1
             r=None
+            initialTime=-1
+            finalTime=-1
             try:
-                r=Run(p['name'], p['test_name'], p['discr'], p['time'], p['length'], p['err'], p['refinements'], p['threads'], p['functionType'], p['jump'], p['guessInitialAngles'], p['power_file'])
+                initialTime=p['initTime']
             except:
-                r=Run(p['name'], p['test_name'], p['discr'], p['time'], p['length'], p['err'], p['refinements'], p['threads'], p['functionType'], p['jump'], p['guessInitialAngles'])
+                pass
+            try:
+                finalTime=p['endTime']
+            except:
+                pass
+            
+            try:
+                r=Run(p['name'], p['test_name'], p['discr'], p['time'], p['length'], p['err'], p['refinements'], p['threads'], p['functionType'], p['jump'], p['guessInitialAngles'], initialTime, finalTime, p['power_file'])
+            except:
+                r=Run(p['name'], p['test_name'], p['discr'], p['time'], p['length'], p['err'], p['refinements'], p['threads'], p['functionType'], p['jump'], p['guessInitialAngles'], initialTime, finalTime)
             
             realName=r.name.split('_')[0]
 
@@ -332,7 +343,7 @@ def main():
             names.append(r.devName)
         if r.test_name not in testNames and acceptAllTests:
             testNames.append(r.test_name)
-
+    refs=defRefinements
     
     print("discrs: "+str(discrs))
     print("threads: "+str(threads))
@@ -461,29 +472,98 @@ def main():
             print("\\end{center}\n\n\n\n\n\n\n")
     
 
-    print("discrs: "+str(discrs))
-    print("threads: "+str(threads))
-    print("funcs: "+str(funcs))
-    print("jumps: "+str(jumps))
-    print("names: "+str(names))
-    print("testNames: "+str(testNames))
     choice=input("Do you want to show the power-consumption graphs? [Y/n]")
     if choice=="Y" or choice=="y" or choice=="":
         print(names)
-        lNamesC=input("These are the devices in list, do you want to print all of them? Otherwise write a coma-separated list [Y/list]")
+        lNamesC=input("These are the devices in list, do you want to show all of them? Otherwise write a coma-separated list [Y/list]")
         lNames=[]
-        if lNamesC=="Y":
+        if lNamesC=="Y" or lNamesC=="y" or lNamesC=="":
             lNames=names
         else:
             lNames=lNamesC.split(",")
+        print("lNames: "+str(lNames))
         print(discrs)
-        lNamesC=input("These are the discriminations in list, do you want to print all of them? Otherwise write a coma-separated list [Y/list]")
+        ldiscrsC=input("These are the discriminations in list, do you want to show all of them? Otherwise write a coma-separated list [Y/list]")
+        ldiscrs=[]
+        if ldiscrsC=="Y" or ldiscrsC=="y" or ldiscrsC=="":
+        	ldiscrs=discrs
+        else:
+        	ldiscrs=[int(d) for d in ldiscrsC.split(",")]
+        print("ldiscrs "+str(ldiscrs))
 
+        print(refs)
+        lrefsC=input("These are the refinements in list, do you want to show all of them? Otherwise write a coma-separated list [Y/list]")
+        lrefs=[]
+        if lrefsC=="Y" or lrefsC=="y" or lrefsC=="":
+            lrefs=refs
+        else:
+            lrefs=[int(d) for d in lrefsC.split(",")]
+        print("lrefs "+str(lrefs))
 
-        fig=plt.figure(figsize=(6.4*3, 4.8*3), constrained_layout=True)
-        spec=fig.add_gridspec(2, 1)
-        ax=[]
+        print(threads)
+        lthreadsC=input("These are the threads in list, do you want to show all of them? Otherwise write a coma-separated list [Y/list]")
+        lthreads=[]
+        if lthreadsC=="Y" or lthreadsC=="y" or lthreadsC=="":
+            lthreads=threads
+        else:
+            lthreads=lthreadsC.split(",")
+
+        print(funcs)
+        lfuncsC=input("These are the function types in list, do you want to show all of them? Otherwise write a coma-separated list [Y/list]")
+        lfuncs=[]
+        if lfuncsC=="Y" or lfuncsC=="y" or lfuncsC=="":
+            lfuncs=funcs
+        else:
+            lfuncs=lfuncsC.split(",")
+
+        print(jumps)
+        ljumpsC=input("These are the jumps in list, do you want to show all of them? Otherwise write a coma-separated list [Y/list]")
+        ljumps=[]
+        if ljumpsC=="Y" or ljumpsC=="y" or ljumpsC=="":
+            ljumps=jumps
+        else:
+            ljumps=ljumpsC.split(",")
+
+        values=[]
+        times=[]
+        labels=[]
+        for r in runs:
+            if r.devName in lNames and r.refinements in lrefs and r.discr in ldiscrs:
+                goOn=False
+                #If it's CPU then only the name
+                if r.threads==0 and r.functionType==0 and r.guessInitialAngles==False and r.jump==0:
+                    goOn=True
+                #Else also threads, jumps and functiontype
+                else:
+                    if r.threads in lthreads and r.jump in ljumps and r.functionType in lfuncs:
+                        goOn=True
+                if goOn:
+                    if r.test_name in ["Circuit"]:
+                        print(r)
+                        print(r.initTime, r.endTime)
+                        powerFile=r.power_file
+                        watts=[]
+                        ts=[]
+
+                        with open(powerFile, "r") as powerJson:
+                            data=json.load(powerJson)
+                            for l in data['power']:
+                                if l['time']>r.initTime and l['time']<r.endTime:
+                                    watts.append(l['power'])
+                                    ts.append(l['time']-r.initTime)
+                        values.append(watts)
+                        times.append(ts)
+                        labels.append(r.devName)
+
+        print(len(times))
+        for i in range(len(times)):
+            plt.plot(times[i], values[i], color=colors[i], label=labels[i])
+
+        plt.legend()
+        plt.show()
                 
+
+
 
 #    import pandas
 #    df = pandas.DataFrame(dict(graph=['Item one', 'Item two', 'Item three'],
