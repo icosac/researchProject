@@ -104,7 +104,7 @@ def getOptions(args=sys.argv[1:]):
     parser.add_argument("-N", "--test_names", type=str, default="", help="List of the names of the tests to print separated by comas without spaces.")
     parser.add_argument("-r", "--ref", type=str, default="", help="List of refinements to consider. The list is coma-separated without spaces.")
     parser.add_argument("-f", "--func", type=str, default="2", help="List of functions to consider. The list is coma-separated without spaces. The default is 2.")
-    parser.add_argument("-j", "--jump", type=str, default="2", help="List of jumps to consider. Taken into account only if 2 is present in the list of functions. The list is coma-separated without spaces. The default is 2.")
+    parser.add_argument("-j", "--jump", type=str, default="3", help="List of jumps to consider. Taken into account only if 2 is present in the list of functions. The list is coma-separated without spaces. The default is 2.")
     parser.add_argument("-g", "--guess", type=int, default=1, help="Considered only if --func is not 0. It says whether to look for specific angles (1) or not (0). Default is 1.")
     parser.add_argument("-l", "--log", action="store_true", default=False, help="Whether to apply logarithm to data or not.")
     parser.add_argument("-M", "--max", type=int, default=sys.maxsize, help="Only times below this value are kept into consideration. Default is sys.maxsize.")
@@ -196,20 +196,20 @@ def main():
     except:
         pass
 
-    print(input_file)
-    print(acceptAllDevices)
-    print(acceptAllTests)
-    print(acceptAllRef)
-    print(names)
-    print(testNames)
-    print(defRefinements)
-    print(log_b)
-    print(timeLimit)
-    print(defDiscr)
-    print(defThreads)
-    print(defFuncs)
-    print(defJumps)
-    print(defGuessed)
+    print("input_file: "+str(input_file))
+    print("acceptAllDevices: "+str(acceptAllDevices))
+    print("acceptAllTests: "+str(acceptAllTests))
+    print("acceptAllRef: "+str(acceptAllRef))
+    print("names: "+str(names))
+    print("testNames: "+str(testNames))
+    print("defRefinements: "+str(defRefinements))
+    print("log_b: "+str(log_b))
+    print("timeLimit: "+str(timeLimit))
+    print("defDiscr: "+str(defDiscr))
+    print("defThreads: "+str(defThreads))
+    print("defFuncs: "+str(defFuncs))
+    print("defJumps: "+str(defJumps))
+    print("defGuessed: "+str(defGuessed))
 
     #Read data from json file and add every possible thing
     runs=[]
@@ -230,6 +230,28 @@ def main():
                 r=Run(p['name'], p['test_name'], p['discr'], p['time'], p['length'], p['err'], p['refinements'], p['threads'], p['functionType'], p['jump'], p['guessInitialAngles'])
             
             realName=r.name.split('_')[0]
+
+            #Check if CPU: threads==0, functype==0, jump==0 guessInitialAngles==False
+            if (acceptAllDevices or (not acceptAllDevices and (realName!="" or realName!=" "))):
+                #print("acceptAllDevices")
+                if (acceptAllTests or (not acceptAllTests and r.test_name in testNames)):
+                    #print("acceptAllTests")
+                    if (acceptAllRef or (not acceptAllRef and r.refinements in defRefinements)):
+                        #print("acceptAllRef")
+                        if r.time<timeLimit:
+                            #print("time")
+                            if  r.discr>=defDiscr[0] and r.discr<=defDiscr[1]:
+                                if r.threads==0 and r.jump==0 and r.functionType==0 and r.guessInitialAngles==False:
+                                    found=False
+                                    r.devName=realName
+                                    for i in range(len(runs)):
+                                        if runs[i]==r:
+                                            runs[i].time+=r.time 
+                                            runs[i].n+=1
+                                            found=True
+                                    if not found:
+                                        runs.append(r)
+
 
             if (acceptAllDevices or (not acceptAllDevices and (realName!="" or realName!=" "))):
                 #print("acceptAllDevices")
@@ -312,106 +334,156 @@ def main():
             testNames.append(r.test_name)
 
     
-    print(discrs)
-    print(threads)
-    print(funcs)
-    print(jumps)
-    print(names)
-    print(testNames)
+    print("discrs: "+str(discrs))
+    print("threads: "+str(threads))
+    print("funcs: "+str(funcs))
+    print("jumps: "+str(jumps))
+    print("names: "+str(names))
+    print("testNames: "+str(testNames))
 
     import matplotlib.colors as mcolors
     colors=['blue', 'orange', 'red', mcolors.CSS4_COLORS['limegreen'], mcolors.CSS4_COLORS['darkgreen'], 'purple', 'red', 'gray']
 
-    for tn in range(len(testNames)): 
-        break
-        width=0.4
-        for th in threads:
-            nGraphs=0
-            fig=plt.figure(figsize=(6.4*3, 4.8*3), constrained_layout=True)
-            spec=fig.add_gridspec(int(((len(funcs)+len(jumps)))/2), 2)
-#           fig, ax=plt.subplots()
-            ax=[]
-            valuess=[]
-            for j in jumps:
-                print("j: "+str(j))
-                for fn in funcs: #Create a graph for each function
-                    if fn!=2 and j!=jumps[-1]:
-                        continue
-                    print("fn: "+str(fn))
-                    ax.append(fig.add_subplot(spec[int(nGraphs/2), nGraphs%2]))
-                    for n in range(len(names)):
-                        values=[]
-                        labels=times(discrs, defRefinements)
-                        x=np.arange(len(labels))
-                        for l in range(len(labels)):
-                            (dis,ref)=labels[l]
-                            #print("looking for: "+names[n]+" with discr: "+str(dis)+", ref: "+str(ref))
-                            before=len(values)
-                            for r in runs:
-                                #print(r)
-                                if r.devName==names[n]:
-                                    #print("r.devName")
-                                    #print("r.test_name <"+r.test_name+"> <"+testNames[tn]+"> "+str(len(testNames)))
-                                    if  r.test_name==testNames[tn]: 
-                                        if r.discr==dis: 
-                                            #print("r.discr")
-                                            if  r.refinements==ref: 
-                                                #print(" r.refinements")
-                                                if r.threads==th: 
-                                                    #print("r.threads")
-                                                    if  r.functionType==fn: 
-                                                        #print(" r.functionType")
-                                                        if fn!=2 or (fn==2 and r.jump==j):
-                                                            #print("r.jump")
-                                                            values.append(r)
-                            #if len(values)==before:
-                            #    print("not found")
-                            #else:
-                            #    print("found: "+str(values[-1]))
-                        if values!=[]:
-                            valuess.append(values)
-                            #print(values)
-                            ax[nGraphs].barh(x+n*width-width/len(names), [v.time for v in values], width, color=colors[n], label=names[n]) #color=colors[n]
-                            ax[nGraphs].set_xlabel('Times in ms')
-                            ax[nGraphs].set_yticks(x)
-                            ax[nGraphs].set_yticklabels(labels)
-                            if func!=2:
-                                ax[nGraphs].set_title(testNames[tn]+", threads: "+str(th)+" func: "+str(fn)+", jump: 0")
-                            else:
-                                ax[nGraphs].set_title(testNames[tn]+", threads: "+str(th)+" func: "+str(fn)+", jump: "+str(j))
-                            ax[nGraphs].legend()
-                    nGraphs+=1
-            for vv in valuess[0:2]:
-                print("<", end="")
-                for v in vv:
-                    print(v, end=", ")
-                print(">")
-            #ax.legend()
-            plt.show()
+    choice=input("Do you want to show the diagram over threads and different functions? [Y/n] ")
+    if choice=="Y" or choice=="y":
+        for tn in range(len(testNames)): 
+            break
+            width=0.4
+            for th in threads:
+                nGraphs=0
+                fig=plt.figure(figsize=(6.4*3, 4.8*3), constrained_layout=True)
+                spec=fig.add_gridspec(int(((len(funcs)+len(jumps)))/2), 2)
+    #           fig, ax=plt.subplots()
+                ax=[]
+                valuess=[]
+                for j in jumps:
+                    print("j: "+str(j))
+                    for fn in funcs: #Create a graph for each function
+                        if fn!=2 and j!=jumps[-1]:
+                            continue
+                        print("fn: "+str(fn))
+                        ax.append(fig.add_subplot(spec[int(nGraphs/2), nGraphs%2]))
+                        for n in range(len(names)):
+                            values=[]
+                            labels=times(discrs, defRefinements)
+                            x=np.arange(len(labels))
+                            for l in range(len(labels)):
+                                (dis,ref)=labels[l]
+                                #print("looking for: "+names[n]+" with discr: "+str(dis)+", ref: "+str(ref))
+                                before=len(values)
+                                for r in runs:
+                                    #print(r)
+                                    if r.devName==names[n]:
+                                        #print("r.devName")
+                                        #print("r.test_name <"+r.test_name+"> <"+testNames[tn]+"> "+str(len(testNames)))
+                                        if  r.test_name==testNames[tn]: 
+                                            if r.discr==dis: 
+                                                #print("r.discr")
+                                                if  r.refinements==ref: 
+                                                    #print(" r.refinements")
+                                                    if r.threads==th: 
+                                                        #print("r.threads")
+                                                        if  r.functionType==fn: 
+                                                            #print(" r.functionType")
+                                                            if fn!=2 or (fn==2 and r.jump==j):
+                                                                #print("r.jump")
+                                                                values.append(r)
+                                #if len(values)==before:
+                                #    print("not found")
+                                #else:
+                                #    print("found: "+str(values[-1]))
+                            if values!=[]:
+                                valuess.append(values)
+                                #print(values)
+                                ax[nGraphs].barh(x+n*width-width/len(names), [v.time for v in values], width, color=colors[n], label=names[n]) #color=colors[n]
+                                ax[nGraphs].set_xlabel('Times in ms')
+                                ax[nGraphs].set_yticks(x)
+                                ax[nGraphs].set_yticklabels(labels)
+                                if func!=2:
+                                    ax[nGraphs].set_title(testNames[tn]+", threads: "+str(th)+" func: "+str(fn)+", jump: 0")
+                                else:
+                                    ax[nGraphs].set_title(testNames[tn]+", threads: "+str(th)+" func: "+str(fn)+", jump: "+str(j))
+                                ax[nGraphs].legend()
+                        nGraphs+=1
+                for vv in valuess[0:2]:
+                    print("<", end="")
+                    for v in vv:
+                        print(v, end=", ")
+                    print(">")
+                #ax.legend()
+                plt.show()
 
-    lthread=128
-    lfunc=2
-    ljump=3
-    lguess=True
-    for dv in names:
-        print("\\section{"+dv+"}")
+    choice=input("Do you want to print the tables? [Y/n] ")
+    if choice=="Y" or choice=="y" or choice=="":
+        lthreads=input("For which number of threads? ")
+        lfunc=2
+        ljump=3
+        lguess=True
+        print("namesss: "+str(names))
+        #for dv1 in names:
         for tn in testNames:
             print("\\subsection{"+tn+"}")
             print("\\begin{center}")
-            print("\\begin{tabular}{c|c|c|c}")
-            print("\tDisc&Ref&Time(s)&Err\\\\\n\\hline")
+            print("\\begin{tabular}{c|c|c", end="")
+            for n in names:
+                print("|c", end="")
+            print("}")
+            print("\t&&&\\multicolumn{"+str(len(names))+"}{|c}{Times(ms)}\\\\")
+            print("\tDisc&Ref&Err", end="")
+            for n in names:
+                print("&"+n, end="")
+            print("\\\\\n\\hline")
             for discr in discrs:
                 for ref in defRefinements:
-                    for r in runs:
-                        if r.devName==dv and r.test_name==tn and r.discr==discr and \
-                            r.threads==lthread and r.functionType==lfunc and \
-                            r.refinements==ref and r.jump==ljump and r.guessInitialAngles==lguess:
-                            print("{:d}&{:d}&{:.1e}&{:.1e}\\\\".format(discr, ref, r.time, r.err))
+                    for dv in range(len(names)): 
+                        for r in runs:
+                            if r.devName==names[dv] and r.test_name==tn and r.discr==discr and r.refinements==ref:
+                                if  str(r.threads) in lthreads and r.functionType==lfunc and \
+                                    r.jump==ljump and r.guessInitialAngles==lguess:
+                                    if dv==0:
+                                        print("{:d}&{:d}&{:.1e}&{:.1e}".format(discr, ref, r.err, r.time), end="")
+                                    elif dv==len(names)-1:
+                                        print("&{:.1e}\\\\".format(r.time))
+                                    else:
+                                        print("&{:.1e}".format(r.time), end="")
+
+
+                                elif r.threads==0 and r.functionType==0 and r.jump==0 and \
+                                    r.guessInitialAngles==False:
+                                    if dv==0:
+                                        print("{:d}&{:d}&{:.1e}&{:.1e}".format(discr, ref, r.err, r.time), end="")
+                                    elif dv==len(names)-1:
+                                        print("&{:.1e}\\\\".format(r.time))
+                                    else:
+                                        print("&{:.1e}".format(r.time), end="")
                 print("\\hline")
             print("\\end{tabular}")
             print("\\end{center}\n\n\n\n\n\n\n")
     
 
+    print("discrs: "+str(discrs))
+    print("threads: "+str(threads))
+    print("funcs: "+str(funcs))
+    print("jumps: "+str(jumps))
+    print("names: "+str(names))
+    print("testNames: "+str(testNames))
+    choice=input("Do you want to show the power-consumption graphs? [Y/n]")
+    if choice=="Y" or choice=="y" or choice=="":
+        print(names)
+        lNamesC=input("These are the devices in list, do you want to print all of them? Otherwise write a coma-separated list [Y/list]")
+        lNames=[]
+        if lNamesC=="Y":
+            lNames=names
+        else:
+            lNames=lNamesC.split(",")
+        print(discrs)
+        lNamesC=input("These are the discriminations in list, do you want to print all of them? Otherwise write a coma-separated list [Y/list]")
+
+
+        fig=plt.figure(figsize=(6.4*3, 4.8*3), constrained_layout=True)
+        spec=fig.add_gridspec(2, 1)
+        ax=[]
+                
 
 #    import pandas
 #    df = pandas.DataFrame(dict(graph=['Item one', 'Item two', 'Item three'],
