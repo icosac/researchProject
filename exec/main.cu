@@ -269,7 +269,7 @@ int main (int argc, char* argv[]){
     auto time1=tp.getTime();
 
     if (initTime!=-1.0){
-      endTime=initTime+time1;
+      endTime=initTime+time1+1000;
     }
 
     LEN_T Length=0.0;

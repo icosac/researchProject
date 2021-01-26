@@ -5,7 +5,7 @@ CLR=clear && clear && clear
 CC=g++
 CCFLAGS=-std=c++11 -O3
 CU=nvcc
-CUFLAGS=-std=c++11 -O3 -arch=sm_75 -rdc=true -DTRIG -DCUDA_ON --fmad=false --compiler-options -std=c++11
+CUFLAGS=-std=c++11 -O3 -arch=sm_62 -rdc=true -DCUDA_ON --fmad=false --compiler-options -std=c++11
 
 AR=ar rcs
 
