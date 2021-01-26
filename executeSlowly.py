@@ -21,13 +21,20 @@ functions=[2]
 tests=range(6)
 guessAngles=False
 nExecs=range(1)
-name=input("Insert the name of the test (device): ")
+name=""
+initStart=0.0
+if len(sys.argv)==1:
+    name=input("Insert the name of the test (device): ")
+else:
+    name=sys.argv[2]
+    initStart=float(sys.argv[1])
+
 
 system("mkdir -p "+name)
 start=datetime.now()
 
 for nExec in nExecs:
-	system("tegrastats --stop && tegrastats --start --logfile tegrastats"+name+"_"+str(nExec)+".log")
+	#system("tegrastats --stop && tegrastats --start --logfile tegrastats"+name+"_"+str(nExec)+".log")
 	for thread in threads:
 		for func in functions:
 			if func!=0:
@@ -48,8 +55,8 @@ for nExec in nExecs:
 								with open("times.json", "a+") as f:
 									f.write('{"name" : "'+testName+'", "start": '+str(elapsedStart)+', "stop": '+str(elapsedStop)+'}\n') #This is just for backup, the same data is stored also in each run in tests.json
 								#sleep(30)
-	system("tegrastats --stop")
-	system("mv tegrastats"+name+"_"+str(nExec)+".log "+name+"/tegrastats"+name+"_"+str(nExec)+".log")
+	#system("tegrastats --stop")
+	#system("mv tegrastats"+name+"_"+str(nExec)+".log "+name+"/tegrastats"+name+"_"+str(nExec)+".log")
 
 
 #            sleep(30)
