@@ -31,7 +31,7 @@ class Run:
         else:
             self.guessInitialAngles=False
         self.initTime=initTime
-        self.endTime=self.initTime+self.time+2000
+        self.endTime=endTime
 
     def __eq__(self, other):
         return (self.devName==other.devName and
