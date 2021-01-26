@@ -29,8 +29,8 @@ public:
       ", \"jump\" : " << jump <<
       ", \"guessInitialAngles\" : \"" << guessInitialAngles <<  "\"" << 
       (file_name=="" ? "" : ", \"power_file\" : \""+file_name+"\"") << 
-      ", \"initTime\" : " << initTime << 
-      ", \"endTime\" : " << endTime << 
+      ", \"initTime\" : " << std::setprecision(20) << initTime << 
+      ", \"endTime\" : " << std::setprecision(20) << endTime << 
       "},\n";
   }
 };
