@@ -155,9 +155,9 @@ int main (int argc, char* argv[]){
   }
 
   else if (argc==5){
-    uint threads=128;
+    uint threads=256;
     uint funcID=2;
-    uint jump=3;
+    uint jump=10;
 
     std::string testName=std::string(argv[1]);
     std::string fileName=std::string(argv[2]);
@@ -255,9 +255,9 @@ int main (int argc, char* argv[]){
     std::fstream json_out; json_out.open("testResults/tests.json", std::fstream::app);
     
     std::vector<bool> fixedAngles;
-    vector<Configuration2<real_type> > v=Tests[testID];
-    for (uint i=0; i<v.size(); i++){
-      if (i==0 || i==v.size()-1) {
+    std::vector<Configuration2<real_type> > points=Tests[testID];
+    for (uint i=0; i<points.size(); i++){
+      if (i==0 || i==points.size()-1) {
         fixedAngles.push_back(true);
       }
       else {
@@ -276,9 +276,9 @@ int main (int argc, char* argv[]){
     //system((std::string("mkdir -p ")+path).c_str());
     //system((std::string("tegrastats --interval 50 --start --logfile ")+powerName).c_str());
     //std::cout << (std::string("tegrastats --interval 50 --start --logfile ")+powerName).c_str() << std::endl;
-    sleep(2);
     
-    std::vector<Configuration2<real_type> > points=Tests[testID];
+    DP::solveDP<Dubins<real_type> >(points, discr, fixedAngles, curveParamV, funcID, guessAnglesVal, rip, threads);
+    sleep(2);
 
     TimePerf tp;
     tp.start();
