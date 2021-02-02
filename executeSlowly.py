@@ -19,7 +19,7 @@ discrs=[4, 16, 90, 360]
 refinements=[0, 1, 2, 4, 8, 16]
 functions=[2]
 tests=range(6)
-guessAngles=False
+guessAngles=True
 nExecs=range(1, 10)
 name=""
 initStart=0.0
@@ -43,7 +43,7 @@ for nExec in nExecs:
 			if func!=0:
 				guessAngles=True
 			for jump in jumps:
-				if func!=1 and jump!=0:
+				if func!=2 and jump!=0:
 					pass
 				else:
 					for discr in discrs:
