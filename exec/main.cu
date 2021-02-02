@@ -95,57 +95,6 @@ int main (int argc, char* argv[]){
   cudaGetDeviceProperties(&deviceProperties, 0);
   //printf("[%d] %s\n", 0, deviceProperties.name);
  
-/*
-  double CPU_C=-0.000000018581287397623214019404;
-  double CPU_S=0.000000037114354256573278689757;
-  double GPU_C=-0.000000018581287397623214019404;
-  double GPU_S=0.000000037114354478617883614788;
-  printf("err C: %.16f\n", (CPU_C-GPU_C));
-  printf("err S: %.16f\n", (CPU_S-GPU_S));
-
-  tryAtan2<<<1,1>>>(GPU_C, GPU_S);
-  cudaDeviceSynchronize();
-  printf("CPU 2: %.16f\n", atan2(CPU_C, CPU_S));
-  printf("CPU 1: %.16f\n", atan(CPU_C/CPU_S));
-  //printf("CPU v: %.16f\n", M_PI-atan(0.000000037114354256573278689757/-0.000000018581287397623214019404));
-
-  std::cout << "==================" << std::endl;
-
-  tryAtan2<<<1,1>>>(CPU_C, CPU_S);
-  cudaDeviceSynchronize();
-  printf("CPU 2 using GPU: %.16f\n", atan2(GPU_C, GPU_S));
-  printf("CPU 1 using GPU: %.16f\n", atan(GPU_C/GPU_S));
-
-
-  std::cout << "==================" << std::endl;
-
-  Configuration2<double> c0(2.0, 0.5, -0.72273426348170455);
-  Configuration2<double> c1(2.0, 0.0, -2.4188583653330378);
-  std::cout << std::setw(20) << std::setprecision(17);
-  Dubins<double> dubins(c0, c1, 3.0);
-  std::cout << "CPU length: " << std::setw(20) << std::setprecision(17) << dubins.l() << std::endl;
-  dubinsL<<<1,1>>>(c0.x(), c0.y(), c0.th(), c1.x(), c1.y(), c1.th(), 3.0);
-  cudaDeviceSynchronize();
-  //return 0;
-
-  std::vector<double> x={ 0.5, 0.0, 0.5, 1.0, 1.5, 2.0, 2, 1.5, 1, 0.5, 0., 0. };
-  std::vector<double> y={ 1.2, 0.5, 0.5, 0.5, 0.5, 0.5, 0, 0.0, 0, 0.0, 0., -0.5 };
-  std::vector<double> th={2.6179938779914944, 5.5181700068343345, 0.27550703827297418, 6.2600960773072822, 0.19802151651795322, 5.5604509844293766, 3.8643269723697231, 2.9435898904162778, 3.1477811860951026, 3.2289796515706222, 2.580176702570077, 0};
-  double totL=0.0;
-  for (int i=x.size()-2; i>=0; i--){
-    std::cout << "i: " << i << std::endl;
-    Configuration2<double> c0(x[i], y[i], th[i]);
-    Configuration2<double> c1(x[i+1], y[i+1], th[i+1]);
-    double *L; cudaMallocManaged(&L, sizeof(double));
-    DP::dubinsWrapper<<<1,1>>>(c0, c1, 3.0, L);
-    cudaDeviceSynchronize();
-    totL+=L[0];
-    std::cout << "L: " << std::setw(20) << std::setprecision(17) << L[0] << std::endl;
-    cudaFree(L);
-  }
-  std::cout << "totL: " << std::setw(20) << std::setprecision(17) << totL << std::endl;
-  return 0;
-  */
   if (argc==1){
     for (int testID=0; testID<6; testID++){
       //if (testID!=3){continue;}
@@ -225,15 +174,15 @@ int main (int argc, char* argv[]){
       initTime=atof(argv[10]);
     }
 
-    //std::cout << "testName: " << testName << std::endl;
-    //std::cout << "nExec: " << nExec << std::endl;
-    //std::cout << "testID: " << testID << std::endl;
-    //std::cout << "discr: " << discr << std::endl;
-    //std::cout << "rip: " << rip << std::endl;
-    //std::cout << "funcID: " << funcID << std::endl;
-    //std::cout << "jump: " << jump << std::endl;
-    //std::cout << "guessAnglesVal: " << guessAnglesVal << std::endl;
-    //std::cout << "threads: " << threads << std::endl;
+    std::cout << "testName: " << testName << std::endl;
+    std::cout << "nExec: " << nExec << std::endl;
+    std::cout << "testID: " << testID << std::endl;
+    std::cout << "discr: " << discr << std::endl;
+    std::cout << "rip: " << rip << std::endl;
+    std::cout << "funcID: " << funcID << std::endl;
+    std::cout << "jump: " << jump << std::endl;
+    std::cout << "guessAnglesVal: " << guessAnglesVal << std::endl;
+    std::cout << "threads: " << threads << std::endl;
 
     std::fstream json_out; json_out.open("testResults/tests.json", std::fstream::app);
     
@@ -263,6 +212,8 @@ int main (int argc, char* argv[]){
     
     std::vector<Configuration2<real_type> > points=Tests[testID];
 
+    DP::solveDP<Dubins<real_type> >(points, discr, fixedAngles, curveParamV, funcID, guessAnglesVal, rip, threads); 
+    sleep(2);
     TimePerf tp;
     tp.start();
     DP::solveDP<Dubins<real_type> >(points, discr, fixedAngles, curveParamV, funcID, guessAnglesVal, rip, threads); 

@@ -14,14 +14,14 @@ from datetime import datetime, timedelta
 interval=50 #Sampling interval in ms
 
 threads=[128]
-jumps=[3]
+functions=[1]
+jumps=[0]
 discrs=[4, 16, 90, 360]
 refinements=[0, 1, 2, 4, 8, 16]
-functions=[2]
 tests=range(6)
-guessAngles=False
+guessAngles=True
 nExecs=range(1)
-name=input("Insert the name of the test (device): ")
+name=sys.argv[2]
 
 system("mkdir -p "+name)
 start=datetime.now()
@@ -33,7 +33,7 @@ for nExec in nExecs:
 			if func!=0:
 				guessAngles=True
 			for jump in jumps:
-				if func!=2 and jump!=2:
+				if func!=2 and jump!=jumps[0]:
 					pass
 				else:
 					for discr in discrs:
@@ -43,6 +43,7 @@ for nExec in nExecs:
 								print(testName)
 								_start=datetime.now()
 								elapsedStart=(int(((datetime.now()-start).total_seconds()*1000)/interval)+1)*interval
+								print("elapsedStart: "+str(elapsedStart))
 								system("./bin/cu/main.out "+testName+" "+str(nExec)+" "+str(test)+" "+str(discr)+" "+str(ref)+" "+str(func)+" "+str(int(guessAngles))+" "+str(thread)+" "+str(jump)+" "+str(elapsedStart))
 								elapsedStop=int(((datetime.now()-start).total_seconds()*1000)/interval)*interval
 								with open("times.json", "a+") as f:
