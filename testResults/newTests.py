@@ -1,4 +1,4 @@
-#import matplotlib
+import matplotlib
 #matplotlib.use("Agg")
 
 import json
@@ -10,10 +10,22 @@ from math import log
 import argparse, sys
 import re
 
+from matplotlib import rc
+#rc('font',**{'family':'sans-serif','sans-serif':['Helvetica']})
+rc('font',**{'family':'serif','serif':['Times'],'size':12})
+rc('text', usetex=True)
+
+def timesF(arr1, arr2):
+    ret=[]
+    for a in arr1:
+        for b in arr2:
+            ret.append((a,b))
+    return ret
+
 class Run:
     def __init__(self,name, test_name, discr, time, length, err, refinements, threads, functionType, jump, guessInitialAngles, initTime=-1.0, endTime=-1.0, power_file=""):
         self.name=name
-        self.devName=""
+        self.devName=name
         self.test_name=test_name
         self.discr=discr
         self.time=time
@@ -297,7 +309,6 @@ def main():
                                     
                                                 if not found:
                                                     runs.append(r)
-                                                
     print("                                                 \rReading file... 100%")
     #Run through all runs and check which had multiple times.
     i=0
@@ -358,7 +369,7 @@ def main():
     choice=input("Do you want to show the diagram over threads and different functions? [Y/n] ")
     if choice=="Y" or choice=="y":
         for tn in range(len(testNames)): 
-            break
+            #break
             width=0.4
             for th in threads:
                 nGraphs=0
@@ -376,7 +387,7 @@ def main():
                         ax.append(fig.add_subplot(spec[int(nGraphs/2), nGraphs%2]))
                         for n in range(len(names)):
                             values=[]
-                            labels=times(discrs, defRefinements)
+                            labels=timesF(discrs, defRefinements)
                             x=np.arange(len(labels))
                             for l in range(len(labels)):
                                 (dis,ref)=labels[l]
@@ -423,6 +434,208 @@ def main():
                     print(">")
                 #ax.legend()
                 plt.show()
+
+    choice=input("Do you want to show the diagrams of times for each example and discretization without OpenMP? [Y/n] ")
+    if choice=="Y" or choice=="y" or choice=="":
+        print(names)
+        Discrs=[d for d in discrs if d in [90,360,720]]
+        Refs=[r for r in defRefinements if r in [1,4,16]]
+        Names=[n for n in names if ("NOOpenMP" in n or "XavierFunc2" in n or "TX2Func1" in n)]
+        newLabels=[]
+        print(Names)
+        nGraphs=0
+        for tn in range(len(testNames)):
+            if testNames[tn]!="Kaya Example 4" and testNames[tn]!="Omega":
+                print("tn: "+testNames[tn])
+                continue
+            else: 
+                for dis in Discrs:
+                    print(testNames[tn])
+                    jumpD=[3,0]
+                    funcD=[2,1,0]
+                    threadD=[128,0]
+
+                    if newLabels==[]:
+                        print(Names)
+                        choiceC=input("These are the labels in list, do you want to choose new labels? [N/y] ")
+                        newLabels=[n for n in Names]
+                        if choiceC=="Y" or choiceC=="y":
+                            for i in range(len(Names)):
+                                l=input(Names[i]+" -> ")
+                                newLabels[i]=l
+                    print(Names)
+
+                    width=0.1
+                    fig, ax=plt.subplots()
+                    for n in range(len(Names)):
+                        values=[]
+                        x=np.arange(len(Refs))
+                        for ref in Refs:
+                            for r in runs:
+                                if  r.devName==Names[n] and r.test_name==testNames[tn] and r.discr==dis and \
+                                    r.refinements==ref and r.threads in threadD and r.functionType in funcD and \
+                                    (r.functionType!=2 or (r.functionType==2 and r.jump in jumpD)):
+                                    #print(r)
+                                    values.append(r.time)
+                        print(values)
+                        print(x)
+                        a=1
+                        if len(names)%2!=1:
+                            a=0.5
+                        if n%2==0:
+                            ax.bar(x-width*(a+int(n/2)), values, width, label=newLabels[n], color=colors[n])
+                        else:
+                            ax.bar(x+width*(a+int(n/2)), values, width, label=newLabels[n], color=colors[n])
+
+                    ax.set_title(testNames[tn]+", discretization: "+str(dis))
+                    ax.set_xlabel("Refinements $m$")
+                    ax.set_xticklabels([str(r) for r in Refs])
+                    ax.set_ylabel("Time (ms)")
+                    ax.set_xticks(x)
+                    ax.legend()
+                    plt.savefig("timesGraphsSeparatedNOOpenMP"+str(nGraphs)+".pdf", transparent=True, bbox_inches='tight', pad_inches=0)
+                    nGraphs+=1
+
+    choice=input("Do you want to show the diagrams of times for each example and discretization? [Y/n] ")
+    if choice=="Y" or choice=="y" or choice=="":
+        print(names)
+        Discrs=[d for d in discrs if d in [90,360,720]]
+        Refs=[r for r in defRefinements if r in [1,4,16]]
+        Names=[n for n in names if "NOOpenMP" not in n and "TX2Func2" not in n]
+        print(Names)
+        nGraphs=0
+        newLabels=[]
+        for tn in range(len(testNames)):
+            if testNames[tn]=="Kaya Example 1" or testNames[tn]=="Kaya Example 2":
+                continue
+            else: 
+                for dis in Discrs:
+                    print(testNames[tn])
+                    jumpD=[3,0]
+                    funcD=[2,1,0]
+                    threadD=[128,0]
+
+                    width=0.1
+                    fig, ax=plt.subplots()
+                    valuess=[]
+                    for n in range(len(Names)):
+                        values=[]
+                        x=np.arange(len(Refs))
+                        for ref in Refs:
+                            #print("looking for: "+names[n]+" with dis: "+str(dis)+", ref: "+str(ref))
+                            for r in runs:
+                                #print(r)
+                                if r.devName==Names[n]:
+                                    #print("r.devName")
+                                    #print("r.test_name <"+r.test_name+"> <"+testNames[tn]+"> "+str(len(testNames)))
+                                    if  r.test_name==testNames[tn]: 
+                                        if r.discr==dis: 
+                                            #print("r.dis")
+                                            if r.refinements==ref: 
+                                                #print(" r.refinements")
+                                                if r.threads in threadD: 
+                                                    #print("r.threads")
+                                                    if  r.functionType in funcD: 
+                                                        #print(" r.functionType")
+                                                        if r.functionType!=2 or (r.functionType==2 and r.jump in jumpD):
+                                                            #print("r.jump")
+                                                            values.append(r.time)
+                  
+                        print(values)
+                        print(x)
+                        a=1
+                        if len(names)%2!=1:
+                            a=0.5
+                        if n%2==0:
+                            ax.bar(x-width*(a+int(n/2)), values, width, label=Names[n], color=colors[n])
+                        else:
+                            ax.bar(x+width*(a+int(n/2)), values, width, label=Names[n], color=colors[n])
+                    
+                    if newLabels==[]:
+                        print(Names)
+                        choiceC=input("These are the labels in list, do you want to choose new labels? [N/y] ")
+                        newLabels=[n for n in Names]
+                        if choiceC=="Y" or choiceC=="y":
+                            for i in range(len(Names)):
+                                l=input(Names[i]+" -> ")
+                                newLabels[i]=l
+
+                    ax.set_title(testNames[tn]+", discretization: "+str(dis))
+                    ax.set_xlabel("Refinements $m$")
+                    ax.set_xticklabels([str(r) for r in Refs])
+                    ax.set_ylabel("Time (ms)")
+                    ax.set_xticks(x)
+                    ax.legend()
+                    plt.savefig("timesGraphsSeparated"+str(nGraphs)+".pdf", transparent=True, bbox_inches='tight', pad_inches=0)
+                    nGraphs+=1
+
+
+
+    choice=input("Do you want to show the diagrams of times for each example? [Y/n] ")
+    if choice=="Y" or choice=="y" or choice=="":
+        print(names)
+        Discrs=[d for d in discrs if d in [90,360,720]]
+        Refs=[r for r in defRefinements if r in [1,4,16]]
+        Names=[n for n in names if "NOOpenMP" not in n]
+        print(Names)
+        nGraphs=0
+        for tn in range(len(testNames)):
+            if testNames[tn]=="Kaya Example 1" or testNames[tn]=="Kaya Example 2":
+                continue
+            else: 
+                print(testNames[tn])
+                jumpD=[3,0]
+                funcD=[2,0]
+                threadD=[128,0]
+
+                width=0.1
+                fig, ax=plt.subplots()
+                valuess=[]
+                for n in range(len(Names)):
+                    values=[]
+                    labels=timesF(Discrs, Refs)
+                    x=np.arange(len(labels))
+                    for l in range(len(labels)):
+                        (dis,ref)=labels[l]
+                        #print("looking for: "+names[n]+" with discr: "+str(dis)+", ref: "+str(ref))
+                        for r in runs:
+                            #print(r)
+                            if r.devName==Names[n]:
+                                #print("r.devName")
+                                #print("r.test_name <"+r.test_name+"> <"+testNames[tn]+"> "+str(len(testNames)))
+                                if  r.test_name==testNames[tn]: 
+                                    if r.discr==dis: 
+                                        #print("r.discr")
+                                        if r.refinements==ref: 
+                                            #print(" r.refinements")
+                                            if r.threads in threadD: 
+                                                #print("r.threads")
+                                                if  r.functionType in funcD: 
+                                                    #print(" r.functionType")
+                                                    if r.functionType!=2 or (r.functionType==2 and r.jump in jumpD):
+                                                        #print("r.jump")
+                                                        values.append(log(r.time))
+              
+                    print(values)
+                    print(labels)
+                    print(x)
+                    a=1
+                    if len(names)%2!=1:
+                        a=0.5
+                    if n%2==0:
+                        ax.bar(x-width*(a+int(n/2)), values, width, label=Names[n], color=colors[n])
+                    else:
+                        ax.bar(x+width*(a+int(n/2)), values, width, label=Names[n], color=colors[n])
+                
+                ax.set_title(testNames[tn])
+                ax.set_xlabel("Disc $k$, ref $m$")
+                ax.set_xticklabels([0]+[str((d,r)) for (d,r) in labels ])
+                ax.set_ylabel("Logarithmic times")
+                ax.legend()
+                plt.savefig("timesGraphsAllInOneLog"+str(nGraphs)+".pdf", transparent=True, bbox_inches='tight', pad_inches=0)
+                nGraphs+=1
+
+
 
     choice=input("Do you want to print the tables? [Y/n] ")
     if choice=="Y" or choice=="y" or choice=="":
@@ -546,11 +759,13 @@ def main():
         if choice!="Y" and choice!="y" and choice!="":
             filename=choice
 
+        newLabels=[]
         for tn in range(len(ltestName)):
             values=[]
             times=[]
             labels=[]
             maxV=0
+            
             for r in runs:
                 if r.devName in lNames and r.refinements in lrefs and r.discr in ldiscrs:
                     goOn=False
@@ -559,7 +774,7 @@ def main():
                         goOn=True
                     #Else also threads, jumps and functiontype
                     else:
-                        if r.threads in lthreads and r.jump in ljumps and r.functionType in lfuncs:
+                        if r.threads in lthreads and r.functionType in lfuncs and (r.functionType==1 and r.jump==0 or r.jump in ljumps):
                             goOn=True
                     if goOn:
                         if r.test_name==ltestName[tn]:
@@ -580,27 +795,29 @@ def main():
                             values.append(watts)
                             times.append(ts)
                             labels.append(r.devName)
+            if newLabels==[]:
+                print(labels)
+                choiceC=input("These are the labels in list, do you want to choose new labels? [N/y] ")
+                newLabels=labels
+                if choiceC=="Y" or choiceC=="y":
+                    for i in range(len(labels)):
+                        l=input(labels[i]+" -> ")
+                        newLabels[i]=l
             
-            print(labels)
-            choiceC=input("These are the labels in list, do you want to choose new labels? [N/y] ")
-            newLabels=labels
-            if choiceC=="Y" or choiceC=="y":
-                for i in range(len(labels)):
-                    l=input(labels[i]+" -> ")
-                    newLabels[i]=l
-
+            fig, ax=plt.subplots()
             print(len(times))
             for i in range(len(times)):
-                plt.plot(times[i], values[i], color=colors[i], label=newLabels[i])
+                ax.plot(times[i], values[i], color=colors[i], label=newLabels[i])
 
-            plt.xlabel("Time (ms)")
-            plt.ylabel("Power (W)")
-            plt.ylim(0, 13/9*maxV)
-            plt.legend(loc="upper right")
+            ax.set_title(ltestName[tn]+", k=360, m=16")
+            ax.set_xlabel("Time (ms)")
+            ax.set_ylabel("Power (W)")
+            #ax.ylim(0, 13/9*maxV)
+            ax.legend(loc="upper right")
             if filename!="":
-                plt.savefig(filename+str(tn)+".pdf", transparent=True)
+                fig.savefig(filename+str(tn)+".pdf", transparent=True, bbox_inches='tight', pad_inches=0.1)
             else:
-                plt.show()
+                fig.show()
 
 
     choice=input("Do you want to print the table of errors? [Y/n] ")
@@ -658,6 +875,56 @@ def main():
             sys.stdout=origin_stdout
             f.close()
    
+
+    choice=input("\n\nDo you want to enter the SPE part? [N/y] ")
+    if choice=="N" or choice=="n" or choice=="":
+        sys.exit(0)
+    else:
+        os.system("python3 readSPE.py")
+    speRuns=[]
+    with open("spe.json") as f:
+        data=json.load(f)['SPE']
+        for l in data:
+            r=Run(p['name'], p['test_name'], p['discr'], p['time'], p['length'], p['err'], p['refinements'], p['threads'], p['functionType'], p['jump'], p['guessInitialAngles'], initialTime, finalTime)
+            found=False
+            for i in range(len(speRuns)):
+                if speRuns[i]==r:
+                    speRuns[i].time+=r.time 
+                    speRuns[i].n+=1
+                    found=True
+            if not found:
+                speRuns.append(r)
+                print(speRuns[-1])
+    testNames=[]
+    discrs=[]
+    refs=[]
+    for r in speRuns:
+        if r.test_name not in testNames:
+            testNames.append(r.test_name)
+        if r.discr not in discrs:
+            discrs.append(r.discr)
+        if r.refinements not in refs:
+            refs.append(r.refinements)
+        if r.n>1:
+            r.time/=r.n
+        print(r)
+
+    #for tn in testNames:
+    #    for discr in discrs:
+    #        for ref in refs:
+    #            for dv in deviceNames:
+    #                for r in runs:
+
+
+
+
+
+
+
+
+    choice=input("Do you want to show the diagram with the simulation time? [Y/n] ")
+    if choice=="Y" or choice=="y" or choice=="":
+        pass
 
 
 #    import pandas
@@ -750,12 +1017,7 @@ def main():
 #        plt.savefig("images/"+(str(i)+"_b.png"), transparent=True)
 #
 #
-def times(arr1, arr2):
-    ret=[]
-    for a in arr1:
-        for b in arr2:
-            ret.append((a,b))
-    return ret
+
 
 if __name__=="__main__":
     main()
