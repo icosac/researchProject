@@ -16,7 +16,7 @@
 #include<tests.hh>
 
 
-void PrintScientific1D(double d){
+void PrintScientific1D(real_type d){
   if (d == 0)
   {
     printf ("%*d", 6, 0);
@@ -24,12 +24,12 @@ void PrintScientific1D(double d){
   }
 
   int exponent  = (int)floor(log10( fabs(d)));  // This will round down the exponent
-  double base   = d * pow(10, -1.0*exponent);
+  real_type base   = d * pow(10, -1.0*exponent);
 
   printf("%1.1lfe%+01d", base, exponent);
 }
 
-void PrintScientific2D(double d){
+void PrintScientific2D(real_type d){
   if (d == 0)
   {
     printf ("%*d", 7, 0);
@@ -37,7 +37,7 @@ void PrintScientific2D(double d){
   }
 
   int exponent  = (int)floor(log10( fabs(d)));  // This will round down the exponent
-  double base   = d * pow(10, -1.0*exponent);
+  real_type base   = d * pow(10, -1.0*exponent);
 
   printf("%1.1lfe%+02d", base, exponent);
 }
@@ -59,7 +59,7 @@ std::vector<std::string> testsNames = {
   "Circuit"
 }; 
 
-std::vector<std::vector<Configuration2<double> > > Tests = {
+std::vector<std::vector<Configuration2<real_type> > > Tests = {
   kaya1, kaya2, kaya3, kaya4, omega, spa
 };
 
@@ -78,8 +78,8 @@ std::string nameTest(std::string name, std::string add="", std::string conc=" ")
   }
 }
 
-__global__ void dubinsL(Configuration2<double> c0, Configuration2<double> c1, double k, double* L){
-  Dubins<double> dubins(c0, c1, k);
+__global__ void dubinsL(Configuration2<real_type> c0, Configuration2<real_type> c1, real_type k, real_type* L){
+  Dubins<real_type> dubins(c0, c1, k);
   L[0]+=dubins.l();
   //printf("GPU Length: %.16f\n", dubins.l());
 }
@@ -95,57 +95,6 @@ int main (int argc, char* argv[]){
   cudaGetDeviceProperties(&deviceProperties, 0);
   //printf("[%d] %s\n", 0, deviceProperties.name);
  
-/*
-  double CPU_C=-0.000000018581287397623214019404;
-  double CPU_S=0.000000037114354256573278689757;
-  double GPU_C=-0.000000018581287397623214019404;
-  double GPU_S=0.000000037114354478617883614788;
-  printf("err C: %.16f\n", (CPU_C-GPU_C));
-  printf("err S: %.16f\n", (CPU_S-GPU_S));
-
-  tryAtan2<<<1,1>>>(GPU_C, GPU_S);
-  cudaDeviceSynchronize();
-  printf("CPU 2: %.16f\n", atan2(CPU_C, CPU_S));
-  printf("CPU 1: %.16f\n", atan(CPU_C/CPU_S));
-  //printf("CPU v: %.16f\n", M_PI-atan(0.000000037114354256573278689757/-0.000000018581287397623214019404));
-
-  std::cout << "==================" << std::endl;
-
-  tryAtan2<<<1,1>>>(CPU_C, CPU_S);
-  cudaDeviceSynchronize();
-  printf("CPU 2 using GPU: %.16f\n", atan2(GPU_C, GPU_S));
-  printf("CPU 1 using GPU: %.16f\n", atan(GPU_C/GPU_S));
-
-
-  std::cout << "==================" << std::endl;
-
-  Configuration2<double> c0(2.0, 0.5, -0.72273426348170455);
-  Configuration2<double> c1(2.0, 0.0, -2.4188583653330378);
-  std::cout << std::setw(20) << std::setprecision(17);
-  Dubins<double> dubins(c0, c1, 3.0);
-  std::cout << "CPU length: " << std::setw(20) << std::setprecision(17) << dubins.l() << std::endl;
-  dubinsL<<<1,1>>>(c0.x(), c0.y(), c0.th(), c1.x(), c1.y(), c1.th(), 3.0);
-  cudaDeviceSynchronize();
-  //return 0;
-
-  std::vector<double> x={ 0.5, 0.0, 0.5, 1.0, 1.5, 2.0, 2, 1.5, 1, 0.5, 0., 0. };
-  std::vector<double> y={ 1.2, 0.5, 0.5, 0.5, 0.5, 0.5, 0, 0.0, 0, 0.0, 0., -0.5 };
-  std::vector<double> th={2.6179938779914944, 5.5181700068343345, 0.27550703827297418, 6.2600960773072822, 0.19802151651795322, 5.5604509844293766, 3.8643269723697231, 2.9435898904162778, 3.1477811860951026, 3.2289796515706222, 2.580176702570077, 0};
-  double totL=0.0;
-  for (int i=x.size()-2; i>=0; i--){
-    std::cout << "i: " << i << std::endl;
-    Configuration2<double> c0(x[i], y[i], th[i]);
-    Configuration2<double> c1(x[i+1], y[i+1], th[i+1]);
-    double *L; cudaMallocManaged(&L, sizeof(double));
-    DP::dubinsWrapper<<<1,1>>>(c0, c1, 3.0, L);
-    cudaDeviceSynchronize();
-    totL+=L[0];
-    std::cout << "L: " << std::setw(20) << std::setprecision(17) << L[0] << std::endl;
-    cudaFree(L);
-  }
-  std::cout << "totL: " << std::setw(20) << std::setprecision(17) << totL << std::endl;
-  return 0;
-  */
   if (argc==1){
     for (int testID=0; testID<6; testID++){
       //if (testID!=3){continue;}
@@ -172,7 +121,7 @@ int main (int argc, char* argv[]){
           TimePerf tp, tp1;
           tp.start();
 
-          std::vector<Configuration2<double> >points=Tests[testID];
+          std::vector<Configuration2<real_type> >points=Tests[testID];
           DP::solveDP<Dubins<real_type> >(points, DISCR, fixedAngles, curveParamV, 2, true, r); 
           auto time1=tp.getTime();
           LEN_T Length=0.0;
@@ -205,6 +154,75 @@ int main (int argc, char* argv[]){
     }
   }
 
+  else if (argc==5 || argc==6){
+    uint threads=128;
+    uint funcID=2;
+    uint jump=3;
+
+    std::string testName=std::string(argv[1]);
+    std::string fileName=std::string(argv[2]);
+    uint discr=atoi(argv[3]);
+    uint rip=atoi(argv[4]);
+    if (argc==6) jump=atoi(argv[5]);
+
+    std::ifstream file("file.txt");
+    real_type value;
+    int count=0;
+    real_type x, y;
+    std::vector<Configuration2<real_type> > points;
+    real_type th0=0.0, thf=0.0, kMax=0.0;
+    while (file >> value){
+      if (count==0){ kMax=value; }
+      else if (count==1){ th0=value; }
+      else if (count==2){ thf=value; }
+      else {
+        if (count%2==1)
+          x=value;
+        else {
+          y=value;
+          points.push_back(Configuration2<real_type> (x, y, ANGLE::INVALID));
+        }
+      }
+      count+=1;
+    }
+    points[0].th(th0);
+    points[points.size()-1].th(thf);
+    file.close();
+
+    std::vector<bool> fixedAngles;
+    for (uint i=0; i<points.size(); i++){
+      if (i==0 || i==points.size()-1) {
+        fixedAngles.push_back(true);
+      }
+      else {
+        fixedAngles.push_back(false);
+      }
+    }
+    std::vector<real_type> curveParamV={kMax};
+    if(jump!=0){ curveParamV.push_back(jump); }
+
+    sleep(2);
+    
+    TimePerf tp;
+    tp.start();
+    DP::solveDP<Dubins<real_type> >(points, discr, fixedAngles, curveParamV, funcID, true, rip, threads); 
+    auto time1=tp.getTime();
+
+    LEN_T Length=0.0;
+    for (unsigned int j=points.size()-1; j>0; j--){
+      Dubins<real_type> c(points[j-1], points[j], kMax);
+      Length+=c.l();
+    }
+    
+    //std::cout << "Length: " << std::setprecision(30) << Length << " " << std::setprecision(20) << (ABS<real_type>(Length*1000.0, exampleLenghts[testID]*1000.0)) << endl;
+    Run r1(testName, discr, time1, Length, 0.0, ("SPE:"+to_string(points.size())), rip, threads, funcID, jump, "true",  "", -1, -1);
+    std::fstream json_out; json_out.open("testResults/spe.json", std::fstream::app);
+    r1.write(json_out);
+    json_out.close();
+    
+    sleep(2);
+  }
+
   else if (argc>=9) {
     std::string testName=std::string(argv[1]);
     std::string nExec=std::string(argv[2]);
@@ -218,8 +236,8 @@ int main (int argc, char* argv[]){
     bool guessAnglesVal=(atoi(argv[7])==1 ? true : false);
     uint threads=atoi(argv[8]);
 
-    double initTime=-1.0;
-    double endTime=0.0;
+    real_type initTime=-1.0;
+    real_type endTime=0.0;
 
     if (argc==11){
       initTime=atof(argv[10]);
@@ -238,9 +256,9 @@ int main (int argc, char* argv[]){
     std::fstream json_out; json_out.open("testResults/tests.json", std::fstream::app);
     
     std::vector<bool> fixedAngles;
-    vector<Configuration2<double> > v=Tests[testID];
-    for (uint i=0; i<v.size(); i++){
-      if (i==0 || i==v.size()-1) {
+    std::vector<Configuration2<real_type> > points=Tests[testID];
+    for (uint i=0; i<points.size(); i++){
+      if (i==0 || i==points.size()-1) {
         fixedAngles.push_back(true);
       }
       else {
@@ -259,9 +277,9 @@ int main (int argc, char* argv[]){
     //system((std::string("mkdir -p ")+path).c_str());
     //system((std::string("tegrastats --interval 50 --start --logfile ")+powerName).c_str());
     //std::cout << (std::string("tegrastats --interval 50 --start --logfile ")+powerName).c_str() << std::endl;
-    sleep(2);
     
-    std::vector<Configuration2<real_type> > points=Tests[testID];
+    DP::solveDP<Dubins<real_type> >(points, discr, fixedAngles, curveParamV, funcID, guessAnglesVal, rip, threads); 
+    sleep(5);
 
     TimePerf tp;
     tp.start();
