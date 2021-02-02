@@ -14,10 +14,10 @@ from datetime import datetime, timedelta
 interval=50 #Sampling interval in ms
 
 threads=[128]
-jumps=[3]
+functions=[1]
+jumps=[0]
 discrs=[4, 16, 90, 360]
 refinements=[0, 1, 2, 4, 8, 16]
-functions=[2]
 tests=range(6)
 guessAngles=True
 nExecs=range(1, 10)
@@ -43,7 +43,7 @@ for nExec in nExecs:
 			if func!=0:
 				guessAngles=True
 			for jump in jumps:
-				if func!=2 and jump!=0:
+				if func!=2 and jump!=jumps[0]:
 					pass
 				else:
 					for discr in discrs:

@@ -278,8 +278,8 @@ int main (int argc, char* argv[]){
     //system((std::string("tegrastats --interval 50 --start --logfile ")+powerName).c_str());
     //std::cout << (std::string("tegrastats --interval 50 --start --logfile ")+powerName).c_str() << std::endl;
     
-    DP::solveDP<Dubins<real_type> >(points, discr, fixedAngles, curveParamV, funcID, guessAnglesVal, rip, threads);
-    sleep(2);
+    DP::solveDP<Dubins<real_type> >(points, discr, fixedAngles, curveParamV, funcID, guessAnglesVal, rip, threads); 
+    sleep(5);
 
     TimePerf tp;
     tp.start();
