@@ -31,7 +31,7 @@ class Run:
         else:
             self.guessInitialAngles=False
         self.initTime=initTime
-        self.endTime=self.initTime+self.time+2000
+        self.endTime=endTime
 
     def __eq__(self, other):
         return (self.devName==other.devName and
@@ -430,7 +430,14 @@ def main():
         lfunc=2
         ljump=3
         lguess=True
-        print("namesss: "+str(names))
+
+        fileName=input("Do you wish to save the data to file? [N/<name_of_file>] ")
+        origin_stdout=sys.stdout
+        f=None
+        if input!="N" and input!="n" and input!="":
+            f=open(fileName, "a+")
+            sys.stdout=f
+
         #for dv1 in names:
         for tn in testNames:
             print("\\subsection{"+tn+"}")
@@ -439,7 +446,7 @@ def main():
             for n in names:
                 print("|c", end="")
             print("}")
-            print("\t&&&\\multicolumn{"+str(len(names))+"}{|c}{Times(ms)}\\\\")
+            print("\t&&&\\multicolumn{"+str(len(names))+"}{c}{Times(ms)}\\\\")
             print("\tDisc&Ref&Err", end="")
             for n in names:
                 print("&"+n, end="")
@@ -470,12 +477,16 @@ def main():
                 print("\\hline")
             print("\\end{tabular}")
             print("\\end{center}\n\n\n\n\n\n\n")
+
+        if input!="N" and input!="n" and input!="":
+            sys.stdout=origin_stdout
+            f.close()
     
 
-    choice=input("Do you want to show the power-consumption graphs? [Y/n]")
+    choice=input("Do you want to show the power-consumption graphs? [Y/n] ")
     if choice=="Y" or choice=="y" or choice=="":
         print(names)
-        lNamesC=input("These are the devices in list, do you want to show all of them? Otherwise write a coma-separated list [Y/list]")
+        lNamesC=input("These are the devices in list, do you want to show all of them? Otherwise write a coma-separated list [Y/list] ")
         lNames=[]
         if lNamesC=="Y" or lNamesC=="y" or lNamesC=="":
             lNames=names
@@ -483,7 +494,7 @@ def main():
             lNames=lNamesC.split(",")
         print("lNames: "+str(lNames))
         print(discrs)
-        ldiscrsC=input("These are the discriminations in list, do you want to show all of them? Otherwise write a coma-separated list [Y/list]")
+        ldiscrsC=input("These are the discriminations in list, do you want to show all of them? Otherwise write a coma-separated list [Y/list] ")
         ldiscrs=[]
         if ldiscrsC=="Y" or ldiscrsC=="y" or ldiscrsC=="":
         	ldiscrs=discrs
@@ -492,7 +503,7 @@ def main():
         print("ldiscrs "+str(ldiscrs))
 
         print(refs)
-        lrefsC=input("These are the refinements in list, do you want to show all of them? Otherwise write a coma-separated list [Y/list]")
+        lrefsC=input("These are the refinements in list, do you want to show all of them? Otherwise write a coma-separated list [Y/list] ")
         lrefs=[]
         if lrefsC=="Y" or lrefsC=="y" or lrefsC=="":
             lrefs=refs
@@ -501,7 +512,7 @@ def main():
         print("lrefs "+str(lrefs))
 
         print(threads)
-        lthreadsC=input("These are the threads in list, do you want to show all of them? Otherwise write a coma-separated list [Y/list]")
+        lthreadsC=input("These are the threads in list, do you want to show all of them? Otherwise write a coma-separated list [Y/list] ")
         lthreads=[]
         if lthreadsC=="Y" or lthreadsC=="y" or lthreadsC=="":
             lthreads=threads
@@ -509,7 +520,7 @@ def main():
             lthreads=lthreadsC.split(",")
 
         print(funcs)
-        lfuncsC=input("These are the function types in list, do you want to show all of them? Otherwise write a coma-separated list [Y/list]")
+        lfuncsC=input("These are the function types in list, do you want to show all of them? Otherwise write a coma-separated list [Y/list] ")
         lfuncs=[]
         if lfuncsC=="Y" or lfuncsC=="y" or lfuncsC=="":
             lfuncs=funcs
@@ -517,52 +528,136 @@ def main():
             lfuncs=lfuncsC.split(",")
 
         print(jumps)
-        ljumpsC=input("These are the jumps in list, do you want to show all of them? Otherwise write a coma-separated list [Y/list]")
+        ljumpsC=input("These are the jumps in list, do you want to show all of them? Otherwise write a coma-separated list [Y/list] ")
         ljumps=[]
         if ljumpsC=="Y" or ljumpsC=="y" or ljumpsC=="":
             ljumps=jumps
         else:
             ljumps=ljumpsC.split(",")
 
-        values=[]
-        times=[]
-        labels=[]
-        for r in runs:
-            if r.devName in lNames and r.refinements in lrefs and r.discr in ldiscrs:
-                goOn=False
-                #If it's CPU then only the name
-                if r.threads==0 and r.functionType==0 and r.guessInitialAngles==False and r.jump==0:
-                    goOn=True
-                #Else also threads, jumps and functiontype
-                else:
-                    if r.threads in lthreads and r.jump in ljumps and r.functionType in lfuncs:
+        print(testNames)
+        ltestNameC=input("These are the test names in list. Default is [\"Circuit\"], do you want to choose another? Otherwise write a coma-separated list [N/list] ")
+        ltestName=["Circuit"]
+        if ltestNameC!="N" and ltestNameC!="n" and ltestNameC!="":
+            ltestName=ltestNameC.split(",")
+
+        choice=input("Do you want to show the figures or to save it? [Y/<file_name>.pdf] ")
+        filename=""
+        if choice!="Y" and choice!="y" and choice!="":
+            filename=choice
+
+        for tn in range(len(ltestName)):
+            values=[]
+            times=[]
+            labels=[]
+            maxV=0
+            for r in runs:
+                if r.devName in lNames and r.refinements in lrefs and r.discr in ldiscrs:
+                    goOn=False
+                    #If it's CPU then only the name
+                    if r.threads==0 and r.functionType==0 and r.guessInitialAngles==False and r.jump==0:
                         goOn=True
-                if goOn:
-                    if r.test_name in ["Circuit"]:
-                        print(r)
-                        print(r.initTime, r.endTime)
-                        powerFile=r.power_file
-                        watts=[]
-                        ts=[]
+                    #Else also threads, jumps and functiontype
+                    else:
+                        if r.threads in lthreads and r.jump in ljumps and r.functionType in lfuncs:
+                            goOn=True
+                    if goOn:
+                        if r.test_name==ltestName[tn]:
+                            print(r)
+                            print(r.initTime, r.endTime)
+                            powerFile=r.power_file
+                            watts=[]
+                            ts=[]
 
-                        with open(powerFile, "r") as powerJson:
-                            data=json.load(powerJson)
-                            for l in data['power']:
-                                if l['time']>r.initTime and l['time']<r.endTime:
-                                    watts.append(l['power'])
-                                    ts.append(l['time']-r.initTime)
-                        values.append(watts)
-                        times.append(ts)
-                        labels.append(r.devName)
+                            with open(powerFile, "r") as powerJson:
+                                data=json.load(powerJson)
+                                for l in data['power']:
+                                    if l['time']>r.initTime and l['time']<r.endTime:
+                                        watts.append(l['power'])
+                                        ts.append(l['time']-r.initTime)
+                                        if l['power']>maxV:
+                                            maxV=l['power']
+                            values.append(watts)
+                            times.append(ts)
+                            labels.append(r.devName)
+            
+            print(labels)
+            choiceC=input("These are the labels in list, do you want to choose new labels? [N/y] ")
+            newLabels=labels
+            if choiceC=="Y" or choiceC=="y":
+                for i in range(len(labels)):
+                    l=input(labels[i]+" -> ")
+                    newLabels[i]=l
 
-        print(len(times))
-        for i in range(len(times)):
-            plt.plot(times[i], values[i], color=colors[i], label=labels[i])
+            print(len(times))
+            for i in range(len(times)):
+                plt.plot(times[i], values[i], color=colors[i], label=newLabels[i])
 
-        plt.legend()
-        plt.show()
-                
+            plt.xlabel("Time (ms)")
+            plt.ylabel("Power (W)")
+            plt.ylim(0, 13/9*maxV)
+            plt.legend(loc="upper right")
+            if filename!="":
+                plt.savefig(filename+str(tn)+".pdf", transparent=True)
+            else:
+                plt.show()
 
+
+    choice=input("Do you want to print the table of errors? [Y/n] ")
+    if choice=="Y" or choice=="y" or choice=="":
+        fileName=input("Do you wish to save the data to file? [N/<name_of_file>] ")
+        origin_stdout=sys.stdout
+        f=None
+        if input!="N" and input!="n" and input!="":
+            f=open(fileName, "a+")
+            sys.stdout=f
+        
+        lfunc=2
+        ljump=3
+        lguess=True
+        for tn in testNames:
+            print("\\subsection{"+tn+"}")
+            print("\\begin{center}")
+            print("\\begin{tabular}{c|c", end="")
+            for n in names:
+                print("|c", end="")
+            print("}")
+            print("\t&&\\multicolumn{"+str(len(names))+"}{c}{Errors}\\\\")
+            print("\tDisc&Ref", end="")
+            for n in names:
+                print("&"+n, end="")
+            print("\\\\\n\\hline")
+            for discr in discrs:
+                for ref in defRefinements:
+                    for dv in range(len(names)): 
+                        for r in runs:
+                            if r.devName==names[dv] and r.test_name==tn and r.discr==discr and r.refinements==ref:
+                                if  r.threads in threads and r.functionType==lfunc and \
+                                    r.jump==ljump and r.guessInitialAngles==lguess:
+                                    if dv==0:
+                                        print("{:d}&{:d}&{:.1e}".format(discr, ref, r.err), end="")
+                                    elif dv==len(names)-1:
+                                        print("&{:.1e}\\\\".format(r.err))
+                                    else:
+                                        print("&{:.1e}".format(r.err), end="")
+
+
+                                elif r.threads==0 and r.functionType==0 and r.jump==0 and \
+                                    r.guessInitialAngles==False:
+                                    if dv==0:
+                                        print("{:d}&{:d}&{:.1e}".format(discr, ref, r.err), end="")
+                                    elif dv==len(names)-1:
+                                        print("&{:.1e}\\\\".format(r.err))
+                                    else:
+                                        print("&{:.1e}".format(r.err), end="")
+                print("\\hline")
+            print("\\end{tabular}")
+            print("\\end{center}\n\n\n\n\n\n\n")
+
+        if input!="N" and input!="n" and input!="":
+            sys.stdout=origin_stdout
+            f.close()
+   
 
 
 #    import pandas

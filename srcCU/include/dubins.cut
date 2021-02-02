@@ -4,7 +4,7 @@
 
 #ifdef TRIG
   #warning "TRIG defined"
-  #import <trig.cuh>
+  #include <trig.cuh>
   #define COS(x)      my_cos(x)
   #define SIN(x)      my_sin(x)
   #define ATAN(x)     my_atan(x)
@@ -20,9 +20,9 @@
 
 BOTH static inline Angle
 rangeSymm(Angle ang){
-	while (ang <= - M_PI) ang += M_2PI;
-	while (ang >  M_PI) ang -= M_2PI;
-	return ang;
+  while (ang <= - M_PI) ang += M_2PI;
+  while (ang >  M_PI) ang -= M_2PI;
+  return ang;
 }
 
 BOTH static inline real_type
@@ -66,7 +66,7 @@ BOTH void Dubins<T>::computeBest(Angle th0, Angle th1, real_type lambda, K_T& sK
   real_type dsin  = sin_0 - sin_1;
   real_type scos  = cos_0 + cos_1;
   real_type ssin  = sin_0 + sin_1;
-	
+  
   real_type dth   = th0 - th1;
 
 #ifdef __CUDA_ARCH__

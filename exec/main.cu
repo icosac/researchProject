@@ -16,7 +16,7 @@
 #include<tests.hh>
 
 
-void PrintScientific1D(double d){
+void PrintScientific1D(real_type d){
   if (d == 0)
   {
     printf ("%*d", 6, 0);
@@ -24,12 +24,12 @@ void PrintScientific1D(double d){
   }
 
   int exponent  = (int)floor(log10( fabs(d)));  // This will round down the exponent
-  double base   = d * pow(10, -1.0*exponent);
+  real_type base   = d * pow(10, -1.0*exponent);
 
   printf("%1.1lfe%+01d", base, exponent);
 }
 
-void PrintScientific2D(double d){
+void PrintScientific2D(real_type d){
   if (d == 0)
   {
     printf ("%*d", 7, 0);
@@ -37,7 +37,7 @@ void PrintScientific2D(double d){
   }
 
   int exponent  = (int)floor(log10( fabs(d)));  // This will round down the exponent
-  double base   = d * pow(10, -1.0*exponent);
+  real_type base   = d * pow(10, -1.0*exponent);
 
   printf("%1.1lfe%+02d", base, exponent);
 }
@@ -59,7 +59,7 @@ std::vector<std::string> testsNames = {
   "Circuit"
 }; 
 
-std::vector<std::vector<Configuration2<double> > > Tests = {
+std::vector<std::vector<Configuration2<real_type> > > Tests = {
   kaya1, kaya2, kaya3, kaya4, omega, spa
 };
 
@@ -78,8 +78,8 @@ std::string nameTest(std::string name, std::string add="", std::string conc=" ")
   }
 }
 
-__global__ void dubinsL(Configuration2<double> c0, Configuration2<double> c1, double k, double* L){
-  Dubins<double> dubins(c0, c1, k);
+__global__ void dubinsL(Configuration2<real_type> c0, Configuration2<real_type> c1, real_type k, real_type* L){
+  Dubins<real_type> dubins(c0, c1, k);
   L[0]+=dubins.l();
   //printf("GPU Length: %.16f\n", dubins.l());
 }
@@ -121,7 +121,7 @@ int main (int argc, char* argv[]){
           TimePerf tp, tp1;
           tp.start();
 
-          std::vector<Configuration2<double> >points=Tests[testID];
+          std::vector<Configuration2<real_type> >points=Tests[testID];
           DP::solveDP<Dubins<real_type> >(points, DISCR, fixedAngles, curveParamV, 2, true, r); 
           auto time1=tp.getTime();
           LEN_T Length=0.0;
@@ -154,6 +154,74 @@ int main (int argc, char* argv[]){
     }
   }
 
+  else if (argc==5){
+    uint threads=256;
+    uint funcID=2;
+    uint jump=10;
+
+    std::string testName=std::string(argv[1]);
+    std::string fileName=std::string(argv[2]);
+    uint discr=atoi(argv[3]);
+    uint rip=atoi(argv[4]);
+
+    std::ifstream file("file.txt");
+    real_type value;
+    int count=0;
+    real_type x, y;
+    std::vector<Configuration2<real_type> > points;
+    real_type th0=0.0, thf=0.0, kMax=0.0;
+    while (file >> value){
+      if (count==0){ kMax=value; }
+      else if (count==1){ th0=value; }
+      else if (count==2){ thf=value; }
+      else {
+        if (count%2==1)
+          x=value;
+        else {
+          y=value;
+          points.push_back(Configuration2<real_type> (x, y, ANGLE::INVALID));
+        }
+      }
+      count+=1;
+    }
+    points[0].th(th0);
+    points[points.size()-1].th(thf);
+    file.close();
+
+    std::vector<bool> fixedAngles;
+    for (uint i=0; i<points.size(); i++){
+      if (i==0 || i==points.size()-1) {
+        fixedAngles.push_back(true);
+      }
+      else {
+        fixedAngles.push_back(false);
+      }
+    }
+    std::vector<real_type> curveParamV={kMax};
+    if(jump!=0){ curveParamV.push_back(jump); }
+
+    sleep(2);
+    
+    TimePerf tp;
+    tp.start();
+    DP::solveDP<Dubins<real_type> >(points, discr, fixedAngles, curveParamV, funcID, true, rip, threads); 
+    auto time1=tp.getTime();
+
+    LEN_T Length=0.0;
+    for (unsigned int j=points.size()-1; j>0; j--){
+      Dubins<real_type> c(points[j-1], points[j], kMax);
+      Length+=c.l();
+    }
+    
+    //std::cout << "Length: " << std::setprecision(30) << Length << " " << std::setprecision(20) << (ABS<real_type>(Length*1000.0, exampleLenghts[testID]*1000.0)) << endl;
+    Run r1(testName, discr, time1, Length, 0.0, ("SPE:"+to_string(points.size())), rip, threads, funcID, jump, "true",  "", -1, -1);
+    std::fstream json_out; json_out.open("testResults/spe.json", std::fstream::app);
+    r1.write(json_out);
+    json_out.close();
+    
+    sleep(2);
+  }
+
   else if (argc>=9) {
     std::string testName=std::string(argv[1]);
     std::string nExec=std::string(argv[2]);
@@ -167,8 +235,8 @@ int main (int argc, char* argv[]){
     bool guessAnglesVal=(atoi(argv[7])==1 ? true : false);
     uint threads=atoi(argv[8]);
 
-    double initTime=-1.0;
-    double endTime=0.0;
+    real_type initTime=-1.0;
+    real_type endTime=0.0;
 
     if (argc==11){
       initTime=atof(argv[10]);
@@ -187,9 +255,9 @@ int main (int argc, char* argv[]){
     std::fstream json_out; json_out.open("testResults/tests.json", std::fstream::app);
     
     std::vector<bool> fixedAngles;
-    vector<Configuration2<double> > v=Tests[testID];
-    for (uint i=0; i<v.size(); i++){
-      if (i==0 || i==v.size()-1) {
+    std::vector<Configuration2<real_type> > points=Tests[testID];
+    for (uint i=0; i<points.size(); i++){
+      if (i==0 || i==points.size()-1) {
         fixedAngles.push_back(true);
       }
       else {
@@ -208,9 +276,9 @@ int main (int argc, char* argv[]){
     //system((std::string("mkdir -p ")+path).c_str());
     //system((std::string("tegrastats --interval 50 --start --logfile ")+powerName).c_str());
     //std::cout << (std::string("tegrastats --interval 50 --start --logfile ")+powerName).c_str() << std::endl;
-    sleep(2);
     
-    std::vector<Configuration2<real_type> > points=Tests[testID];
+    DP::solveDP<Dubins<real_type> >(points, discr, fixedAngles, curveParamV, funcID, guessAnglesVal, rip, threads);
+    sleep(2);
 
     DP::solveDP<Dubins<real_type> >(points, discr, fixedAngles, curveParamV, funcID, guessAnglesVal, rip, threads); 
     sleep(2);
