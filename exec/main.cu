@@ -242,15 +242,15 @@ int main (int argc, char* argv[]){
       initTime=atof(argv[10]);
     }
 
-    std::cout << "testName: " << testName << std::endl;
-    std::cout << "nExec: " << nExec << std::endl;
-    std::cout << "testID: " << testID << std::endl;
-    std::cout << "discr: " << discr << std::endl;
-    std::cout << "rip: " << rip << std::endl;
-    std::cout << "funcID: " << funcID << std::endl;
-    std::cout << "jump: " << jump << std::endl;
-    std::cout << "guessAnglesVal: " << guessAnglesVal << std::endl;
-    std::cout << "threads: " << threads << std::endl;
+    //std::cout << "testName: " << testName << std::endl;
+    //std::cout << "nExec: " << nExec << std::endl;
+    //std::cout << "testID: " << testID << std::endl;
+    //std::cout << "discr: " << discr << std::endl;
+    //std::cout << "rip: " << rip << std::endl;
+    //std::cout << "funcID: " << funcID << std::endl;
+    //std::cout << "jump: " << jump << std::endl;
+    //std::cout << "guessAnglesVal: " << guessAnglesVal << std::endl;
+    //std::cout << "threads: " << threads << std::endl;
 
     std::fstream json_out; json_out.open("testResults/tests.json", std::fstream::app);
     
@@ -277,11 +277,9 @@ int main (int argc, char* argv[]){
     //system((std::string("tegrastats --interval 50 --start --logfile ")+powerName).c_str());
     //std::cout << (std::string("tegrastats --interval 50 --start --logfile ")+powerName).c_str() << std::endl;
     
-    DP::solveDP<Dubins<real_type> >(points, discr, fixedAngles, curveParamV, funcID, guessAnglesVal, rip, threads);
-    sleep(2);
-
     DP::solveDP<Dubins<real_type> >(points, discr, fixedAngles, curveParamV, funcID, guessAnglesVal, rip, threads); 
-    sleep(2);
+    sleep(5);
+
     TimePerf tp;
     tp.start();
     DP::solveDP<Dubins<real_type> >(points, discr, fixedAngles, curveParamV, funcID, guessAnglesVal, rip, threads); 
