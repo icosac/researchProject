@@ -154,15 +154,16 @@ int main (int argc, char* argv[]){
     }
   }
 
-  else if (argc==5){
-    uint threads=256;
+  else if (argc==5 || argc==6){
+    uint threads=128;
     uint funcID=2;
-    uint jump=10;
+    uint jump=3;
 
     std::string testName=std::string(argv[1]);
     std::string fileName=std::string(argv[2]);
     uint discr=atoi(argv[3]);
     uint rip=atoi(argv[4]);
+    if (argc==6) jump=atoi(argv[5]);
 
     std::ifstream file("file.txt");
     real_type value;
