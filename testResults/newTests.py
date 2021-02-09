@@ -353,7 +353,7 @@ def main():
     i=0
     for r in runs:
         if r.n>1:
-            #print(r.n, r.name)
+            print(r.n, r.name)
             r.time=(r.time/r.n)
             maxL=0
             for i in range(len(r.power_cons)): #Find the longest log
