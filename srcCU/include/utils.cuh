@@ -11,6 +11,7 @@
 #include <typedefs.hh>
 
 //#define DEBUG
+#define MYM_PI 3.14159265358979323846264338328
 
 #ifdef DEBUG
 #define COUT(x) cout << x;
@@ -45,7 +46,7 @@ extern real_type const m_1_sqrt_pi ; // 1/sqrt(pi)
 
 #define printV(v)                         \
   std::cout << "<";                       \
-  for (auto a : v) std::cout << a << " "; \
+  for (auto a : v) std::cout << std::setw(20) << std::setprecision(17) << a << " "; \
   std::cout << ">" << endl;
 
 #define printM(M, discr, size) \
@@ -57,14 +58,15 @@ for (int i=0; i<discr; i++){   \
   cout << endl;                \
 }
 
-#define printVM(M, discr, size)       \
-for (int i=0; i<discr; i++){          \
-  std::cout << "l" << i;             \
-  for (int j=0; j<size; j++){         \
-    std::cout << std::setw(30);       \
-    std::cout << M[i*size+j] << "\t"; \
-  }                                   \
-  std::cout << std::endl;             \
+#define printVM(M, discr, size)        \
+for (int i=0; i<discr; i++){           \
+  std::cout << "l" << i;               \
+  for (int j=0; j<size; j++){          \
+    std::cout << std::setw(20);        \
+    std::cout << std::setprecision(17);\
+    std::cout << M[i*size+j] << "\t";  \
+  }                                    \
+  std::cout << std::endl;              \
 }
 
 #define printCVM(M, discr, size)             \
@@ -76,12 +78,19 @@ for (int i=0; i<discr; i++){                 \
   printf("\n");                              \
 }
 
-template<class T>
-BOTH inline T ABS(T x, T y) {return (x>y ? (x-y) : (y-x)); }
+template<class T=double>
+BOTH inline T ABS(T x, T y) { return (x>y ? (x-y) : (y-x)); }
 
-template<class T>
-inline bool eq(const T x, const T y, const T EPSI=std::numeric_limits<T>::epsilon()) {
-  return ((ABS(x, y)>(EPSI)) ? false : true);
+template<class T=double>
+BOTH inline bool eq(const T x, const T y, const T EPSI=std::numeric_limits<T>::epsilon()) {
+  return ((ABS<double>(x, y)>(EPSI)) ? false : true);
+}
+
+BOTH inline Angle
+mod2pi(Angle ang){
+  while (ang < 0) {ang += M_PI*2;}
+  while (ang >=  2*M_PI) {ang -= M_PI*2;}
+  return ang;
 }
 
 template<class T>

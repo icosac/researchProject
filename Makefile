@@ -5,7 +5,7 @@ CLR=clear && clear && clear
 CC=g++
 CCFLAGS=-std=c++11 -O3
 CU=nvcc
-CUFLAGS=-std=c++11 -O3 -arch=sm_72 -DCUDA_ON --compiler-options -Wall
+CUFLAGS=-std=c++11 -O3 -arch=sm_62 -rdc=true -DCUDA_ON --compiler-options -std=c++11
 
 AR=ar rcs
 
@@ -45,7 +45,7 @@ bin/cu/%.out: exec/%.cu.o
 	$(CU) $(CUFLAGS) $(MORE_FLAGS) -o $@ $< $(LIBSCU)
 
 
-all: echo #CPU GPU 
+all: echo CPU GPU 
 
 CPU: lib/$(LIBCC) $(TESTCCEXEC)
 
