@@ -534,7 +534,7 @@ def main():
                     ax.set_ylabel("Time (s)", fontsize=AXESSIZE)
                     ax.set_xticks(x)
                     ax.legend(fontsize=LEGENDSIZE)
-                    plt.savefig("images/timesGraphsSeparatedNOOpenMP"+str(nGraphs)+"s.pdf", transparent=True, bbox_inches='tight', pad_inches=0.1)
+                    plt.savefig("images/timesGraphsSeparatedNOOpenMP"+str(nGraphs)+"s", format="pgf", transparent=True, bbox_inches='tight', pad_inches=0.1)
                     nGraphs+=1
 
     choice=input("Do you want to show the diagrams of times for each example and discretization? [Y/n] ")
