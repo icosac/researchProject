@@ -1,5 +1,7 @@
 # Enrico Saccon's Research Project on Parallel Dynamic Programming.
 
+Adding G1 support 
+
 ## Compile
 
 ### CMake 
