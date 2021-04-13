@@ -57,9 +57,9 @@ for (int i=0; i<discr; i++){   \
 }
 
 #define printVM(M, discr, size)       \
-for (int i=0; i<discr; i++){          \
+for (uint i=0; i<(uint)discr; i++){          \
   std::cout << "th" << i;             \
-  for (int j=0; j<size; j++){         \
+  for (uint j=0; j<(uint)size; j++){         \
     std::cout << std::setw(30);       \
     std::cout << M[i*size+j] << "\t"; \
   }                                   \
@@ -67,9 +67,9 @@ for (int i=0; i<discr; i++){          \
 }
 
 #define printCVM(M, discr, size)             \
-for (int i=0; i<discr; i++){                 \
+for (uint i=0; i<(uint)discr; i++){                 \
   printf("th%d", i);                         \
-  for (int j=0; j<size; j++){                \
+  for (uint j=0; j<(uint)size; j++){                \
     printf("\t%-5f", (double)(M[i*size+j])); \
   }                                          \
   printf("\n");                              \

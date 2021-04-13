@@ -1,3 +1,5 @@
+#ifdef TRIG
+
 #pragma once
 
 #include<utils.cuh>
@@ -181,3 +183,5 @@ BOTH double my_cos(double x);
 BOTH double my_atan(double x);
 BOTH double my_acos(double x);
 BOTH double my_atan2(double y, double x);
+
+#endif //TRIG

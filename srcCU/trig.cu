@@ -1,3 +1,5 @@
+#ifdef trig
+
 #include<trig.cuh>
 
 #define __HI(x) *(1+(int*)&x)
@@ -497,3 +499,5 @@ BOTH double my_atan2(double y, double x)
 	    	    return  (z-pi_lo)-pi;/* atan(-,-) */
 	}
 }
+
+#endif //TRIG

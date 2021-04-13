@@ -151,7 +151,7 @@ int main (){
 #else
 #define KAYA kaya1
   std::vector<bool> fixedAngles;
-  for (int i=0; i<KAYA.size(); i++){
+  for (uint i=0; i<KAYA.size(); i++){
     if (i==0 || i==KAYA.size()-1) {
       fixedAngles.push_back(true);
     }
