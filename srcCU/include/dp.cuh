@@ -103,7 +103,11 @@ namespace DP {
   }
 
   template<class CURVE>
-  void solveDP(std::vector<Configuration2<real_type> >& points, int discr, const std::vector<bool> fixedAngles, std::vector<real_type> params, short type=2, bool guessInitialAnglesVal=false, uint nIter=1, uint threads=128, Angle _fullAngle=m_2pi){
+  void solveDP( std::vector<Configuration2<real_type> >& points, 
+                int discr, const std::vector<bool> fixedAngles, 
+                std::vector<real_type> params, short type=2, 
+                bool guessInitialAnglesVal=false, uint nIter=1, 
+                uint threads=128, Angle _fullAngle=m_2pi){
     Angle fullAngle=_fullAngle;
     std::vector<Angle> angles; 
     //Passing the functions as pointers doesn't work for reasons I don't know

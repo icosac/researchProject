@@ -1,5 +1,8 @@
 #pragma once
 
+#include<iomanip>
+#include<vector>
+
 class Run{
 public:
   std::string name, test_name, file_name, guessInitialAngles;
