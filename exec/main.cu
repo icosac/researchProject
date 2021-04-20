@@ -60,7 +60,7 @@ std::vector<std::string> testsNames = {
 }; 
 
 std::vector<std::vector<Configuration2<real_type> > > Tests = {
-  kaya1, kaya2, kaya3, kaya4, omega, spa
+  kaya1Points, kaya2Points, kaya3Points, kaya4Points, omegaPoints, circuitPoints
 };
 
 std::vector<K_T> Ks = {3.0, 3.0, 5.0, 3.0, 3.0, 3.0};
@@ -97,7 +97,7 @@ int main (int argc, char* argv[]){
  
   if (argc==1){
     for (int testID=0; testID<6; testID++){
-      //if (testID!=3){continue;}
+      if (testID!=5){continue;}
       real_type dLen=exampleLenghts[testID];
 
       std::vector<bool> fixedAngles;
