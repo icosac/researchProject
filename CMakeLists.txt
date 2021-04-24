@@ -8,7 +8,7 @@ set(LIBCU libDynamicCurveCU)
 set(APP_EXEC dynamicCurve)
 
 set(CMAKE_CXX_STANDARD 11)
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -O3")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -O3 -Wno-reorder")
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 set(SRCIN "./include")
@@ -29,8 +29,8 @@ IF(${CUDA_ON} MATCHES ON)
   enable_language(CUDA)
   add_definitions(-DCUDA_ON)
   
-  set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} -Wreorder -std=c++11 -O3 -arch=sm_75 --default-stream per-thread --compiler-options -Wall") 
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wreorder")
+  set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} -Wno-reorder -std=c++11 -O3 -arch=sm_75 --default-stream per-thread --compiler-options -Wall") 
+  set(CMAKE_CXX)
   set(CMAKE_CUDA_ARCHITECTURES 75)
   set(CUDA_SEPARABLE_COMPILATION ON)
   

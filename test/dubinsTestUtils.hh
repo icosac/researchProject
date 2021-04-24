@@ -6,9 +6,16 @@
 #define EPSILON 1e-11
 #define CONFIDENCE 0.04
 
-#if !defined(DEBUG) && defined(DEBUGTEST)
-  #define COUT(x) cout << x;
+#ifdef DEBUG
+  #define DECOUT(x) COUT(x)
+#else
+  #ifdef DEBUGTEST
+    #define DECOUT(x) cout << x;
+  #else
+    #define DECOUT(x)
+  #endif 
 #endif
+  
 
 inline const char* toCString(std::stringstream msg){
   return msg.str().c_str();

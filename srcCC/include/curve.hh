@@ -19,11 +19,11 @@ public:
   /*!
    * @brief Void constructor.
    */
-  Curve() : _ci(), _cf(), _type(CURVE_TYPE::INVALID), _params(NULL) {}
+  Curve() : _ci(), _cf(), _type(CURVE_TYPE::INVALID_CURVE), _params(NULL) {}
   /*!
    * @brief Constructor to only set the type of the curve.
    */
-  Curve(CURVE_TYPE type=CURVE_TYPE::INVALID) : _ci(), _cf(), _type(type), _params(NULL) {}
+  Curve(CURVE_TYPE type=CURVE_TYPE::INVALID_CURVE) : _ci(), _cf(), _type(type), _params(NULL) {}
 
   /*!
    * @brief Constructor that takes two `Configuration2` and the type of the curve.
@@ -32,14 +32,14 @@ public:
    * @param type Type of the curve.
    * @param params The parameters of the curve, such as the curvature.
    */
-  Curve(Configuration2<T1> ci, Configuration2<T1> cf, CURVE_TYPE type=CURVE_TYPE::INVALID, real_type* params=NULL) : _ci(ci), _cf(cf), _type(type), _params(params) {}
+  Curve(Configuration2<T1> ci, Configuration2<T1> cf, CURVE_TYPE type=CURVE_TYPE::INVALID_CURVE, real_type* params=NULL) : _ci(ci), _cf(cf), _type(type), _params(params) {}
 
   Configuration2<T1>* ci() { return &(this->_ci); }   ///< Returns a pointer to the initial `Configuration2`.
   Configuration2<T1>* cf() { return &(this->_cf); }   ///< Returns a pointer to the final `Configuration2`.
 
   CURVE_TYPE type () const { return this->_type; }    ///< Returns type of curve.
   
-  real_type* params () const { return this->_params; }         ///< Returns the parameters of the curve.
+  real_type* params () const { return this->_params; }///< Returns the parameters of the curve.
 
   virtual LEN_T l() const = 0;                        ///< Returns the length of the curve.
 };

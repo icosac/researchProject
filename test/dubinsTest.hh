@@ -11,14 +11,13 @@
 
 BOOST_AUTO_TEST_SUITE(SingleDubinsTest)
 BOOST_AUTO_TEST_CASE(OneDubins){
-  real_type err;
   uint nerr=0,i=0;
 
   ifstream inputF("dubinsTestNew.txt"); 
   if(!inputF.is_open()){BOOST_ERROR("File not opened"); }
 
   real_type pl, ps1, ps2, ps3, pk1, pk2, pk3; 
-  real_type el, es1, es2, es3, ek1, ek2, ek3; 
+  real_type el=0.0, es1=0.0, es2=0.0, es3=0.0, ek1=0.0, ek2=0.0, ek3=0.0; 
   int_type nl=0, ns1=0, ns2=0, ns3=0, nk1=0, nk2=0, nk3=0; 
   real_type x0, y0, th0, x1, y1, th1, kmax, l, s1, s2, s3, k1, k2, k3;
   while ( inputF >> kmax >> x0 >> y0 >> th0 >> x1 >> y1 >> th1 >>
@@ -165,7 +164,7 @@ TEST(DubinsTestName, OneDubins){//TODO Find bug for which ctest shows this test 
   if(!inputF.is_open()){FAIL() << "File not opened"; }
 
   real_type pl, ps1, ps2, ps3, pk1, pk2, pk3; 
-  real_type el, es1, es2, es3, ek1, ek2, ek3; 
+  real_type el=0.0, es1=0.0, es2=0.0, es3=0.0, ek1=0.0, ek2=0.0, ek3=0.0; 
   int_type nl=0, ns1=0, ns2=0, ns3=0, nk1=0, nk2=0, nk3=0; 
   real_type x0, y0, th0, x1, y1, th1, kmax, l, s1, s2, s3, k1, k2, k3;
   while ( inputF >> kmax >> x0 >> y0 >> th0 >> x1 >> y1 >> th1 >>
