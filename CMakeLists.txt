@@ -16,18 +16,29 @@ set(SRCCC "srcCC")
 set(SRCCCF "${SRCCC}/*.cc")
 set(SRCINC "${SRCCC}/include")
 
+file(GLOB TEST_FILES "${CMAKE_CURRENT_SOURCE_DIR}/test/*.txt")
+
+IF(${DEBUG} MATCHES ON)
+  add_definitions(-DDEBUG)
+ELSEIF(${DEBUG} MATCHES TS)
+  add_definitions(-DDEBUGTEST)
+ENDIF()
+
 IF(${CUDA_ON} MATCHES ON)
   set(CUDA_DIR "/opt/cuda/targets/x86_64-linux/include/")
   enable_language(CUDA)
-  file(GLOB dynamicCurveExec "exec/main.cu")
   add_definitions(-DCUDA_ON)
-  set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} -Wreorder -std=c++11 -O3 -arch=sm_75 -DCUDA_ON --default-stream per-thread --compiler-options -Wall") 
+  
+  set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} -Wreorder -std=c++11 -O3 -arch=sm_75 --default-stream per-thread --compiler-options -Wall") 
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wreorder")
   set(CMAKE_CUDA_ARCHITECTURES 75)
   set(CUDA_SEPARABLE_COMPILATION ON)
+  
   set(SRCCU "srcCU")
   set(SRCCUF "${SRCCU}/*.cu")
   set(SRCINU "${SRCCU}/include")
+
+  file(GLOB dynamicCurveExec "exec/main.cu")
   message(STATUS "Compiling CUDA with: ${CMAKE_CUDA_FLAGS}")
 ELSE()
   file(GLOB dynamicCurveExec "exec/main.cc")
@@ -89,6 +100,7 @@ IF(${TEST} MATCHES "GTEST")
   IF(${CUDA_ON} MATCHES ON)
     gtest_discover_tests(DubinsTestCU)
   ENDIF()
+  file(COPY ${TEST_FILES} DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 
 ELSEIF(${TEST} MATCHES "BOOST")
   #BOOST_TEST
@@ -125,4 +137,6 @@ ELSEIF(${TEST} MATCHES "BOOST")
   IF(${CUDA_ON} MATCHES ON)
     add_test(NAME DubinsTestCU COMMAND DubinsTestCU)
   ENDIF()
+
+  file(COPY ${TEST_FILES} DESTINATION "${CMAKE_CURRENT_BINARY_DIR}")
 ENDIF()

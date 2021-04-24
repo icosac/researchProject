@@ -82,8 +82,8 @@ template<class T=double>
 BOTH inline T ABS(T x, T y) { return (x>y ? (x-y) : (y-x)); }
 
 template<class T=double>
-BOTH inline bool eq(const T x, const T y, const T EPSI=std::numeric_limits<T>::epsilon()) {
-  return ((ABS<double>(x, y)>(EPSI)) ? false : true);
+BOTH inline bool eq(const T x, const T y, const real_type EPSI=std::numeric_limits<real_type>::epsilon()) {
+  return ((ABS<double>(x, y)<=(EPSI)) ? true : false);
 }
 
 BOTH inline Angle

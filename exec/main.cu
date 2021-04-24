@@ -15,6 +15,18 @@
 
 #include<tests.hh>
 
+#define READ_FROM_FILE_DUBINS()                                                               \
+  { /*Using local scope to contain variables*/                                                \
+    ifstream inputF("test/dubinsTestNew.txt");                                                \
+    real_type pl, ps1, ps2, ps3, pk1, pk2, pk3; /*the first value is the required precision*/ \
+    real_type x0, y0, th0, x1, y1, th1, kmax, l, s1, s2, s3, k1, k2, k3;                      \
+    while ( inputF >> kmax >> x0 >> y0 >> th0 >> x1 >> y1 >> th1 >>                           \
+            l >> s1 >> s2 >> s3 >> k1 >> k2 >> k3 >>                                          \
+            pl >> ps1 >> ps2 >> ps3 >> pk1 >> pk2 >> pk3){                                    \
+      Configuration2<real_type>ci(x0, y0, th0);                                               \
+      Configuration2<real_type>cf(x1, y1, th1);                                                            
+
+#define CLOSE_FILE_DUBINS() } inputF.close(); } //Closing local scope
 
 void PrintScientific1D(real_type d){
   if (d == 0)
@@ -78,13 +90,58 @@ std::string nameTest(std::string name, std::string add="", std::string conc=" ")
   }
 }
 
-__global__ void dubinsL(Configuration2<real_type> c0, Configuration2<real_type> c1, real_type k, real_type* L){
+__global__ void dubinsL(Configuration2<real_type> c0, Configuration2<real_type> c1, real_type k, 
+                        real_type* L, real_type* s1, real_type* s2, real_type* s3,
+                        real_type* k1, real_type* k2, real_type* k3){
   Dubins<real_type> dubins(c0, c1, k);
-  L[0]+=dubins.l();
+  L[0]=dubins.l();
+  k1[0]=dubins.k1();
+  k2[0]=dubins.k2();
+  k3[0]=dubins.k3();
+  s1[0]=dubins.s1();
+  s2[0]=dubins.s2();
+  s3[0]=dubins.s3();
   //printf("GPU Length: %.16f\n", dubins.l());
 }
 
 int main (int argc, char* argv[]){
+  READ_FROM_FILE_DUBINS()
+  double *L;
+  double *S1;
+  double *S2;
+  double *S3;
+  double *K1;
+  double *K2;
+  double *K3;
+  cudaMallocManaged(&L, sizeof(real_type));
+  cudaMallocManaged(&S1, sizeof(real_type));
+  cudaMallocManaged(&S2, sizeof(real_type));
+  cudaMallocManaged(&S3, sizeof(real_type));
+  cudaMallocManaged(&K1, sizeof(real_type));
+  cudaMallocManaged(&K2, sizeof(real_type));
+  cudaMallocManaged(&K3, sizeof(real_type));
+  dubinsL <<<1,1>>>(ci, cf, kmax, L, S1, S2, S3, K1, K2, K3);
+  cudaDeviceSynchronize();
+  if (!eq<real_type>(L[0], l, pl*10) ||
+      !eq<real_type>(K1[0], k1, pk1*10) ||
+      !eq<real_type>(K2[0], k2, pk2*10) ||
+      !eq<real_type>(K3[0], k3, pk3*10) ||
+      !eq<real_type>(S1[0], s1, ps1*10) ||
+      !eq<real_type>(S2[0], s2, ps2*10) ||
+      !eq<real_type>(S3[0], s3, ps3*10) 
+    ){
+    cout << 
+          "L: "    << std::setprecision(12) << std::setw(15) << L[0] << " "  << std::setprecision(12) << std::setw(15) << l << " "  << std::setprecision(12) << std::setw(15)  << L[0]-l   << std::setprecision(12) << std::setw(15) << pl << 
+          "\nS1: " << std::setprecision(12) << std::setw(15) << S1[0] << " " << std::setprecision(12) << std::setw(15) << s1 << " " << std::setprecision(12) << std::setw(15)  << S1[0]-s1 << std::setprecision(12) << std::setw(15) << ps1 << 
+          "\nS2: " << std::setprecision(12) << std::setw(15) << S2[0] << " " << std::setprecision(12) << std::setw(15) << s2 << " " << std::setprecision(12) << std::setw(15)  << S2[0]-s2 << std::setprecision(12) << std::setw(15) << ps2 << 
+          "\nS3: " << std::setprecision(12) << std::setw(15) << S3[0] << " " << std::setprecision(12) << std::setw(15) << s3 << " " << std::setprecision(12) << std::setw(15)  << S3[0]-s3 << std::setprecision(12) << std::setw(15) << ps3 << 
+          "\nK1: " << std::setprecision(12) << std::setw(15) << K1[0] << " " << std::setprecision(12) << std::setw(15) << k1 << " " << std::setprecision(12) << std::setw(15)  << K1[0]-k1 << std::setprecision(12) << std::setw(15) << pk1 << 
+          "\nK2: " << std::setprecision(12) << std::setw(15) << K2[0] << " " << std::setprecision(12) << std::setw(15) << k2 << " " << std::setprecision(12) << std::setw(15)  << K2[0]-k2 << std::setprecision(12) << std::setw(15) << pk2 << 
+          "\nK3: " << std::setprecision(12) << std::setw(15) << K3[0] << " " << std::setprecision(12) << std::setw(15) << k3 << " " << std::setprecision(12) << std::setw(15)  << K3[0]-k3 << std::setprecision(12) << std::setw(15) << pk3 << endl;
+  
+  }
+  CLOSE_FILE_DUBINS()
+  return 0;
 
   //std::cout << "CUDA" << std::endl;
   cudaFree(0);
@@ -127,7 +184,7 @@ int main (int argc, char* argv[]){
           LEN_T Length=0.0;
           LEN_T *Length1; cudaMallocManaged(&Length1, sizeof(LEN_T));
           for (unsigned int idjijij=points.size()-1; idjijij>0; idjijij--){
-            dubinsL<<<1,1>>>(points[idjijij-1], points[idjijij], Ks[testID], Length1);
+            //dubinsL<<<1,1>>>(points[idjijij-1], points[idjijij], Ks[testID], Length1);
             cudaDeviceSynchronize();
 
             Dubins<real_type> c(points[idjijij-1], points[idjijij], Ks[testID]);

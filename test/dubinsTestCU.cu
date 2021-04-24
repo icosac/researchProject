@@ -7,6 +7,7 @@
 
 using namespace std;
 
+#define DubinsTestName DubinsTestGPU
 #define TESTONCUDA 1
 #include"dubinsTestUtils.hh"
 #include"dubinsTest.hh" //PLEASE add tests here, this code is as device independent as possible
